@@ -55,7 +55,7 @@ If a design choice doesn't make those two flows better, we cut it.
         │                     │                      │
         ▼                     ▼                      ▼
 ┌─────────────────────────────────────────────────────────────┐
-│           Postgres + pgvector  (Neon or Supabase)            │
+│           Supabase Postgres + pgvector                       │
 │   talent / startup / utah_orgs / affiliations / matches      │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -63,8 +63,8 @@ If a design choice doesn't make those two flows better, we cut it.
 **Stack:**
 - **Frontend:** Next.js 15 (App Router), TypeScript, Tailwind, shadcn/ui, Lucide icons
 - **API:** Next.js Route Handlers (REST) — tRPC is overkill for a 2-day build
-- **DB:** Postgres + pgvector (Neon free tier — zero-config, branchable)
-- **AI:** OpenAI `text-embedding-3-small` for vectors, Claude Sonnet 4.6 for re-ranking + explanations + free-text → structured extraction
+- **DB:** Supabase (Postgres + pgvector + auth-ready if we add it later)
+- **AI:** OpenAI across the stack — `text-embedding-3-small` for vectors, `gpt-5` for re-ranking + explanations, `gpt-5-mini` for free-text → structured extraction
 - **Hosting:** Vercel (single deploy, env vars, instant preview URLs for the demo)
 - **Auth:** none for demo. A `?as=<userId>` query param picks identity. Add Clerk if there's time.
 
@@ -171,8 +171,8 @@ Embedding input = an LLM-assembled paragraph that bakes in *intent* — not just
 
 Embed that, not the JSON.
 
-### Stage 3 — LLM re-rank + explain (Claude Sonnet 4.6)
-Send top-20 candidates + the requesting profile to Claude with a structured-output prompt. Returns:
+### Stage 3 — LLM re-rank + explain (OpenAI `gpt-5`)
+Send top-20 candidates + the requesting profile to `gpt-5` with a structured-output prompt (response_format = json_schema). Returns:
 
 ```json
 [
@@ -415,11 +415,10 @@ Anything not on this list is a stretch goal:
 
 ---
 
-## 11. Open decisions
+## 11. Locked decisions
 
-Things we should pick before building:
-
-- **Vector DB host** — Neon vs Supabase vs Postgres on Railway. Default: Neon for the branchable previews.
-- **Affinity demo path** — try for real API access from Nucleus, fall back to a recorded mock. Default: mock-first, real if granted before day 2.
-- **Auth for the demo** — none vs Clerk. Default: none (`?as=<id>` for identity switching). Add Clerk only if everything else ships.
-- **Free-text extraction model** — Claude Sonnet vs Haiku. Default: Haiku for extraction (cheap, fast), Sonnet for re-rank (quality matters there).
+- **Vector DB:** Supabase (Postgres + pgvector + auth-ready).
+- **LLM provider:** OpenAI across the stack. `gpt-5-mini` for free-text → structured extraction, `gpt-5` for the re-rank + explanation pass where quality drives the demo.
+- **Embeddings:** OpenAI `text-embedding-3-small` (1536d native; truncate via `dimensions` param if storage matters).
+- **Affinity:** mock-first via an `AffinityClient` abstraction, with `AFFINITY_LIVE=true` flipping to real API calls if access is granted before day 2.
+- **Auth:** none for the demo. Identity is switched via a `?as=<userId>` query param. Clerk added only if everything else ships.
