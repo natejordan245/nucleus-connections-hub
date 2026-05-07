@@ -1,424 +1,759 @@
 # Nucleus Connections Hub — Design Doc
 
-A hackathon-scoped design for an AI-powered talent ↔ startup matching platform tailored to Utah's innovation ecosystem.
+AI-powered talent ↔ startup matching for the Utah innovation ecosystem.
 
-**Scope:** what we'll build for the demo. Not a forever architecture. Decisions favor "buildable in 2 days" and "demos well on stage" over scale or generality.
+**Scope:** what we'll build for the hackathon demo. Not a forever architecture. Decisions favor "buildable in 2 days by 3 people working in parallel" and "demos well on stage" over scale or generality.
 
 ---
 
-## 1. Product surface
+## 1. Product surface & demo personas
 
 Two user types share one platform:
 
 - **Talent** — executives, co-founders, fractional operators, engineers, sales/marketing, students/interns, advisors, mentors, board members.
 - **Startups** — Utah-based, especially university spinouts (U of U / BYU / USU TTOs) and Silicon Slopes companies, across Life Sciences / AI / Defense & Aerospace / Cyber / Energy / Advanced Manufacturing / Fintech / Software.
 
-Three core jobs the platform does:
-
-1. **Onboard** a talent or startup with rich, structured + free-text profile data.
-2. **Match** — given a profile, surface a ranked list of the other side with an explanation.
-3. **Connect** — once both sides express interest, push the relationship into Affinity for the Nucleus team to broker.
+The platform does three jobs: **onboard** profiles, **match** with explanations, **connect** by pushing mutual interest into Affinity.
 
 Two demo personas anchor every design decision:
 
 - *"I'm a former Qualtrics VP of Sales looking for fractional advisory roles in Utah AI startups."*
 - *"I'm a U of U bioengineering PhD spinout that just licensed our IP and need a CEO who's done life-sci commercialization."*
 
-If a design choice doesn't make those two flows better, we cut it.
+If a design choice doesn't make those flows better, we cut it.
 
 ---
 
-## 2. Architecture at a glance
+## 2. Team & ownership
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Next.js App                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐   │
-│  │  Onboarding  │  │   Matches    │  │  Profile / Edit  │   │
-│  │  (talent &   │  │  (ranked +   │  │                  │   │
-│  │   startup)   │  │  explained)  │  │                  │   │
-│  └──────────────┘  └──────────────┘  └──────────────────┘   │
-│                            │                                 │
-│                     tRPC / Route Handlers                    │
-└──────────────────────────────┼──────────────────────────────┘
-                               │
-        ┌──────────────────────┼──────────────────────┐
-        ▼                      ▼                      ▼
-┌────────────────┐   ┌──────────────────┐   ┌────────────────┐
-│  Match service │   │  Profile service │   │ Integrations   │
-│                │   │                  │   │                │
-│ embed → vector │   │  CRUD + enrich   │   │ Squarespace WH │
-│ search → LLM   │   │  (LLM extracts   │   │ Affinity push  │
-│ re-rank +      │   │  structured data │   │                │
-│ explain        │   │  from free text) │   │                │
-└───────┬────────┘   └────────┬─────────┘   └───────┬────────┘
-        │                     │                      │
-        ▼                     ▼                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│           Supabase Postgres + pgvector                       │
-│   talent / startup / utah_orgs / affiliations / matches      │
-└─────────────────────────────────────────────────────────────┘
-```
+Three of us, working in parallel from day 1. The architecture below is built so each of us can ship in isolation against shared contracts.
 
-**Stack:**
-- **Frontend:** Next.js 15 (App Router), TypeScript, Tailwind, shadcn/ui, Lucide icons
-- **API:** Next.js Route Handlers (REST) — tRPC is overkill for a 2-day build
-- **DB:** Supabase (Postgres + pgvector + auth-ready if we add it later)
-- **AI:** OpenAI across the stack — `text-embedding-3-small` for vectors, `gpt-5` for re-ranking + explanations, `gpt-5-mini` for free-text → structured extraction
-- **Hosting:** Vercel (single deploy, env vars, instant preview URLs for the demo)
-- **Auth:** none for demo. A `?as=<userId>` query param picks identity. Add Clerk if there's time.
+| Person | Domain | Owns |
+|---|---|---|
+| **Zac** | Frontend | `app/`, `components/`, `lib/demo/` (slideshow + typing animation), `lib/services/mock/` and demo fixtures |
+| **Tobias** | API + frontend glue | `app/api/` route handlers, `lib/services/real/` (HTTP clients), `contracts/` shepherd |
+| **Nate** | Data + integrations | `lib/data-layer/` (Supabase, OpenAI, Affinity, Squarespace), `data/` (synthetic seeds), `scripts/` (migrations & seeding) |
+
+`contracts/` is shared. Any change there is a 3-person review.
 
 ---
 
-## 3. Data model
+## 3. Layered architecture
 
-Single Postgres database, `pgvector` enabled. Five core tables.
+The whole point of the layering is that any layer can run against a mock of the layer below it. Two boundaries, two mocks.
+
+```
+┌─ Frontend (Zac) ───────────────────────────────────────────┐
+│   Slideshow pages, demo header, double-click-to-type       │
+│   Imports IMatchService, IProfileService from @/contracts  │
+│   — interfaces, never implementations                       │
+└─────────────────────────┬──────────────────────────────────┘
+                          │
+                Service contract  ← Boundary #1
+                          │
+       ┌──────────────────┴──────────────────┐
+       ▼                                     ▼
+┌─ Mock Service (Zac) ──┐         ┌─ HTTP Service (Tobias) ──┐
+│ in-memory, demo       │         │ fetch() against /api/*    │
+│ fixtures, no network  │         │ in app/api/               │
+└───────────────────────┘         └────────────┬──────────────┘
+                                               │
+                                  Data-layer contract  ← Boundary #2
+                                               │
+                                  ┌────────────┴────────────┐
+                                  ▼                         ▼
+                        ┌─ Mock data layer ─┐   ┌─ Real data layer (Nate) ─┐
+                        │ in-process,        │   │ Supabase + OpenAI +       │
+                        │ canned responses   │   │ Affinity + Squarespace    │
+                        └────────────────────┘   └───────────────────────────┘
+```
+
+### Three independent run modes
+Each developer picks a mode by setting two env vars. No coordination needed.
+
+| Mode | `NEXT_PUBLIC_SERVICE_MODE` | `DATA_MODE` | Who uses it | What runs |
+|---|---|---|---|---|
+| **Frontend-only** | `mock` | (ignored) | Zac, demo machine | UI + service mocks. No API server, no DB, no API keys. The whole demo runs from this mode. |
+| **API dev (no integrations)** | `real` | `mock` | Tobias | Frontend → HTTP → API routes → mock data layer. Tobias can iterate on API shape, validation, error mapping with no OpenAI/Supabase keys. |
+| **Full stack** | `real` | `real` | Nate, integration testing | Everything live. |
+
+The demo on stage runs **frontend-only mode**. We don't need a working backend to win — we need a polished, fast, deterministic walkthrough. The real backend exists for the technical-judging conversation afterward.
+
+---
+
+## 4. Contracts — the shared boundary
+
+Two files, both in `contracts/`. These are the only things all three of us must agree on. Everything else is implementation we own independently.
+
+### `contracts/data.ts` — entity shapes
+
+```ts
+export type Availability = 'full-time' | 'fractional' | 'advisory' | 'internship';
+export type Compensation = 'cash' | 'equity' | 'mentor';
+export type Stage = 'pre-seed' | 'seed' | 'series-a' | 'series-b' | 'growth';
+export type Sector =
+  | 'life-sciences' | 'ai' | 'defense-aerospace' | 'cyber'
+  | 'energy' | 'advanced-manufacturing' | 'fintech' | 'software';
+export type Origin =
+  | 'u-of-u-spinout' | 'byu-spinout' | 'usu-spinout'
+  | 'bootstrapped' | 'vc-backed';
+
+export interface UtahOrgRef { id: string; name: string; type: 'tto'|'accelerator'|'university'|'community'|'investor' }
+
+export interface TalentDTO {
+  id: string;
+  name: string;
+  email: string;
+  headline: string;
+  bio: string;
+  skills: string[];
+  domains: Sector[];
+  availability: Availability;
+  compensation: Compensation[];
+  stagePrefs: Stage[];
+  riskTolerance: 1|2|3|4|5;
+  location: string;
+  utahOrgs: UtahOrgRef[];
+  createdAt: string;
+}
+
+export interface StartupDTO {
+  id: string;
+  name: string;
+  oneLiner: string;
+  description: string;
+  sector: Sector;
+  origin: Origin;
+  trl?: number;
+  fundingStage: Stage;
+  fundingStatus: 'grant'|'pre-revenue'|'revenue';
+  needs: Array<'ceo'|'cto'|'biz-dev'|'regulatory'|'sales-lead'|'engineering'|'marketing'>;
+  location: string;
+  utahOrgs: UtahOrgRef[];
+  createdAt: string;
+}
+
+export interface MatchFactors {
+  skillFit: string;
+  stageFit: string;
+  utahSignal: string;
+  concerns: string;
+}
+
+export interface RankedMatch<T = TalentDTO | StartupDTO> {
+  candidateId: string;
+  candidate: T;
+  score: number;                 // 0..1
+  verdict: 'strong' | 'good' | 'partial';
+  reason: string;                // one paragraph, LLM-generated
+  factors: MatchFactors;
+  proximityBoost: number;
+  proximityReasons: string[];
+}
+
+export interface MatchResponse {
+  matches: RankedMatch[];
+  pipelineMs: { gates: number; vector: number; rerank: number };
+}
+
+export interface InterestState {
+  talentId: string;
+  startupId: string;
+  talentState: 'pending'|'interested'|'pass';
+  startupState: 'pending'|'interested'|'pass';
+  mutualAt: string | null;
+}
+```
+
+### `contracts/services.ts` — frontend ↔ API boundary
+
+```ts
+import type { TalentDTO, StartupDTO, MatchResponse, InterestState } from './data';
+
+export interface IProfileService {
+  getTalent(id: string): Promise<TalentDTO>;
+  createTalent(input: Partial<TalentDTO> & { bio: string }): Promise<TalentDTO>;
+  updateTalent(id: string, patch: Partial<TalentDTO>): Promise<TalentDTO>;
+
+  getStartup(id: string): Promise<StartupDTO>;
+  createStartup(input: Partial<StartupDTO> & { description: string }): Promise<StartupDTO>;
+  updateStartup(id: string, patch: Partial<StartupDTO>): Promise<StartupDTO>;
+
+  /** LLM extraction: free-text → suggested structured fields */
+  extractFromBio(args: { bio: string; kind: 'talent' }): Promise<Partial<TalentDTO>>;
+  extractFromBio(args: { description: string; kind: 'startup' }): Promise<Partial<StartupDTO>>;
+}
+
+export interface IMatchService {
+  getMatches(args: { for: string; type: 'talent' | 'startup' }): Promise<MatchResponse>;
+}
+
+export interface IInterestService {
+  expressInterest(args: { talentId: string; startupId: string; from: 'talent'|'startup'; state: 'interested'|'pass' }): Promise<InterestState>;
+}
+```
+
+### `contracts/data-layer.ts` — API ↔ data layer boundary (internal to Tobias + Nate)
+
+```ts
+import type { TalentDTO, StartupDTO, RankedMatch } from './data';
+
+export interface IProfileStore {
+  getTalent(id: string): Promise<TalentDTO | null>;
+  putTalent(t: TalentDTO): Promise<void>;
+  listTalent(): Promise<TalentDTO[]>;
+  getStartup(id: string): Promise<StartupDTO | null>;
+  putStartup(s: StartupDTO): Promise<void>;
+  listStartups(): Promise<StartupDTO[]>;
+}
+
+export interface IEmbeddingClient {
+  embed(text: string): Promise<number[]>;            // 1536-dim
+  embedBatch(texts: string[]): Promise<number[][]>;
+}
+
+export interface ILLMClient {
+  extractTalent(bio: string): Promise<Partial<TalentDTO>>;
+  extractStartup(description: string): Promise<Partial<StartupDTO>>;
+  rerank(args: { subject: TalentDTO|StartupDTO; candidates: Array<TalentDTO|StartupDTO> }): Promise<RankedMatch[]>;
+}
+
+export interface IMatchEngine {
+  /** Runs gates → vector retrieval → rerank → proximity boost. */
+  findMatches(args: { for: string; type: 'talent'|'startup'; k?: number }): Promise<RankedMatch[]>;
+}
+
+export interface IAffinityClient {
+  upsertPerson(p: { name: string; email: string }): Promise<{ affinityId: string }>;
+  addToList(args: { personId: string; listName: string }): Promise<void>;
+  addNote(args: { personId: string; body: string }): Promise<void>;
+}
+```
+
+Everyone codes against the interfaces. Implementations are picked at the factory layer.
+
+---
+
+## 5. Frontend layer (Zac)
+
+### Demo-first principle
+We never type during the demo. Every text input that has a canonical demo value is wrapped in `<DemoTextInput>`:
+
+- **Double-click** the field → clears existing value, types out the canonical demo content character-by-character (~25ms/char) with a blinking cursor. Real React `onChange` fires at every step so downstream form state stays consistent.
+- **Single-click + type** still works for live editing if a judge wants to try.
+- The component reads its demo content from `lib/demo/scenarios.ts`, keyed by a `demoKey` prop.
+
+```tsx
+<DemoTextInput
+  demoKey="talent-bio-sarah-chen"
+  value={form.bio}
+  onChange={(v) => setForm({ ...form, bio: v })}
+  placeholder="Tell us about yourself..."
+  rows={8}
+/>
+```
+
+### Slideshow shell
+The whole app is a sequential walkthrough. Layout owns a `SlideController` that tracks which slide is active and exposes `next()` / `prev()`.
+
+- Header has `‹` and `›` chevrons, plus a slide-title dropdown for jumping. Arrow keys (`←` / `→`) work too.
+- Each route is a slide in `app/(slides)/<n>-<name>/page.tsx`.
+- Slide order *is* the demo:
+
+| # | Route | Demo beat |
+|---|---|---|
+| 0 | `/` | Landing — pitch, "Start the demo →" |
+| 1 | `/onboard/talent` | Sarah Chen onboards. Double-click bio → types out story → other fields auto-populate from `extractFromBio()` |
+| 2 | `/profile/talent/sarah-chen` | "Here's the profile we built." |
+| 3 | `/onboard/startup` | The bio-spinout onboards. Same flow. |
+| 4 | `/profile/startup/lumen-bio` | "Here's the spinout profile." |
+| 5 | `/matches?as=sarah-chen` | Sarah's ranked matches. Click into Lumen Bio → see full reasoning + Concerns card. |
+| 6 | `/matches/handshake` | Both sides express interest. Animated mutual-match state. |
+| 7 | `/admin/affinity-push` | The Affinity request payload, formatted, with the LLM reason as the note body. |
+
+### Trust UX rules
+- Never show a numeric score without the paragraph reason.
+- Always render the **Concerns** factor when present. Hiding weaknesses makes matches look like a sales pitch.
+- "Why was I matched?" is the primary CTA on every card, not a hidden tooltip.
+- Pipeline timing (`94ms gates → 38ms vector → 1.2s rerank`) is rendered as a small footer on the matches page. Makes the system legible.
+
+### Frontend file layout
+```
+app/
+├── layout.tsx                    # mounts <DemoHeader/> with chevrons + keyboard nav
+├── (slides)/
+│   ├── page.tsx                  # slide 0: landing
+│   ├── onboard/talent/page.tsx   # slide 1
+│   ├── profile/talent/[id]/page.tsx
+│   ├── onboard/startup/page.tsx
+│   ├── profile/startup/[id]/page.tsx
+│   ├── matches/page.tsx          # slide 5
+│   ├── matches/handshake/page.tsx
+│   └── admin/affinity-push/page.tsx
+lib/
+├── demo/
+│   ├── SlideController.tsx       # context + provider + keyboard listener
+│   ├── DemoHeader.tsx            # chevrons + dropdown
+│   ├── DemoTextInput.tsx         # double-click → typing animation
+│   ├── useTypingAnimation.ts
+│   └── scenarios.ts              # canonical demo text keyed by demoKey
+└── services/
+    ├── factory.ts                # picks mock vs real based on env
+    ├── mock/                     # MockProfileService, MockMatchService, MockInterestService
+    └── real/                     # HttpProfileService, HttpMatchService, HttpInterestService
+components/
+├── ui/                           # shadcn primitives
+├── MatchCard.tsx
+├── ProfileForm.tsx
+├── UtahSignalPill.tsx
+├── ExplainabilityPanel.tsx
+└── AffinityPayloadView.tsx
+```
+
+---
+
+## 6. Service layer — the strategy pattern boundary
+
+Frontend never imports anything from `lib/services/mock/` or `lib/services/real/` directly. It imports the factory.
+
+```ts
+// lib/services/factory.ts
+import type { IProfileService, IMatchService, IInterestService } from '@/contracts/services';
+
+const mode = process.env.NEXT_PUBLIC_SERVICE_MODE ?? 'mock';
+
+export const profileService: IProfileService =
+  mode === 'real'
+    ? new (await import('./real/HttpProfileService')).HttpProfileService()
+    : new (await import('./mock/MockProfileService')).MockProfileService();
+
+// ...same for matchService, interestService
+```
+
+### Mock service implementation (Zac, with help from Tobias)
+- Backed by **in-memory fixtures** loaded from `lib/services/mock/fixtures/`.
+- `getMatches()` returns pre-canned `MatchResponse` objects keyed by demo persona.
+- `extractFromBio()` returns deterministic structured output for the canonical bios so the typing animation always lands on the same fields. (No LLM call.)
+- `expressInterest()` mutates an in-memory `Map` so the handshake slide can show the state transition.
+- Latency is faked with `await sleep(700)` to make the UI feel real.
+
+### HTTP service implementation (Tobias)
+- Each method is a thin `fetch()` wrapper to the matching `app/api/*` route.
+- Errors normalize to a `ServiceError` shape so frontend error handling is mode-agnostic.
+- Reuses `contracts/data.ts` types — no DTO duplication.
+
+### Why this matters
+Zac builds the entire demo without anyone else online. Tobias builds the API without Nate's integrations being real. Nate builds integrations without blocking on Tobias's API shape.
+
+---
+
+## 7. API layer (Tobias)
+
+Next.js Route Handlers under `app/api/`. Stateless. They translate HTTP ↔ data layer.
+
+| Method | Path | Calls into data layer |
+|---|---|---|
+| `POST`  | `/api/talent` | `LLMClient.extractTalent` → `EmbeddingClient.embed` → `ProfileStore.putTalent` |
+| `GET`   | `/api/talent/:id` | `ProfileStore.getTalent` |
+| `PATCH` | `/api/talent/:id` | `ProfileStore.putTalent` (re-embeds if bio changed) |
+| `POST`  | `/api/startup` | mirror of talent |
+| `GET`   | `/api/startup/:id` | mirror |
+| `PATCH` | `/api/startup/:id` | mirror |
+| `POST`  | `/api/extract` | `LLMClient.extractTalent` or `extractStartup` (used during onboarding suggest) |
+| `GET`   | `/api/matches` | `MatchEngine.findMatches` |
+| `POST`  | `/api/interest` | mutate interest record; on mutual, fire `AffinityClient.*` |
+| `POST`  | `/api/integrations/squarespace/webhook` | normalize → same path as `POST /api/talent` or `/api/startup` |
+
+Routes get their data-layer dependencies from a single `lib/data-layer/factory.ts`:
+
+```ts
+const dataMode = process.env.DATA_MODE ?? 'mock';
+export const profileStore = dataMode === 'real' ? new SupabaseProfileStore() : new MockProfileStore();
+export const llmClient   = dataMode === 'real' ? new OpenAILLMClient()      : new MockLLMClient();
+// ...
+```
+
+The factory is **the only file** that imports both `mock/*` and `real/*`.
+
+---
+
+## 8. Data layer (Nate)
+
+Two parallel implementations of every data-layer interface, picked by `DATA_MODE`.
+
+### Real implementations
+- `SupabaseProfileStore` — Postgres CRUD via `@supabase/supabase-js`.
+- `OpenAIEmbeddingClient` — wraps `text-embedding-3-small`. 1536d.
+- `OpenAILLMClient` — wraps `gpt-5.3-nano` for extraction (cheap, fast, structured outputs) and `gpt-5.5-instant` for re-rank/explain (quality where it matters).
+- `PgvectorMatchEngine` — orchestrates gates → pgvector top-K → LLM rerank → proximity boost.
+- `AffinityClient` — `upsertPerson`, `addToList`, `addNote` against the Affinity REST API. Behind `AFFINITY_LIVE` flag.
+
+### Mock implementations
+- `MockProfileStore` — backed by `data/talent.synthetic.json` + `data/startups.synthetic.json` loaded into a `Map`.
+- `MockEmbeddingClient` — returns a deterministic 1536-d vector hashed from the input text. Cheap, repeatable, lets `MockMatchEngine` do real cosine similarity without OpenAI.
+- `MockLLMClient` — returns canned `Partial<TalentDTO>` and `Partial<StartupDTO>` for known bios; for unknown bios, returns a sensible default. `rerank()` builds a plausible reason paragraph from a template using the candidates' actual fields.
+- `MockMatchEngine` — runs the same gates → vector → rerank pipeline, just against the mock primitives. So mock-mode end-to-end ≈ real-mode end-to-end, structurally.
+- `MockAffinityClient` — appends to an in-memory log. The admin slide reads from this log to render the "request that would be sent to Affinity" view.
+
+The key invariant: **mocks satisfy the same interfaces and run the same code paths** as the real impls. Switching `DATA_MODE` flips behavior without changing call sites.
+
+### Data-layer file layout
+```
+lib/data-layer/
+├── factory.ts                    # the only file that imports both mock/* and real/*
+├── mock/
+│   ├── MockProfileStore.ts
+│   ├── MockEmbeddingClient.ts    # deterministic hash → vector
+│   ├── MockLLMClient.ts          # canned + templated outputs
+│   ├── MockMatchEngine.ts
+│   └── MockAffinityClient.ts
+└── real/
+    ├── SupabaseProfileStore.ts
+    ├── OpenAIEmbeddingClient.ts
+    ├── OpenAILLMClient.ts
+    ├── PgvectorMatchEngine.ts
+    └── AffinityClient.ts
+```
+
+---
+
+## 9. Data model (Supabase / Postgres)
+
+Five tables. `pgvector` extension enabled.
 
 ### `talent`
 ```sql
-id              uuid pk
-created_at      timestamptz
-name            text
-email           text
-headline        text                  -- "ex-Qualtrics VP Sales, fractional"
-bio             text                  -- free-form, the user's story
-skills          text[]                -- ['enterprise sales', 'GTM', 'pricing']
-domains         text[]                -- ['ai', 'fintech']
-availability    text                  -- 'full-time' | 'fractional' | 'advisory' | 'internship'
-compensation    text[]                -- ['equity', 'cash', 'mentor']
-stage_prefs     text[]                -- ['pre-seed', 'seed', 'series-a', 'growth']
-risk_tolerance  int                   -- 1-5
-location        text                  -- 'SLC' | 'Provo' | 'Park City' | 'Remote-Utah'
-utah_orgs       uuid[]                -- FK array → utah_orgs (alma maters, employers)
+id              uuid pk default gen_random_uuid()
+created_at      timestamptz default now()
+name            text not null
+email           text unique not null
+headline        text
+bio             text not null
+skills          text[]                 -- ['enterprise sales', 'GTM', 'pricing']
+domains         text[]                 -- sectors (Sector enum)
+availability    text                   -- Availability enum
+compensation    text[]
+stage_prefs     text[]
+risk_tolerance  int check (risk_tolerance between 1 and 5)
+location        text
+utah_org_ids    uuid[]
 embedding       vector(1536)
-profile_jsonb   jsonb                 -- everything raw, for prompt assembly
+profile_jsonb   jsonb                  -- full DTO snapshot for prompt assembly
 ```
 
 ### `startup`
 ```sql
-id                uuid pk
-created_at        timestamptz
-name              text
+id                uuid pk default gen_random_uuid()
+created_at        timestamptz default now()
+name              text not null
 one_liner         text
-description       text                  -- pitch / story
-sector            text                  -- 'life-sciences' | 'ai' | ...
-origin            text                  -- 'u-of-u-spinout' | 'byu-spinout' | 'usu-spinout' | 'bootstrapped' | 'vc-backed'
-trl               int                   -- 1-9, optional
-funding_stage     text                  -- 'pre-seed' | 'seed' | 'series-a' | ...
-funding_status    text                  -- 'grant' | 'pre-revenue' | 'revenue' | ...
-needs             text[]                -- ['ceo', 'cto', 'biz-dev', 'regulatory', 'sales-lead']
+description       text not null
+sector            text
+origin            text
+trl               int
+funding_stage     text
+funding_status    text
+needs             text[]
 location          text
-utah_orgs         uuid[]                -- TTO of origin, accelerators, lead investors
+utah_org_ids      uuid[]
 embedding         vector(1536)
 profile_jsonb     jsonb
 ```
 
-### `utah_orgs`  *(the ecosystem graph)*
+### `utah_orgs` *(the ecosystem graph)*
 ```sql
-id              uuid pk
-name            text                    -- 'University of Utah PIVOT Center', 'Kiln', 'Silicon Slopes', 'Lassonde'
-type            text                    -- 'tto' | 'accelerator' | 'university' | 'community' | 'investor'
-universities    text[]                  -- linked schools, e.g. ['u-of-u']
+id            uuid pk default gen_random_uuid()
+name          text not null
+type          text                    -- 'tto'|'accelerator'|'university'|'community'|'investor'
+universities  text[]                  -- linked schools, e.g. ['u-of-u']
 ```
 
-Why this matters: ecosystem proximity is **the** Utah-specific signal LinkedIn doesn't have. Two profiles that share a Utah org get a graph-distance bonus that bumps them up the ranking.
+This is **the** Utah-specific signal LinkedIn doesn't have. Two profiles that share a Utah org get a graph-distance bonus that bumps them up the ranking.
 
-### `match_decisions`  *(audit trail + demo replay)*
+### `match_decisions` *(audit trail + demo replay)*
 ```sql
-id              uuid pk
-created_at      timestamptz
-talent_id       uuid fk
-startup_id      uuid fk
+id              uuid pk default gen_random_uuid()
+created_at      timestamptz default now()
+talent_id       uuid references talent(id)
+startup_id      uuid references startup(id)
 score           float
-reason          text                    -- the LLM's "why" paragraph
-factors         jsonb                   -- structured contributions: vector, gates, ecosystem
+reason          text                    -- LLM's "why" paragraph
+factors         jsonb                   -- {skillFit, stageFit, utahSignal, concerns}
+proximity_boost float
 viewer          text                    -- 'talent' | 'startup' | 'admin'
 ```
 
-Every match shown is logged. Powers (a) the explainability UI, (b) demo replay, and (c) "why didn't I match X?" debugging on stage.
+Every match shown is logged. Powers (a) the explainability UI, (b) demo replay, (c) "why didn't I match X?" debugging on stage.
 
-### `interest`  *(dual opt-in handshake)*
+### `interest` *(dual opt-in handshake)*
 ```sql
-id              uuid pk
-talent_id       uuid fk
-startup_id      uuid fk
+id              uuid pk default gen_random_uuid()
+talent_id       uuid references talent(id)
+startup_id      uuid references startup(id)
 talent_state    text                  -- 'pending' | 'interested' | 'pass'
-startup_state   text                  -- same
-mutual_at       timestamptz nullable  -- set when both flip to 'interested' → triggers Affinity push
+startup_state   text
+mutual_at       timestamptz           -- set when both flip to 'interested' → triggers Affinity push
+unique (talent_id, startup_id)
+```
+
+Indexes:
+```sql
+create index talent_embedding_idx on talent using ivfflat (embedding vector_cosine_ops);
+create index startup_embedding_idx on startup using ivfflat (embedding vector_cosine_ops);
 ```
 
 ---
 
-## 4. The matching pipeline
+## 10. Matching pipeline
 
-This is the heart of the demo. Three stages, each cheap and explainable.
+Three stages plus a Utah proximity boost. Lives in `PgvectorMatchEngine` (real) and `MockMatchEngine` (mock); both run the same logic against their primitives.
 
 ### Stage 1 — Hard gates (SQL)
 Filter the candidate set with non-negotiable structured criteria *before* any AI runs:
 
-- Talent's `availability` must intersect with startup's needs (e.g. startup needs CEO full-time → drop fractional-only talent).
+- Talent's `availability` must intersect with startup's needs (e.g. startup needs full-time CEO → drop fractional-only talent).
 - Talent's `stage_prefs` must include the startup's `funding_stage`.
-- Talent's `compensation` must overlap the startup's offer (a mentor-only candidate ≠ a paid CEO role).
+- Talent's `compensation` must overlap the startup's offer (mentor-only candidate ≠ paid CEO role).
 
 Hard gates first means we never have to "explain away" a structurally bad match.
 
 ### Stage 2 — Vector retrieval (pgvector)
-Top-K (K=20) by cosine similarity over `embedding`.
+Top-K=20 by cosine similarity over `embedding`.
 
-Embedding input = an LLM-assembled paragraph that bakes in *intent* — not just a concatenation of fields. Example for talent:
+Embedding input = an LLM-assembled paragraph that bakes in *intent* — not just a JSON dump. Example for talent:
 
 > "Sarah Chen is a fractional GTM advisor available 10–15 hrs/week for equity. 18 years scaling enterprise SaaS at Qualtrics and Domo. Looking for AI/data-infra startups at seed to Series A, ideally Utah-based. Mission-aligned with applied AI in education and healthcare. Will not consider full-time roles."
 
 Embed that, not the JSON.
 
-### Stage 3 — LLM re-rank + explain (OpenAI `gpt-5`)
-Send top-20 candidates + the requesting profile to `gpt-5` with a structured-output prompt (response_format = json_schema). Returns:
+### Stage 3 — LLM re-rank + explain (`gpt-5.5-instant`)
+Send top-20 candidates + the requesting profile with a structured-output prompt (response_format = json_schema). Returns:
 
 ```json
 [
   {
-    "candidate_id": "...",
+    "candidateId": "...",
     "score": 0.87,
     "verdict": "strong",
     "reason": "Sarah's 18 years scaling enterprise SaaS GTM directly addresses your need for a sales-focused advisor at the Series A inflection point. Her availability (fractional, 10-15 hrs/week) matches your equity-only advisor structure. Both Utah-based, both Qualtrics alumni — likely 1-degree separation through your investor.",
     "factors": {
-      "skill_fit": "Enterprise sales, pricing, RevOps — exact match for your 'sales-lead' need.",
-      "stage_fit": "Series A is in her stated preference range.",
-      "utah_signal": "Shared Qualtrics alumni network. Both SLC-based.",
+      "skillFit": "Enterprise sales, pricing, RevOps — exact match for your 'sales-lead' need.",
+      "stageFit": "Series A is in her stated preference range.",
+      "utahSignal": "Shared Qualtrics alumni network. Both SLC-based.",
       "concerns": "Her healthcare interest is partial overlap; your product is dev-tools-focused."
     }
   }
 ]
 ```
 
-Score is the LLM's ranking; the **factors** are what we render in the UI. Concerns matter — "trust-building" is in the rubric, and showing the gaps makes the recommendation feel honest.
+`gpt-5.3-nano` handles the cheaper free-text → structured extraction during onboarding.
 
-### Ecosystem proximity boost
+### Stage 4 — Utah proximity boost
 On top of the LLM score, add a Utah-specific bump:
 
 ```
-proximity_boost = 0.05 * (shared_utah_orgs)
-                + 0.10 * (same_university)
-                + 0.05 * (same_city)
-                + 0.10 * (1 if startup is a spinout AND talent has tto/research experience)
+proximity_boost = 0.05 * shared_utah_orgs
+                + 0.10 * same_university
+                + 0.05 * same_city
+                + 0.10 * (spinout_startup AND tto_or_research_talent ? 1 : 0)
+                  capped at +0.25
 ```
 
-Capped at +0.25. Surfaced in the UI as a "Utah signal" badge with a tooltip listing what triggered it.
+Surfaced as a **Utah signal** badge with a tooltip listing what triggered it.
 
 ### Why this beats LinkedIn
-- LinkedIn ranks on keyword overlap and connection distance. We rank on **role-fit semantics + Utah ecosystem topology + stage compatibility** — three signals LinkedIn cannot compute.
-- The "concerns" field is something no job board surfaces. It's the trust differentiator.
+LinkedIn ranks on keyword overlap and connection distance. We rank on **role-fit semantics + Utah ecosystem topology + stage compatibility** — three signals LinkedIn cannot compute. The **Concerns** field is something no job board surfaces. That's the trust differentiator.
 
 ---
 
-## 5. API surface
-
-Eight endpoints. All Next.js Route Handlers under `/app/api/`.
-
-| Method | Path | Purpose |
-|---|---|---|
-| `POST` | `/api/talent` | Create talent profile (also accepts a raw bio for LLM extraction) |
-| `GET`  | `/api/talent/:id` | Read talent profile |
-| `PATCH`| `/api/talent/:id` | Update talent profile (re-embeds on save) |
-| `POST` | `/api/startup` | Create startup profile (same LLM extraction path) |
-| `GET`  | `/api/startup/:id` | Read startup profile |
-| `PATCH`| `/api/startup/:id` | Update startup profile (re-embeds on save) |
-| `GET`  | `/api/matches?for=<id>&type=talent\|startup` | Run pipeline, return ranked matches with explanations |
-| `POST` | `/api/interest` | Express interest (one side); fires Affinity push on mutual |
-| `POST` | `/api/integrations/squarespace/webhook` | Inbound from Squarespace form |
-
-**Match endpoint response shape:**
-```ts
-type MatchResponse = {
-  matches: Array<{
-    candidateId: string;
-    candidate: TalentDTO | StartupDTO;
-    score: number;
-    verdict: 'strong' | 'good' | 'partial';
-    reason: string;
-    factors: {
-      skill_fit: string;
-      stage_fit: string;
-      utah_signal: string;
-      concerns: string;
-    };
-    proximityBoost: number;
-    proximityReasons: string[]; // ['Both U of U alumni', 'Both SLC-based']
-  }>;
-  pipelineMs: { gates: number; vector: number; rerank: number };
-};
-```
-
-Returning `pipelineMs` is for the demo — we'll show the "94ms gates → 38ms vector → 1.2s re-rank" breakdown on stage to make the system legible.
-
----
-
-## 6. Frontend
-
-Five routes. Nothing more for v1.
-
-| Route | Purpose |
-|---|---|
-| `/` | Marketing landing — explains the product, two CTAs ("I'm talent" / "I'm a startup"). |
-| `/onboard/talent` | Talent onboarding — hybrid form + free-text bio. |
-| `/onboard/startup` | Startup onboarding — same shape, different fields. |
-| `/matches` | The killer view. Ranked list of the other side, with explanations. |
-| `/profile/:id` | Detail view for a profile. Shown when a match card is clicked. |
-| `/admin` | Optional. Lists all profiles + match decisions for debugging on stage. |
-
-### Onboarding UX (the "AI-first" part)
-Form has two halves on one page:
-
-1. **Structured fields** — dropdowns / chips for the things we can't leave to interpretation: availability, stage prefs, compensation type, sector, funding stage, needs. Required.
-2. **Free-text "tell us about yourself / your startup"** — a big textarea. On submit, an LLM call extracts skills, domains, mission keywords, and notable Utah-org affiliations and *populates the structured side as suggestions the user can accept or edit*. This is the "feels magical, beats a typeform" moment.
-
-### Match view UX (the demo centerpiece)
-Each match card shows:
-
-- **Header** — name, headline, big verdict badge (Strong / Good fit / Partial fit), score
-- **Why this match** — one-paragraph reason from the LLM
-- **Factors grid** — 4 small cards: Skill fit, Stage fit, Utah signal, Concerns. The Concerns card is *intentionally prominent* — it builds trust.
-- **Utah signal pill** — "Both U of U alumni · Both SLC · Spinout↔TTO experience"
-- **Actions** — *Express interest* / *Pass* / *See full profile*
-
-When both sides flip to Express Interest, an animated state change appears: *"Mutual interest — Nucleus has been notified."* That's the moment the Affinity push fires.
-
-### Trust & explainability — design rules
-- Never show a numeric score without a paragraph reason.
-- Always render Concerns when present. If we hide weaknesses, the matches feel like a sales pitch.
-- "Why was I matched?" is the primary CTA on every card, not a hidden tooltip.
-
----
-
-## 7. Integration layer
+## 11. Integrations (Nate)
 
 ### Squarespace (inbound)
-Nucleus's existing form is on Squarespace and feeds Typeform → Affinity. We replace the Typeform leg.
+Replaces Nucleus's existing Typeform leg.
 
 - Squarespace form posts JSON to `POST /api/integrations/squarespace/webhook`.
-- Handler validates a shared-secret header, normalizes the payload to talent or startup shape, runs LLM extraction on free-text fields, embeds, writes to DB.
-- Response includes a one-time signed URL (`/onboard/talent?token=...`) the user can click to review and refine the profile we extracted. Removes the "I filled out a form, where's my profile?" gap.
+- Handler validates a shared-secret header, normalizes payload to talent or startup shape, runs LLM extraction on free-text, embeds, writes via `ProfileStore`.
+- Response includes a one-time signed URL (`/onboard/talent?token=...`) the user can click to review and refine the auto-extracted profile. Removes the "I filled out a form, where's my profile?" gap.
 
 ### Affinity (outbound)
 Affinity has a REST API. We use two endpoints: `POST /persons` and `POST /relationships`.
 
-- On **mutual interest**, `POST /api/interest` triggers a job that:
-  1. Upserts both sides as Affinity persons (idempotent on email).
-  2. Adds them to the "Nucleus Connections — Mutual Match" Affinity list.
-  3. Posts a note containing the LLM's `reason` paragraph and the proximity factors, so Nucleus's team has full context before they reach out.
+On **mutual interest** (both sides flip to `interested`), the API route fires:
+1. `AffinityClient.upsertPerson` for both sides (idempotent on email).
+2. `AffinityClient.addToList` to "Nucleus Connections — Mutual Match".
+3. `AffinityClient.addNote` containing the LLM's `reason` paragraph + proximity factors.
 
-For the demo we'll likely mock the Affinity HTTP client behind a feature flag — but the abstraction (`AffinityClient` with `upsertPerson`, `addToList`, `addNote`) is built such that flipping `AFFINITY_LIVE=true` calls real endpoints. Showing the mock log on stage with the exact request payloads communicates "this is a real integration, not vapor."
-
-### Why this matters for judging
-Integration is 20% of the score and most teams will skip it. Even a polished mock with the request payloads visible beats nothing. A real Affinity push beats everyone.
+Behind `AFFINITY_LIVE` — false by default. Mock client logs to memory; admin slide renders the would-be request payloads. Real client only flips on after Nucleus grants API access.
 
 ---
 
-## 8. Data layer — synthetic seeds
+## 12. Synthetic data plan (Nate)
 
-Demo data is the difference between "interesting prototype" and "I can imagine using this on Monday." Plan:
+Demo data is the difference between "interesting prototype" and "I can imagine using this on Monday."
 
 ### `data/utah_orgs.json` — hand-curated, ~30 entries
 Real Utah orgs. Costs nothing, sells the Utah angle hard:
 
-- Universities & TTOs: U of U PIVOT Center, BYU Tech Transfer, USU Innovation Campus
-- Accelerators: Kiln, BoomStartup, Lassonde Founders, Summit Sandbox
-- Community: Silicon Slopes, Women Tech Council, Beehive Startups
-- Notable employer alumni networks: Qualtrics, Pluralsight, Domo, Owlet, Recursion, Lucid
+- **TTOs & universities:** U of U PIVOT Center, BYU Tech Transfer, USU Innovation Campus
+- **Accelerators:** Kiln, BoomStartup, Lassonde Founders, Summit Sandbox
+- **Community:** Silicon Slopes, Women Tech Council, Beehive Startups
+- **Notable employer alumni networks:** Qualtrics, Pluralsight, Domo, Owlet, Recursion, Lucid
 
 ### `data/talent.synthetic.json` — 50 talent profiles
-LLM-generated with strict prompting: include realistic Utah affiliations, varying stages, varying availability, deliberately seeded "obvious match" pairs for the demo personas. Each profile gets a written bio, not just structured fields, so embeddings have something rich to chew on.
+LLM-generated with strict prompting: realistic Utah affiliations, varying stages and availability, deliberately seeded "obvious match" pairs for the demo personas. Each profile gets a written bio so embeddings have something rich to chew on.
 
 ### `data/startups.synthetic.json` — 30 startup profiles
-Mix of: real public Utah spinouts (paraphrased), realistic synthetic ones, with origin spread across U of U, BYU, USU, Silicon Slopes companies, and a few defense/aerospace + life-sci to flex the sector range.
+Mix of: paraphrased real Utah spinouts, realistic synthetic ones, with origin spread across U of U / BYU / USU / Silicon Slopes, and a few defense/aerospace + life-sci to flex the sector range.
 
-### Seed script
-`scripts/seed.ts` — wipes and reloads the DB, runs embedding generation in batches, then runs the matching pipeline once for the demo personas and prints the top 5 to console. This is our smoke test.
+### `data/demo-personas.ts` — hand-authored, 3 scenarios
+The three required match scenarios — Executive → deep tech, Student → spinout, Operator → scaling — exist as rich, deliberately-matchable inputs. The system finds them organically; we do **not** hard-code outputs. Hand-authoring inputs ≠ hand-authoring outputs.
 
-### "Hand-tuned" demo trio
-For the three required match scenarios (Executive → deep tech, Student → spinout, Operator → scaling company), we hand-author the talent and startup such that the match is genuinely strong — and the system finds them organically. We do *not* hard-code the result. Hand-authoring inputs ≠ hand-authoring outputs.
+These same fixtures back `MockProfileStore`, so frontend-only mode shows the same personas as full-stack mode.
+
+### `scripts/seed.ts` (Nate)
+Wipes and reloads the DB, runs embedding generation in batches, prints top-5 matches for each demo persona to console as a smoke test.
 
 ---
 
-## 9. Project layout
+## 13. Project layout — concrete tree with owners
 
 ```
 nucleus-connections-hub/
-├── app/                          # Next.js App Router
-│   ├── (marketing)/page.tsx
-│   ├── onboard/
-│   │   ├── talent/page.tsx
-│   │   └── startup/page.tsx
-│   ├── matches/page.tsx
-│   ├── profile/[id]/page.tsx
-│   ├── admin/page.tsx
-│   └── api/
-│       ├── talent/[[...id]]/route.ts
-│       ├── startup/[[...id]]/route.ts
+├── DESIGN.md                                # this file
+├── README.md
+├── .env.example
+│
+├── contracts/                               # ★ shared, 3-person review
+│   ├── data.ts
+│   ├── services.ts
+│   └── data-layer.ts
+│
+├── app/                                     # Zac (frontend) + Tobias (api routes)
+│   ├── layout.tsx                           # Zac
+│   ├── (slides)/                            # Zac
+│   │   ├── page.tsx                         # 0 landing
+│   │   ├── onboard/talent/page.tsx          # 1
+│   │   ├── profile/talent/[id]/page.tsx     # 2
+│   │   ├── onboard/startup/page.tsx         # 3
+│   │   ├── profile/startup/[id]/page.tsx    # 4
+│   │   ├── matches/page.tsx                 # 5
+│   │   ├── matches/handshake/page.tsx       # 6
+│   │   └── admin/affinity-push/page.tsx     # 7
+│   └── api/                                 # Tobias
+│       ├── talent/route.ts
+│       ├── talent/[id]/route.ts
+│       ├── startup/route.ts
+│       ├── startup/[id]/route.ts
+│       ├── extract/route.ts
 │       ├── matches/route.ts
 │       ├── interest/route.ts
 │       └── integrations/squarespace/webhook/route.ts
-├── lib/
-│   ├── db.ts                     # postgres client + helpers
-│   ├── embeddings.ts             # OpenAI embeddings
-│   ├── llm.ts                    # Claude client
-│   ├── match/
-│   │   ├── gates.ts              # SQL hard filters
-│   │   ├── retrieve.ts           # pgvector search
-│   │   ├── rerank.ts             # Claude re-rank prompt
-│   │   ├── proximity.ts          # Utah ecosystem boost
-│   │   └── pipeline.ts           # orchestrator
-│   ├── extract/
-│   │   └── from-bio.ts           # free-text → structured fields
-│   └── integrations/
-│       ├── affinity.ts           # mock + live client
-│       └── squarespace.ts        # webhook normalization
-├── components/
-│   ├── ui/                       # shadcn primitives
+│
+├── components/                              # Zac
+│   ├── ui/
 │   ├── MatchCard.tsx
 │   ├── ProfileForm.tsx
 │   ├── UtahSignalPill.tsx
-│   └── ExplainabilityPanel.tsx
-├── data/
+│   ├── ExplainabilityPanel.tsx
+│   └── AffinityPayloadView.tsx
+│
+├── lib/
+│   ├── demo/                                # Zac
+│   │   ├── SlideController.tsx
+│   │   ├── DemoHeader.tsx
+│   │   ├── DemoTextInput.tsx
+│   │   ├── useTypingAnimation.ts
+│   │   └── scenarios.ts
+│   │
+│   ├── services/                            # Zac (mock) + Tobias (real)
+│   │   ├── factory.ts
+│   │   ├── mock/
+│   │   │   ├── MockProfileService.ts
+│   │   │   ├── MockMatchService.ts
+│   │   │   ├── MockInterestService.ts
+│   │   │   └── fixtures/
+│   │   │       ├── demo-talent.ts
+│   │   │       ├── demo-startups.ts
+│   │   │       └── demo-matches.ts
+│   │   └── real/
+│   │       ├── HttpProfileService.ts
+│   │       ├── HttpMatchService.ts
+│   │       └── HttpInterestService.ts
+│   │
+│   └── data-layer/                          # Nate
+│       ├── factory.ts
+│       ├── mock/
+│       │   ├── MockProfileStore.ts
+│       │   ├── MockEmbeddingClient.ts
+│       │   ├── MockLLMClient.ts
+│       │   ├── MockMatchEngine.ts
+│       │   └── MockAffinityClient.ts
+│       └── real/
+│           ├── SupabaseProfileStore.ts
+│           ├── OpenAIEmbeddingClient.ts
+│           ├── OpenAILLMClient.ts
+│           ├── PgvectorMatchEngine.ts
+│           └── AffinityClient.ts
+│
+├── data/                                    # Nate
 │   ├── utah_orgs.json
 │   ├── talent.synthetic.json
-│   └── startups.synthetic.json
-├── scripts/
-│   ├── seed.ts
-│   └── smoke-match.ts
-├── DESIGN.md
-└── README.md
+│   ├── startups.synthetic.json
+│   └── demo-personas.ts                     # also imported by lib/services/mock/fixtures
+│
+└── scripts/                                 # Nate
+    ├── migrate.ts
+    ├── seed.ts
+    └── smoke-match.ts
 ```
 
 ---
 
-## 10. Build order
+## 14. Build order — three parallel tracks
 
-A sequence that keeps the demo runnable end-to-end at every step:
+Day 1 morning: all three of us land `contracts/` together. After that we fork.
 
-1. **DB + schema migration + seed loader** with hand-curated Utah orgs only. Verify `pgvector` works.
-2. **Embeddings + retrieval** — get top-K vector search working from a CLI script before touching the UI.
-3. **Re-rank prompt** — iterate the Claude prompt against fixed fixtures until the explanations feel real.
-4. **Proximity boost** — add the Utah graph signal, verify it changes rankings sensibly.
-5. **Match API + a single ugly page** that lists results with reasons. End-to-end before pretty.
-6. **Onboarding flows** — structured + free-text + LLM extraction.
-7. **Pretty match UI** — MatchCard, factors grid, Utah signal pill, Express interest action.
-8. **Affinity integration** — mock first, then live if API access is real.
-9. **Squarespace webhook** — last, since it's a wrapper around already-working onboarding.
-10. **Demo polish** — hand-author the three scenarios, rehearse the walkthrough, record a backup video.
+### Zac (frontend track)
+1. Next.js + Tailwind + shadcn scaffold; layout shell with `DemoHeader`.
+2. `SlideController` + keyboard nav + slide route stubs (1–7).
+3. `DemoTextInput` + typing animation + `scenarios.ts` content.
+4. `MockProfileService` / `MockMatchService` / `MockInterestService` with demo fixtures.
+5. Onboarding form, `MatchCard`, factors grid, Utah signal pill, mutual-interest animation, Affinity payload view.
+6. Demo polish — timing, transitions, recorded backup video.
 
-Anything not on this list is a stretch goal:
-- Talent upskilling recommendations ("you're 80% fit, here's how to close the gap") — high-judging-value bonus per the brief
-- Ecosystem map visualization (force-directed graph of Utah orgs)
-- Real auth (Clerk)
-- "Cold start" handling for empty profiles
+### Tobias (API track)
+1. After contracts: scaffold all `app/api/*` routes returning 501.
+2. `HttpProfileService` / `HttpMatchService` / `HttpInterestService` against the route stubs.
+3. Wire routes to `lib/data-layer/factory.ts` (still mock).
+4. Validation, error normalization, response shapes finalized against contracts.
+5. Squarespace webhook normalization layer.
+6. Hook up real data layer once Nate's primitives ship (just flip env).
+
+### Nate (data + integrations track)
+1. After contracts: `MockProfileStore` / `MockEmbeddingClient` / `MockLLMClient` / `MockMatchEngine` / `MockAffinityClient` so Tobias is unblocked.
+2. `data/utah_orgs.json` hand-curated; synthetic talent + startup JSON via LLM-assisted generation.
+3. Supabase project + schema migration + `pgvector` enabled.
+4. `OpenAIEmbeddingClient` (`text-embedding-3-small`, 1536d).
+5. `OpenAILLMClient` (`gpt-5.3-nano` extract, `gpt-5.5-instant` rerank).
+6. `SupabaseProfileStore` + `PgvectorMatchEngine` + proximity boost.
+7. `seed.ts` end-to-end + smoke-test top-5 for demo personas.
+8. `AffinityClient` (mock-first; live if access granted day 2).
+
+### Stretch (whoever finishes first)
+- Talent upskilling recommendations ("you're 80% fit — here's how to close the gap").
+- Ecosystem map visualization (force-directed graph of Utah orgs).
+- Real auth (Clerk).
 
 ---
 
-## 11. Locked decisions
+## 15. Locked decisions
 
-- **Vector DB:** Supabase (Postgres + pgvector + auth-ready).
-- **LLM provider:** OpenAI across the stack. `gpt-5-mini` for free-text → structured extraction, `gpt-5` for the re-rank + explanation pass where quality drives the demo.
-- **Embeddings:** OpenAI `text-embedding-3-small` (1536d native; truncate via `dimensions` param if storage matters).
-- **Affinity:** mock-first via an `AffinityClient` abstraction, with `AFFINITY_LIVE=true` flipping to real API calls if access is granted before day 2.
+- **Vector DB:** Supabase (Postgres + pgvector + auth-ready if added later).
+- **LLM provider:** OpenAI across the stack. `gpt-5.3-nano` for free-text → structured extraction, `gpt-5.5-instant` for the re-rank + explanation pass.
+- **Embeddings:** OpenAI `text-embedding-3-small` (1536d native).
+- **Service-layer mode:** controlled by `NEXT_PUBLIC_SERVICE_MODE` (`mock` | `real`).
+- **Data-layer mode:** controlled by `DATA_MODE` (`mock` | `real`).
+- **Affinity:** mock-first via `AffinityClient` interface; `AFFINITY_LIVE=true` flips to real API if access is granted before day 2.
 - **Auth:** none for the demo. Identity is switched via a `?as=<userId>` query param. Clerk added only if everything else ships.
+- **Demo input UX:** double-click any `DemoTextInput` to type out the canonical demo content with animation. Live typing still works for judges who want to try.
+- **Demo navigation:** sequential slides controlled by header chevrons + arrow keys.
