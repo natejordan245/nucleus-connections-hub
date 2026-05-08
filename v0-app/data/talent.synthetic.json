@@ -1,0 +1,295 @@
+[
+  {
+    "id": "tal-sarah-chen",
+    "name": "Sarah Chen",
+    "email": "sarah.chen@example.com",
+    "headline": "Fractional GTM advisor — ex-Qualtrics VP Sales",
+    "bio": "Eighteen years scaling enterprise SaaS GTM. VP of Sales at Qualtrics through the IPO, then VP of Revenue at Domo. Mission-aligned with applied AI in education and healthcare.",
+    "lookingFor": "A fractional GTM advisor seat at a Utah AI or data-infra startup at seed to Series A. 10–15 hrs/week, equity-only. Especially interested in education-AI and applied healthcare. Not open to full-time.",
+    "skills": ["enterprise sales", "GTM strategy", "pricing", "RevOps", "channel partnerships", "sales hiring"],
+    "domains": ["ai", "software"],
+    "availability": "fractional",
+    "compensation": ["equity"],
+    "stagePrefs": ["seed", "series-a"],
+    "riskTolerance": 4,
+    "location": "Salt Lake City, UT",
+    "utahOrgs": [
+      { "id": "org-qualtrics", "name": "Qualtrics Alumni", "type": "community" },
+      { "id": "org-domo", "name": "Domo Alumni", "type": "community" },
+      { "id": "org-sslopes", "name": "Silicon Slopes", "type": "community" }
+    ],
+    "photoUrl": "https://i.pravatar.cc/240?img=49",
+    "linkedinUrl": "https://www.linkedin.com/in/sarahchen-utah",
+    "xUrl": "https://x.com/sarahchenutah",
+    "createdAt": "2025-09-12T18:00:00.000Z"
+  },
+  {
+    "id": "tal-marcus-okafor",
+    "name": "Marcus Okafor",
+    "email": "marcus.okafor@example.com",
+    "headline": "Life sciences CEO — 2× exits, FDA-experienced",
+    "bio": "Two-time life-sciences CEO. Led a U of U cardiac-imaging spinout from seed to Series B and acquisition by GE. Deep experience navigating FDA 510(k) and PMA pathways.",
+    "lookingFor": "A CEO seat at a Utah bio or medtech spinout — ideally U of U or BYU lineage, pre-seed to Series A. Full-time, mostly equity with a runway-sized salary. Strongest fit for a company about to enter clinical or first-in-human.",
+    "skills": ["FDA strategy", "medtech commercialization", "fundraising", "clinical operations", "executive leadership"],
+    "domains": ["life-sciences"],
+    "availability": "full-time",
+    "compensation": ["cash", "equity"],
+    "stagePrefs": ["pre-seed", "seed", "series-a"],
+    "riskTolerance": 5,
+    "location": "Salt Lake City, UT",
+    "utahOrgs": [
+      { "id": "org-pivot", "name": "U of U PIVOT Center", "type": "tto", "universities": ["u-of-u"] },
+      { "id": "org-uofu", "name": "University of Utah", "type": "university", "universities": ["u-of-u"] }
+    ],
+    "photoUrl": "https://i.pravatar.cc/240?img=12",
+    "linkedinUrl": "https://www.linkedin.com/in/marcus-okafor",
+    "createdAt": "2025-09-14T14:30:00.000Z"
+  },
+  {
+    "id": "tal-priya-patel",
+    "name": "Priya Patel",
+    "email": "priya.patel@example.com",
+    "headline": "BYU CS senior — full-stack, ML-curious",
+    "bio": "Senior at BYU studying Computer Science with a minor in Statistics. Built a deep-learning pipeline for crop-disease detection during a USDA-funded research stint.",
+    "lookingFor": "A paid summer engineering internship at a Utah AI or agtech spinout. Full-time availability June through August, fractional during the school year. Most excited about applied ML problems with real-world data.",
+    "skills": ["Python", "PyTorch", "TypeScript", "React", "data pipelines", "ML research"],
+    "domains": ["ai", "software"],
+    "availability": "internship",
+    "compensation": ["cash"],
+    "stagePrefs": ["pre-seed", "seed", "series-a"],
+    "riskTolerance": 3,
+    "location": "Provo, UT",
+    "utahOrgs": [
+      { "id": "org-byu", "name": "Brigham Young University", "type": "university", "universities": ["byu"] },
+      { "id": "org-byu-tto", "name": "BYU Technology Transfer", "type": "tto", "universities": ["byu"] }
+    ],
+    "photoUrl": "https://i.pravatar.cc/240?img=47",
+    "linkedinUrl": "https://www.linkedin.com/in/priya-patel-byu",
+    "xUrl": "https://x.com/priyacodes",
+    "createdAt": "2025-09-15T09:15:00.000Z"
+  },
+  {
+    "id": "tal-david-kim",
+    "name": "David Kim",
+    "email": "david.kim@example.com",
+    "headline": "VP Engineering — scaled Pluralsight platform 5×",
+    "bio": "Fifteen years engineering leadership. VP Engineering at Pluralsight where I scaled the platform team from 12 to 60 and led the migration from monolith to microservices. Looking for a VP Eng or CTO role at a Series A/B Utah software company. Open to full-time or fractional CTO arrangements while I weigh options.",
+    "skills": ["engineering leadership", "platform architecture", "microservices", "team scaling", "AWS"],
+    "domains": ["software", "ai"],
+    "availability": "full-time",
+    "compensation": ["cash", "equity"],
+    "stagePrefs": ["series-a", "series-b"],
+    "riskTolerance": 4,
+    "location": "Lehi, UT",
+    "utahOrgs": [
+      { "id": "org-pluralsight", "name": "Pluralsight Alumni", "type": "community" },
+      { "id": "org-sslopes", "name": "Silicon Slopes", "type": "community" }
+    ],
+    "createdAt": "2025-09-16T16:45:00.000Z"
+  },
+  {
+    "id": "tal-emily-rasmussen",
+    "name": "Emily Rasmussen",
+    "email": "emily.rasmussen@example.com",
+    "headline": "Regulatory affairs — defense & aerospace",
+    "bio": "Twelve years in DoD acquisition and ITAR/EAR compliance. Former program manager at Northrop Grumman before joining a Utah hypersonics spinout as VP of Government Affairs. Looking for fractional advisory work with USU defense/aerospace spinouts navigating Phase II SBIR or AFWERX TACFI.",
+    "skills": ["ITAR compliance", "SBIR strategy", "DoD contracting", "AFWERX", "regulatory affairs"],
+    "domains": ["defense-aerospace"],
+    "availability": "fractional",
+    "compensation": ["equity", "cash"],
+    "stagePrefs": ["pre-seed", "seed"],
+    "riskTolerance": 3,
+    "location": "Logan, UT",
+    "utahOrgs": [
+      { "id": "org-usu-innov", "name": "USU Innovation Campus", "type": "tto", "universities": ["usu"] },
+      { "id": "org-usu", "name": "Utah State University", "type": "university", "universities": ["usu"] }
+    ],
+    "createdAt": "2025-09-17T11:00:00.000Z"
+  },
+  {
+    "id": "tal-jason-nguyen",
+    "name": "Jason Nguyen",
+    "email": "jason.nguyen@example.com",
+    "headline": "Cybersecurity engineer — offensive security",
+    "bio": "Eight years in offensive security. Red team lead at a Big-4 firm, then security engineer at Recursion. CISSP + OSCP. Looking for a senior engineering or founding-engineer role at a Utah cyber or AI-security startup, ideally Series A.",
+    "skills": ["red teaming", "cloud security", "penetration testing", "secure code review", "incident response"],
+    "domains": ["cyber", "ai"],
+    "availability": "full-time",
+    "compensation": ["cash", "equity"],
+    "stagePrefs": ["seed", "series-a"],
+    "riskTolerance": 4,
+    "location": "Salt Lake City, UT",
+    "utahOrgs": [
+      { "id": "org-recursion", "name": "Recursion Alumni", "type": "community" },
+      { "id": "org-sslopes", "name": "Silicon Slopes", "type": "community" }
+    ],
+    "createdAt": "2025-09-18T13:30:00.000Z"
+  },
+  {
+    "id": "tal-rachel-stewart",
+    "name": "Rachel Stewart",
+    "email": "rachel.stewart@example.com",
+    "headline": "Marketing & brand — B2B SaaS go-to-market",
+    "bio": "Ten years marketing leadership at high-growth Utah SaaS — VP Marketing at Lucid through hypergrowth, then CMO at a Series B fintech. Looking for fractional CMO or brand-strategy advisory work, 8–12 hours/week, equity-only.",
+    "skills": ["B2B marketing", "brand strategy", "demand generation", "content", "PLG"],
+    "domains": ["software", "fintech"],
+    "availability": "fractional",
+    "compensation": ["equity"],
+    "stagePrefs": ["seed", "series-a", "series-b"],
+    "riskTolerance": 3,
+    "location": "Lehi, UT",
+    "utahOrgs": [
+      { "id": "org-lucid", "name": "Lucid Alumni", "type": "community" },
+      { "id": "org-wtc", "name": "Women Tech Council", "type": "community" }
+    ],
+    "createdAt": "2025-09-19T17:20:00.000Z"
+  },
+  {
+    "id": "tal-omar-haddad",
+    "name": "Omar Haddad",
+    "email": "omar.haddad@example.com",
+    "headline": "Energy / cleantech advisor — ex-DOE",
+    "bio": "Former DOE program officer focused on grid storage and small-modular nuclear. Ten years in energy policy and project finance. Looking for advisory roles with USU or U of U energy spinouts, especially around DOE grant strategy and project-finance partnerships. Mentor-only — no compensation needed.",
+    "skills": ["DOE grants", "energy policy", "project finance", "regulatory strategy"],
+    "domains": ["energy"],
+    "availability": "advisory",
+    "compensation": ["mentor"],
+    "stagePrefs": ["pre-seed", "seed"],
+    "riskTolerance": 2,
+    "location": "Salt Lake City, UT",
+    "utahOrgs": [
+      { "id": "org-uofu", "name": "University of Utah", "type": "university", "universities": ["u-of-u"] }
+    ],
+    "createdAt": "2025-09-20T10:00:00.000Z"
+  },
+  {
+    "id": "tal-jen-walker",
+    "name": "Jen Walker",
+    "email": "jen.walker@example.com",
+    "headline": "COO — operations & manufacturing scale-up",
+    "bio": "Twenty years in operations leadership. COO at an advanced-manufacturing Series B that scaled from 30 to 280 employees over three years. Strong on supply chain, quality systems, ISO 9001/13485, and lean ops. Looking for a full-time COO or VP Ops role at a Utah hard-tech company at Series A or later.",
+    "skills": ["operations", "supply chain", "manufacturing", "ISO 9001", "ISO 13485", "lean"],
+    "domains": ["advanced-manufacturing", "life-sciences"],
+    "availability": "full-time",
+    "compensation": ["cash", "equity"],
+    "stagePrefs": ["series-a", "series-b", "growth"],
+    "riskTolerance": 3,
+    "location": "Ogden, UT",
+    "utahOrgs": [
+      { "id": "org-sslopes", "name": "Silicon Slopes", "type": "community" }
+    ],
+    "createdAt": "2025-09-21T08:45:00.000Z"
+  },
+  {
+    "id": "tal-ben-thomas",
+    "name": "Ben Thomas",
+    "email": "ben.thomas@example.com",
+    "headline": "Fintech founder — 1 exit, looking for the next thing",
+    "bio": "Founded and exited a payments-infra company to a public fintech. Twelve years in financial services, deep experience with KYC/AML and bank partnerships. Considering a co-founder role at a Utah fintech or AI-fintech startup at pre-seed or seed.",
+    "skills": ["fintech", "payments", "KYC/AML", "fundraising", "founder operations"],
+    "domains": ["fintech", "ai"],
+    "availability": "full-time",
+    "compensation": ["equity"],
+    "stagePrefs": ["pre-seed", "seed"],
+    "riskTolerance": 5,
+    "location": "Park City, UT",
+    "utahOrgs": [
+      { "id": "org-sslopes", "name": "Silicon Slopes", "type": "community" },
+      { "id": "org-kickstart", "name": "Kickstart Seed Fund", "type": "investor" }
+    ],
+    "createdAt": "2025-09-22T15:10:00.000Z"
+  },
+  {
+    "id": "tal-aisha-johnson",
+    "name": "Aisha Johnson",
+    "email": "aisha.johnson@example.com",
+    "headline": "ML engineer — applied LLMs, retrieval systems",
+    "bio": "Six years ML engineering. Built retrieval-augmented LLM systems at a top AI lab. Looking for senior or staff engineering roles at a Utah AI startup, seed or Series A. Will consider full-time if mission and team are right.",
+    "skills": ["LLMs", "retrieval", "PyTorch", "vector search", "production ML"],
+    "domains": ["ai", "software"],
+    "availability": "full-time",
+    "compensation": ["cash", "equity"],
+    "stagePrefs": ["seed", "series-a"],
+    "riskTolerance": 4,
+    "location": "Salt Lake City, UT",
+    "utahOrgs": [
+      { "id": "org-sslopes", "name": "Silicon Slopes", "type": "community" }
+    ],
+    "createdAt": "2025-09-23T12:00:00.000Z"
+  },
+  {
+    "id": "tal-tom-richards",
+    "name": "Tom Richards",
+    "email": "tom.richards@example.com",
+    "headline": "Hardware engineer — aerospace, ex-Owlet",
+    "bio": "Ten years hardware engineering. Led firmware at Owlet, then principal engineer at a Utah hypersonics startup. Looking for a senior hardware or systems-engineering role at a USU or U of U defense/aerospace spinout.",
+    "skills": ["embedded systems", "RF", "firmware", "DO-178C", "hardware/software co-design"],
+    "domains": ["defense-aerospace", "advanced-manufacturing"],
+    "availability": "full-time",
+    "compensation": ["cash", "equity"],
+    "stagePrefs": ["seed", "series-a"],
+    "riskTolerance": 4,
+    "location": "Logan, UT",
+    "utahOrgs": [
+      { "id": "org-owlet", "name": "Owlet Alumni", "type": "community" },
+      { "id": "org-usu-innov", "name": "USU Innovation Campus", "type": "tto", "universities": ["usu"] }
+    ],
+    "createdAt": "2025-09-24T09:30:00.000Z"
+  },
+  {
+    "id": "tal-laura-mendez",
+    "name": "Laura Mendez",
+    "email": "laura.mendez@example.com",
+    "headline": "Bio business development — academic-to-commercial",
+    "bio": "Eight years BD at a top life-sciences company, focused on partnering academic spinouts with pharma. Looking for a fractional business-development role at a U of U bio/medtech spinout to drive licensing and pharma-partnership conversations.",
+    "skills": ["business development", "pharma partnerships", "licensing", "deal structuring"],
+    "domains": ["life-sciences"],
+    "availability": "fractional",
+    "compensation": ["equity", "cash"],
+    "stagePrefs": ["seed", "series-a"],
+    "riskTolerance": 3,
+    "location": "Salt Lake City, UT",
+    "utahOrgs": [
+      { "id": "org-pivot", "name": "U of U PIVOT Center", "type": "tto", "universities": ["u-of-u"] },
+      { "id": "org-recursion", "name": "Recursion Alumni", "type": "community" }
+    ],
+    "createdAt": "2025-09-25T14:00:00.000Z"
+  },
+  {
+    "id": "tal-kevin-larsen",
+    "name": "Kevin Larsen",
+    "email": "kevin.larsen@example.com",
+    "headline": "Sales lead — early-stage AI / dev tools",
+    "bio": "First sales hire at two seed-stage Utah dev-tools startups, scaled both to $2M+ ARR before they raised Series A. Looking for the same kind of role — first or second sales hire at a seed-stage Utah AI or dev-tools company. Cash + equity.",
+    "skills": ["enterprise sales", "developer tools sales", "outbound", "founder-led sales", "discovery"],
+    "domains": ["ai", "software"],
+    "availability": "full-time",
+    "compensation": ["cash", "equity"],
+    "stagePrefs": ["pre-seed", "seed"],
+    "riskTolerance": 5,
+    "location": "Lehi, UT",
+    "utahOrgs": [
+      { "id": "org-sslopes", "name": "Silicon Slopes", "type": "community" }
+    ],
+    "createdAt": "2025-09-26T11:15:00.000Z"
+  },
+  {
+    "id": "tal-natalie-park",
+    "name": "Natalie Park",
+    "email": "natalie.park@example.com",
+    "headline": "U of U bioE PhD candidate — looking for advisor work",
+    "bio": "Fourth-year bioengineering PhD candidate at the University of Utah, working on biosensors for early sepsis detection. Looking for advisor or mentor relationships with non-bio Utah startups to broaden my exposure to commercialization. Mentor-only, ~5 hrs/week.",
+    "skills": ["biosensors", "microfluidics", "research", "scientific writing"],
+    "domains": ["life-sciences"],
+    "availability": "advisory",
+    "compensation": ["mentor"],
+    "stagePrefs": ["pre-seed", "seed"],
+    "riskTolerance": 2,
+    "location": "Salt Lake City, UT",
+    "utahOrgs": [
+      { "id": "org-uofu", "name": "University of Utah", "type": "university", "universities": ["u-of-u"] },
+      { "id": "org-pivot", "name": "U of U PIVOT Center", "type": "tto", "universities": ["u-of-u"] }
+    ],
+    "createdAt": "2025-09-27T16:00:00.000Z"
+  }
+]

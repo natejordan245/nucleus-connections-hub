@@ -185,7 +185,30 @@ export interface IProfileService {
 }
 
 export interface IMatchService {
-  getMatches(args: { for: string; type: 'talent' | 'startup' }): Promise<MatchResponse>;
+  /**
+   * Default: returns candidates of the *opposing* type (talent → startup,
+   * startup → talent). Pass `target` to override (e.g. talent → talent for
+   * the Network tab — peer discovery within the same role pool).
+   */
+  getMatches(args: {
+    for: string;
+    type: 'talent' | 'startup';
+    target?: 'talent' | 'startup';
+  }): Promise<MatchResponse>;
+}
+
+export interface ISearchService {
+  /**
+   * Free-text semantic search. The query is embedded, the nearest neighbors
+   * in `kind`'s pool are pulled, and the LLM reranker writes per-result
+   * "why this matches your search" reasons. No subject profile required —
+   * the query string itself stands in.
+   */
+  search(args: {
+    query: string;
+    kind: 'talent' | 'startup';
+    k?: number;
+  }): Promise<MatchResponse>;
 }
 
 export interface IInterestService {
@@ -215,12 +238,27 @@ export interface IEmbeddingClient {
 export interface ILLMClient {
   extractTalent(bio: string): Promise<Partial<TalentDTO>>;
   extractStartup(description: string): Promise<Partial<StartupDTO>>;
+  /** Subject-anchored rerank — explanations reference the subject. */
   rerank(args: { subject: TalentDTO|StartupDTO; candidates: Array<TalentDTO|StartupDTO> }): Promise<RankedMatch[]>;
+  /** Query-anchored rerank — explanations reference the search query. */
+  rerankFromQuery(args: { query: string; candidates: Array<TalentDTO|StartupDTO> }): Promise<RankedMatch[]>;
 }
 
 export interface IMatchEngine {
-  /** Runs gates → vector retrieval → rerank → proximity boost. */
-  findMatches(args: { for: string; type: 'talent'|'startup'; k?: number }): Promise<RankedMatch[]>;
+  /** Subject mode. Runs gates → vector retrieval → rerank → proximity boost. */
+  findMatches(args: {
+    for: string;
+    type: 'talent'|'startup';
+    target?: 'talent'|'startup';
+    k?: number;
+  }): Promise<RankedMatch[]>;
+
+  /** Query mode. Embeds the query, pulls top-K from `target`, reranks. No gates. */
+  findFromQuery(args: {
+    query: string;
+    target: 'talent'|'startup';
+    k?: number;
+  }): Promise<RankedMatch[]>;
 }
 
 export interface IAffinityClient {
@@ -262,14 +300,34 @@ The whole app is a sequential walkthrough. Layout owns a `SlideController` that 
 
 | # | Route | Demo beat |
 |---|---|---|
-| 0 | `/` | Landing — pitch, "Start the demo →" |
-| 1 | `/onboard/talent` | Sarah Chen onboards. Double-click bio → types out story → other fields auto-populate from `extractFromBio()` |
-| 2 | `/profile/talent/sarah-chen` | "Here's the profile we built." |
+| 0 | `/landing` | Landing — pitch, "Start the demo →" |
+| 1 | `/onboard/talent` | Sarah Chen onboards. Double-click bio → types out story → other fields auto-populate from `extractFromBio()`. Photo upload + LinkedIn / X. |
+| 2 | `/profile/talent/sarah-chen` | "Here's the profile we built." Avatar, socials, Utah affiliations. |
 | 3 | `/onboard/startup` | The bio-spinout onboards. Same flow. |
 | 4 | `/profile/startup/lumen-bio` | "Here's the spinout profile." |
-| 5 | `/matches?as=sarah-chen` | Sarah's ranked matches. Click into Lumen Bio → see full reasoning + Concerns card. |
-| 6 | `/matches/handshake` | Both sides express interest. Animated mutual-match state. |
-| 7 | `/admin/affinity-push` | The Affinity request payload, formatted, with the LLM reason as the note body. |
+| 5 | `/matches?as=sarah-chen` | **Three-tab dashboard** (Search / Network / Opportunities) — see §5.1. |
+| 6 | `/handshake` | Both sides express interest. Animated mutual-match state. |
+| 7 | `/affinity-push` | The Affinity request payload, formatted, with the LLM reason as the note body. |
+
+### 5.1 Dashboard (slide 5) — three tabs
+
+The matches page is *the* trust surface. We split it into three tabs that each answer a different question, sharing one chrome and one card primitive (`<OpportunityCard>`).
+
+| Tab | Question it answers | Engine call | Pool searched |
+|---|---|---|---|
+| **Search** | "Find me someone who…" | `searchService.search({ query, kind })` | `kind` (talent or startup), driven by free-text |
+| **Network** | "Who in Utah should I meet?" | `matchService.getMatches({ for, type:'talent', target:'talent' })` | Other talent (peer discovery) |
+| **Opportunities** | "Which company should I join / advise?" *(default tab)* | `matchService.getMatches({ for, type:'talent' })` | Startups |
+
+Tabs are URL-driven via `?tab=search|network|opportunities` so any tab is linkable from the slide deck. Default tab when missing is `opportunities` — the demo's anchor moment.
+
+**Search tab** — full-width search bar at the top with a `kind` toggle (People / Companies). The query goes through the same pipeline as a profile-anchored match, except the "subject" is the embedded query string rather than an existing profile. The reranker writes "why this matches your search" reasons that quote the user's intent. Empty state shows a few prompt suggestions ("life-sciences CEO with FDA experience", "BYU spinout in computer vision").
+
+**Network tab** — peer-mode matching. The same engine runs against the talent pool minus the viewer themselves. Hard gates relax (no stage / availability / compensation gates between two people). The reranker explains complementarity — overlapping Utah orgs, complementary skill stacks, mission alignment. Used for advisor-meets-advisor, founder-meets-founder, mentor-meets-student.
+
+**Opportunities tab** — current talent ↔ startup behavior. No change to engine semantics.
+
+All three tabs render results as `<OpportunityCard>`s — same card, same trust UX (verdict pill, score, "Why this match", expandable factor grid with Concerns, "I'm interested →" / "Pass" CTAs).
 
 ### Trust UX rules
 - Never show a numeric score without the paragraph reason.
@@ -360,7 +418,8 @@ Next.js Route Handlers under `app/api/`. Stateless. They translate HTTP ↔ data
 | `GET`   | `/api/startup/:id` | mirror |
 | `PATCH` | `/api/startup/:id` | mirror |
 | `POST`  | `/api/extract` | `LLMClient.extractTalent` or `extractStartup` (used during onboarding suggest) |
-| `GET`   | `/api/matches` | `MatchEngine.findMatches` |
+| `GET`   | `/api/matches` | `MatchEngine.findMatches` — accepts `for`, `type`, optional `target` (peer mode when `type=target=talent`) |
+| `GET`   | `/api/search` | `MatchEngine.findFromQuery` — query-mode semantic search. Params: `q`, `kind` (talent\|startup), optional `k` |
 | `POST`  | `/api/interest` | mutate interest record; on mutual, fire `AffinityClient.*` |
 | `POST`  | `/api/integrations/squarespace/webhook` | normalize → same path as `POST /api/talent` or `/api/startup` |
 
@@ -558,6 +617,18 @@ proximity_boost = 0.05 * shared_utah_orgs
                 + 0.10 * (spinout_startup AND tto_or_research_talent ? 1 : 0)
                   capped at +0.25
 ```
+
+### Pipeline variants
+
+The same engine runs three different modes, sharing stages 2–4. Only stage 1 changes.
+
+| Mode | Stage 1 (gates) | Stage 2 (vector) | Stage 3 (rerank) | Stage 4 (proximity) |
+|---|---|---|---|---|
+| **Subject — opportunities** *(talent → startup)* | Stage / availability / compensation gates | Subject embedding → top-K | `rerank({ subject, candidates })` | Talent ↔ Startup proximity |
+| **Subject — network** *(talent → talent)* | None — peer matching has no stage gate; we exclude `id == subject.id` | Subject embedding → top-K | `rerank({ subject, candidates })` writes peer-style language ("complementary skills", "shared advisor lineage") | Talent ↔ Talent proximity (shared orgs / same university / same city) |
+| **Query — search** *(free text → talent or startup)* | None — the query is intent, not constraints | Embed the query string → top-K from `target` pool | `rerankFromQuery({ query, candidates })` writes "matches your search because…" reasons | Skipped — no subject side to compute proximity from |
+
+The query-mode rerank is the same prompt skeleton as subject-mode rerank with the subject slot replaced by the raw query string. The reranker is told to quote phrases from the query in its `reason` paragraph so the user can see *why* the system thinks each result fits what they typed.
 
 Surfaced as a **Utah signal** badge with a tooltip listing what triggered it.
 
