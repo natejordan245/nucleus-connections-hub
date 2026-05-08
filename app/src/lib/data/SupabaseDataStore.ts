@@ -463,7 +463,9 @@ export class SupabaseDataStore implements IDataStore {
           return null;
         }
 
-        const composite = (viewerWantsCand + candWantsViewer) / 2;
+        // Min — not average — so lopsided pairs (strong one direction, weak
+        // the other) get penalized. The weaker side governs the score.
+        const composite = Math.min(viewerWantsCand, candWantsViewer);
         return { row: cand, viewerWantsCand, candWantsViewer, composite };
       })
       .filter(
@@ -593,7 +595,7 @@ export class SupabaseDataStore implements IDataStore {
     candWantsViewer: number,
     verdict: LLMGateVerdict,
   ): MatchDTO {
-    const composite = (viewerWantsCand + candWantsViewer) / 2;
+    const composite = Math.min(viewerWantsCand, candWantsViewer);
     const score = clamp01((composite + 1) / 2);
     const verdictWeight: Record<LLMGateVerdict["factors"][number]["verdict"], number> = {
       strong: 0.95,
