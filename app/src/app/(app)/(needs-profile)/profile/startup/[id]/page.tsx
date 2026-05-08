@@ -93,9 +93,8 @@ export default async function StartupProfilePage({ params }: { params: { id: str
             )}
             {showGapCloser && viewerTalent && (
               <GapCloser
-                talent={viewerTalent}
-                startup={startup}
-                resources={resources}
+                subjectId={viewerTalent.id}
+                candidateId={startup.id}
               />
             )}
           </aside>

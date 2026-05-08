@@ -516,6 +516,338 @@ export const baselineResources: ResourceDTO[] = [
     uploadedByName: "Marcus Okafor",
     createdAt: "2026-05-04T16:45:00.000Z",
   },
+
+  // ── Fundraising / investor mapping ────────────────────────────────────────
+  {
+    id: "res-utah-investor-map",
+    title: "Utah seed-stage investor map",
+    description:
+      "Who's writing what check, at what stage, in what sector. Covers Pelion, Album, Mercato, Park City Angels, Kickstart, and the family offices.",
+    kind: "guide",
+    url: "https://example.com/utah-investor-map",
+    tags: ["fundraising", "investors", "pelion", "kickstart", "park-city-angels", "ceo"],
+    summary: "Closes the gap for first-time founders fundraising in Utah — which firms write the first check, which lead seed vs participate, sector preferences, and the typical Utah term-sheet shape vs Bay Area norms.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-04-25T09:00:00.000Z",
+  },
+  {
+    id: "res-safe-vs-priced",
+    title: "SAFE vs priced round: when to switch",
+    description:
+      "Decision framework for whether to do a SAFE-on-SAFE-on-SAFE or stop and price the round. Includes Utah-specific norms.",
+    kind: "playbook",
+    url: "https://example.com/safe-vs-priced",
+    tags: ["fundraising", "safe", "term-sheet", "cap-table", "ceo"],
+    summary: "Closes the gap for founders raising their second round — when SAFEs stop being founder-friendly, dilution scenarios, and the moment Utah investors start asking for a priced round.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-04-26T10:30:00.000Z",
+  },
+  {
+    id: "res-board-management-101",
+    title: "Board management for first-time CEOs",
+    description:
+      "How to run a productive board meeting when you've never sat on the other side of one.",
+    kind: "guide",
+    url: "https://example.com/board-management",
+    tags: ["board", "ceo", "operating", "fundraising", "scaling"],
+    summary: "Closes the gap for first-time CEOs taking on board governance — pre-meeting prep, the three-slide narrative arc, handling lead-investor pushback, and managing observer-vs-director dynamics.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-04-27T11:15:00.000Z",
+  },
+
+  // ── TTO / spinout mechanics ───────────────────────────────────────────────
+  {
+    id: "res-byu-tto-playbook",
+    title: "BYU Tech Transfer playbook",
+    description:
+      "How BYU faculty work with the Crocker Innovation Fellows and the Tech Transfer office to incorporate spinouts.",
+    kind: "guide",
+    url: "https://example.com/byu-tto",
+    tags: ["tto", "spinout", "byu", "ip", "ceo"],
+    summary: "Closes the gap for operators joining BYU spinouts — the Crocker Fellows path, faculty equity norms, sponsored-research-vs-licensing trade-offs, and the BYU IP-assignment template.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-04-28T13:00:00.000Z",
+  },
+  {
+    id: "res-usu-spinout",
+    title: "USU spinout & SBIR alignment guide",
+    description:
+      "How USU agriculture and energy faculty layer SBIR / STTR funding with TTO licensing to fund early R&D without VC dollars.",
+    kind: "playbook",
+    url: "https://example.com/usu-spinout",
+    tags: ["tto", "usu", "sbir", "sttr", "agtech", "energy"],
+    summary: "Closes the gap for AgTech and energy founders navigating non-dilutive funding — USDA / DOE SBIR phase 1→2 strategy, TTO licensing layered with grant capital, and the timing tradeoffs vs raising VC.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-04-28T14:00:00.000Z",
+  },
+
+  // ── Hiring / org-building ─────────────────────────────────────────────────
+  {
+    id: "res-first-eng-hire",
+    title: "Hiring your founding engineer in Utah",
+    description:
+      "How Utah seed founders source, screen, and close their first 1-3 engineers. Covers comp benchmarks, equity bands, and the U of U / BYU alumni pipeline.",
+    kind: "playbook",
+    url: "https://example.com/first-eng-hire",
+    tags: ["hiring", "engineering", "founding-engineer", "compensation", "ceo"],
+    summary: "Closes the gap for first-time CEOs hiring their founding engineer — Utah comp benchmarks, equity ranges for employee #1-5, and where to find the senior IC who actually wants the seed-stage risk.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-04-29T10:00:00.000Z",
+  },
+  {
+    id: "res-sales-leader-comp",
+    title: "Comp packages for your first GTM leader",
+    description:
+      "OTE structure, accelerators, and equity bands for the head-of-sales hire at seed-to-Series-A. Pulled from twenty Utah deals in the last 18 months.",
+    kind: "guide",
+    url: "https://example.com/sales-leader-comp",
+    tags: ["hiring", "sales-lead", "compensation", "gtm-strategy", "ceo"],
+    summary: "Closes the gap for founders making their first head-of-sales hire — base/OTE splits for seed-stage SaaS, when to add accelerators, equity ranges, and how Utah norms differ from coastal benchmarks.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-04-30T11:00:00.000Z",
+  },
+  {
+    id: "res-cs-team-zero-to-one",
+    title: "Building a CS team from scratch",
+    description:
+      "How to set up customer success at a seed-stage SaaS — pooled vs assigned, when to hire an ops person, retention motion design.",
+    kind: "playbook",
+    url: "https://example.com/cs-zero-to-one",
+    tags: ["customer-success", "retention", "operations", "saas", "growth"],
+    summary: "Closes the gap for first CS hires at vertical or compliance-heavy SaaS — onboarding flow design, when to layer in an ops/data person, and the retention-vs-expansion balance through Series A.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-01T09:30:00.000Z",
+  },
+
+  // ── Healthcare / regulatory ───────────────────────────────────────────────
+  {
+    id: "res-fda-510k",
+    title: "FDA 510(k) for software-as-medical-device founders",
+    description:
+      "What a 510(k) submission actually requires for SaMD products. Timeline, predicate selection, and the QMS work that has to happen in parallel.",
+    kind: "guide",
+    url: "https://example.com/fda-510k",
+    tags: ["fda", "regulatory", "samd", "life-sciences", "compliance"],
+    summary: "Closes the gap for healthcare-AI or medical-device founders facing a 510(k) for the first time — predicate device strategy, the realistic submission timeline, and how to budget the QMS lift before clearance.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-02T10:00:00.000Z",
+  },
+  {
+    id: "res-hipaa-saas",
+    title: "HIPAA for early-stage healthcare SaaS",
+    description:
+      "Minimum-viable HIPAA stance for selling to clinics and small hospital systems before you have a compliance team.",
+    kind: "guide",
+    url: "https://example.com/hipaa-saas",
+    tags: ["hipaa", "regulatory", "compliance", "healthcare", "saas"],
+    summary: "Closes the gap for healthcare-SaaS founders in their first procurement cycle — the BAA basics, what 'HIPAA-ready' actually means, and which controls a 5-person team can credibly maintain pre-Series-A.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-02T12:00:00.000Z",
+  },
+  {
+    id: "res-clia-clinical-validation",
+    title: "CLIA-waived diagnostics: a wet-lab founder's primer",
+    description:
+      "What CLIA-waived means in practice, the analytical and clinical validation studies you need, and how the FDA path interacts with CLIA.",
+    kind: "guide",
+    url: "https://example.com/clia-validation",
+    tags: ["clia", "regulatory", "diagnostics", "wet-lab", "life-sciences"],
+    summary: "Closes the gap for diagnostics founders pre-validation — CLIA-waiver criteria, sample-size math for analytical studies, and how to sequence FDA + CLIA work to not stall the team.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-03T09:00:00.000Z",
+  },
+
+  // ── Energy / climate ──────────────────────────────────────────────────────
+  {
+    id: "res-doe-loan-programs",
+    title: "DOE Loan Programs Office: a founder's guide",
+    description:
+      "When the LPO is and isn't the right capital source, which programs match which technologies, and the realistic timeline from application to drawdown.",
+    kind: "guide",
+    url: "https://example.com/doe-lpo",
+    tags: ["doe", "lpo", "fundraising", "energy", "climate", "non-dilutive"],
+    summary: "Closes the gap for climate-tech founders considering DOE loan financing — which LPO programs fit your TRL stage, what's required to get in, and how it sequences with VC capital.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-03T13:00:00.000Z",
+  },
+  {
+    id: "res-ira-tax-credits",
+    title: "IRA tax credits for clean-energy startups",
+    description:
+      "How to actually monetize 45X, 48E, and the transferability of credits if your company doesn't have tax appetite yet.",
+    kind: "playbook",
+    url: "https://example.com/ira-tax-credits",
+    tags: ["ira", "tax-credits", "energy", "climate", "fundraising", "ceo"],
+    summary: "Closes the gap for early climate-tech founders unfamiliar with IRA mechanics — which credits apply to which technologies, the transferability market, and the working-capital impact pre-revenue.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-04T10:00:00.000Z",
+  },
+  {
+    id: "res-utility-pilot-design",
+    title: "Designing a utility pilot that converts",
+    description:
+      "How to structure a pilot with Rocky Mountain Power, PacifiCorp, or any IOU so it actually leads to procurement, not a year-long science-fair project.",
+    kind: "playbook",
+    url: "https://example.com/utility-pilot",
+    tags: ["utility", "pilot", "energy", "biz-dev", "sales-lead"],
+    summary: "Closes the gap for grid / energy founders running their first IOU pilot — scope-of-work shape, who actually signs the procurement contract, and the metrics that move the buyer from pilot to MSA.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-04T14:00:00.000Z",
+  },
+
+  // ── Defense / aerospace ───────────────────────────────────────────────────
+  {
+    id: "res-dod-sbir",
+    title: "DoD SBIR Phase I → II → III, decoded",
+    description:
+      "How to structure a DoD SBIR application that actually gets funded, and how Phase III sole-source contracts work in practice.",
+    kind: "guide",
+    url: "https://example.com/dod-sbir",
+    tags: ["sbir", "dod", "defense-tech", "fundraising", "non-dilutive"],
+    summary: "Closes the gap for defense-tech and aerospace founders new to DoD funding — what makes a Phase I winnable, the Phase II→III bridge, and how SBIR sequences with private capital.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-05T09:00:00.000Z",
+  },
+  {
+    id: "res-itar-startup",
+    title: "ITAR primer for early-stage aerospace startups",
+    description:
+      "What ITAR actually requires of a 5-person hardware team, who needs to be a US person, and the bare-minimum compliance posture before your first DoD pilot.",
+    kind: "guide",
+    url: "https://example.com/itar-primer",
+    tags: ["itar", "regulatory", "aerospace", "defense-tech", "compliance"],
+    summary: "Closes the gap for aerospace founders facing ITAR for the first time — registration timeline, who counts as a US person, the export-control regime for a 5-person team, and the cost realistically.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-05T11:00:00.000Z",
+  },
+
+  // ── Compliance / security ─────────────────────────────────────────────────
+  {
+    id: "res-soc2-90-days",
+    title: "SOC 2 Type II in 90 days for seed startups",
+    description:
+      "Realistic 90-day SOC 2 timeline using Drata or Vanta, with the human work that automation doesn't cover.",
+    kind: "playbook",
+    url: "https://example.com/soc2-90",
+    tags: ["soc-2", "compliance", "cyber", "saas", "regulatory"],
+    summary: "Closes the gap for SaaS founders heading into their first enterprise procurement cycle — how to land SOC 2 Type II in 90 days, the policy work automation doesn't do for you, and which auditors are seed-startup-friendly.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-05T15:00:00.000Z",
+  },
+
+  // ── Sector-specific GTM ───────────────────────────────────────────────────
+  {
+    id: "res-vertical-saas-pricing",
+    title: "Vertical SaaS pricing for mid-market buyers",
+    description:
+      "How to price a vertical SaaS product when your buyer thinks Salesforce is too expensive but is willing to pay for the niche.",
+    kind: "playbook",
+    url: "https://example.com/vertical-saas-pricing",
+    tags: ["pricing", "vertical-saas", "gtm-strategy", "sales-lead", "saas"],
+    summary: "Closes the gap for GTM leaders pricing a vertical SaaS product — packaging tiers, value metrics that hold up, and how to price into mid-market buyers without leaving budget on the table.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-06T08:00:00.000Z",
+  },
+  {
+    id: "res-state-local-procurement",
+    title: "Selling to state and local government",
+    description:
+      "How to navigate Utah county procurement (and broadly Mountain West state/local). RFP timing, the cooperative purchasing trick, and budget cycles that make or break the deal.",
+    kind: "guide",
+    url: "https://example.com/sled-procurement",
+    tags: ["sled", "procurement", "biz-dev", "government", "sales-lead"],
+    summary: "Closes the gap for SaaS founders selling into state, county, or city government — RFP timing, the cooperative-purchasing shortcut, and the budget-cycle dynamics that determine when a deal can actually close.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-06T10:00:00.000Z",
+  },
+  {
+    id: "res-clinical-design-partner",
+    title: "Closing your first clinical design partner",
+    description:
+      "How to land your first health-system design partner before you have a sales team, including IRB pitfalls.",
+    kind: "playbook",
+    url: "https://example.com/clinical-design-partner",
+    tags: ["healthcare", "design-partner", "biz-dev", "sales-lead", "regulatory"],
+    summary: "Closes the gap for healthcare-AI founders chasing their first hospital pilot — IRB-vs-no-IRB scoping, who internally champions, and the contract shape that actually gets signed by a CMIO + procurement.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-06T14:00:00.000Z",
+  },
+  {
+    id: "res-ag-distribution",
+    title: "Ag-tech distribution: bypassing the co-op",
+    description:
+      "When direct-to-grower works and when you have to go through the co-op or input distributor. Mountain West specifics.",
+    kind: "playbook",
+    url: "https://example.com/ag-distribution",
+    tags: ["agtech", "distribution", "channel", "biz-dev", "sales-lead"],
+    summary: "Closes the gap for ag-tech founders making their first GTM bet — direct-to-grower vs co-op vs input-distributor channels, the trust dynamics, and Mountain West specifics that don't apply on the corn belt.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T09:00:00.000Z",
+  },
+
+  // ── Engineering depth ─────────────────────────────────────────────────────
+  {
+    id: "res-llm-eval",
+    title: "Evaluating LLM-powered features in production",
+    description:
+      "How to build evals for an LLM feature that survives a model swap. Used at Tracebase, generalized.",
+    kind: "guide",
+    url: "https://example.com/llm-eval",
+    tags: ["ml-infra", "llm", "evaluation", "engineering", "ai"],
+    summary: "Closes the gap for engineers shipping their first LLM-powered feature — golden-set construction, model-versus-prompt regressions, and the eval shape that survives a quarterly model swap.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T11:00:00.000Z",
+  },
+  {
+    id: "res-distributed-systems-startup",
+    title: "Distributed systems on a 5-person team",
+    description:
+      "Pragmatic guidance on when to reach for Kafka, when a Postgres queue is enough, and how to not over-engineer at seed stage.",
+    kind: "guide",
+    url: "https://example.com/distsys-startup",
+    tags: ["engineering", "distributed-systems", "platform", "infra", "cto"],
+    summary: "Closes the gap for senior engineers stepping into a CTO seat — when Kafka / Pulsar is overkill, the Postgres-as-queue pattern, and the architectural choices that age well from seed through Series A.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T13:00:00.000Z",
+  },
+
+  // ── Network / soft skills ─────────────────────────────────────────────────
+  {
+    id: "res-operator-network-etiquette",
+    title: "How to use the Nucleus Operator Network",
+    description:
+      "Etiquette and best-practice for asking for intros, sharing intel, and not burning the network.",
+    kind: "guide",
+    url: "https://example.com/operator-network",
+    tags: ["operator-network", "intros", "biz-dev", "ops"],
+    summary: "Closes the gap for new entrants to the Utah operator network — how to ask for intros without burning credit, what to bring back to the network, and the unwritten rules that determine whether your asks land.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T15:00:00.000Z",
+  },
 ];
 
 export const baselinePushes: AffinityPushDTO[] = [
