@@ -2,6 +2,7 @@ import type {
   Availability,
   Compensation,
   FundingStatus,
+  Network,
   Origin,
   Sector,
   Stage,
@@ -64,6 +65,22 @@ export const FUNDING_STATUS_LABELS: Record<FundingStatus, string> = {
   "revenue":     "Revenue",
 };
 
+export const NETWORK_LABELS: Record<Network, string> = {
+  "operator":         "Operator Network",
+  "mentor":           "Mentor Network",
+  "sme-advisory":     "SME Advisory",
+  "venture":          "Venture Network",
+  "service-provider": "Service Provider",
+};
+
+export const NETWORK_BLURBS: Record<Network, string> = {
+  "operator":         "Full-time, fractional, and intern-track operators.",
+  "mentor":           "Volunteer mentors offering time, not equity.",
+  "sme-advisory":     "Paid subject-matter expert advisors.",
+  "venture":          "Investors, angels, and venture connectors.",
+  "service-provider": "Lawyers, designers, accountants, agencies.",
+};
+
 export const AVAILABILITIES = Object.keys(AVAILABILITY_LABELS) as Availability[];
 export const COMPENSATIONS = Object.keys(COMPENSATION_LABELS) as Compensation[];
 export const STAGES = Object.keys(STAGE_LABELS) as Stage[];
@@ -71,3 +88,4 @@ export const SECTORS = Object.keys(SECTOR_LABELS) as Sector[];
 export const ORIGINS = Object.keys(ORIGIN_LABELS) as Origin[];
 export const NEEDS = Object.keys(NEED_LABELS) as StartupNeed[];
 export const FUNDING_STATUSES = Object.keys(FUNDING_STATUS_LABELS) as FundingStatus[];
+export const NETWORKS = Object.keys(NETWORK_LABELS) as Network[];

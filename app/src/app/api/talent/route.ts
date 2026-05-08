@@ -37,6 +37,7 @@ function fillTalent(p: Partial<TalentDTO>): TalentDTO {
     riskTolerance: p.riskTolerance ?? 3,
     location: p.location ?? "Salt Lake City, UT",
     utahOrgIds: p.utahOrgIds ?? [],
+    networks: p.networks ?? ["operator"],
     photoUrl: p.photoUrl,
     linkedinUrl: p.linkedinUrl,
     xUrl: p.xUrl,

@@ -33,6 +33,7 @@ function fillStartup(p: Partial<StartupDTO>): StartupDTO {
     fundingStage: p.fundingStage ?? "seed",
     fundingStatus: p.fundingStatus ?? "pre-revenue",
     needs: p.needs ?? [],
+    networksWanted: p.networksWanted ?? ["operator"],
     location: p.location ?? "Salt Lake City, UT",
     utahOrgIds: p.utahOrgIds ?? [],
     logoUrl: p.logoUrl,

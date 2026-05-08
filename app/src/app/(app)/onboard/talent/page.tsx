@@ -6,6 +6,8 @@ import {
   AVAILABILITY_LABELS,
   COMPENSATION_LABELS,
   COMPENSATIONS,
+  NETWORK_LABELS,
+  NETWORKS,
   SECTOR_LABELS,
   SECTORS,
   STAGE_LABELS,
@@ -24,6 +26,7 @@ export default async function OnboardTalentPage({
   const sectorOpts = SECTORS.map((v) => ({ value: v, label: SECTOR_LABELS[v] }));
   const compOpts = COMPENSATIONS.map((v) => ({ value: v, label: COMPENSATION_LABELS[v] }));
   const stageOpts = STAGES.map((v) => ({ value: v, label: STAGE_LABELS[v] }));
+  const networkOpts = NETWORKS.map((v) => ({ value: v, label: NETWORK_LABELS[v] }));
 
   return (
       <main className="mx-auto w-full max-w-2xl px-8 py-10">
@@ -76,6 +79,10 @@ export default async function OnboardTalentPage({
           </Field>
           <Field id="skills" name="skills" label="Skills" hint="Comma-separated.">
             <Input id="skills" name="skills" placeholder="sales-leadership, gtm-strategy, pricing" />
+          </Field>
+
+          <Field id="networks" name="networks" label="Which Nucleus networks do you fit?" hint="Pick all that apply — most operators just check Operator.">
+            <ChipGroup name="networks" options={networkOpts} defaultSelected={["operator"]} />
           </Field>
 
           <Field id="domains" name="domains" label="Domains of interest" hint="Pick any that fit.">

@@ -10,6 +10,7 @@ import {
   type LucideIcon,
   Search,
   Settings,
+  Shield,
 } from "lucide-react";
 import { DelicateArch } from "./DelicateArch";
 import { Avatar } from "./Avatar";
@@ -29,6 +30,7 @@ export type SidebarViewer = {
   name: string;
   photoUrl?: string;
   profileHref: string | null;
+  isAdmin?: boolean;
 };
 
 export function AppSidebar({ viewer }: { viewer: SidebarViewer | null }) {
@@ -58,6 +60,14 @@ export function AppSidebar({ viewer }: { viewer: SidebarViewer | null }) {
               </li>
             );
           })}
+          {viewer?.isAdmin && (
+            <li className="mt-3 border-t border-warmgray-100 pt-3">
+              <SidebarItem
+                item={{ href: "/admin", label: "Admin", icon: Shield }}
+                active={pathname.startsWith("/admin")}
+              />
+            </li>
+          )}
         </ul>
       </nav>
 

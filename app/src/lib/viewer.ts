@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import type { SidebarViewer } from "@/components/AppSidebar";
+import { isViewerAdmin } from "@/lib/admin";
 import { getDataStore } from "@/lib/data";
 import { getViewer, type Viewer } from "@/lib/session";
 
@@ -29,6 +30,7 @@ export async function maybeViewer(): Promise<{ viewer: Viewer; viewerId: string 
 export async function getSidebarViewer(): Promise<SidebarViewer | null> {
   const { viewer, viewerId } = await maybeViewer();
   if (!viewerId || viewer.kind === "anon") return null;
+  const isAdmin = isViewerAdmin(viewer);
   const store = getDataStore();
   const [talent, startup] = await Promise.all([
     store.getTalent(viewerId),
@@ -40,6 +42,7 @@ export async function getSidebarViewer(): Promise<SidebarViewer | null> {
       name: talent.name,
       photoUrl: talent.photoUrl,
       profileHref: `/profile/talent/${talent.id}`,
+      isAdmin,
     };
   }
   if (startup) {
@@ -48,6 +51,7 @@ export async function getSidebarViewer(): Promise<SidebarViewer | null> {
       name: startup.name,
       photoUrl: startup.logoUrl,
       profileHref: `/profile/startup/${startup.id}`,
+      isAdmin,
     };
   }
   return {
@@ -58,5 +62,6 @@ export async function getSidebarViewer(): Promise<SidebarViewer | null> {
         : viewer.email?.split("@")[0] ?? "You",
     photoUrl: undefined,
     profileHref: null,
+    isAdmin,
   };
 }
