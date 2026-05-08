@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { AppShell } from "@/components/AppShell";
 import { DemoDeckHeader } from "@/components/DemoDeckHeader";
 import { isDemoActive } from "@/lib/demo/cookie";
-import { getSidebarViewer } from "@/lib/viewer";
+import { getHeaderViewer } from "@/lib/viewer";
 
 /**
  * Layout for the signed-in surface. The route group `(app)` doesn't affect
@@ -10,7 +10,7 @@ import { getSidebarViewer } from "@/lib/viewer";
  * across client-side navigation between pages inside the group.
  */
 export default async function AppGroupLayout({ children }: { children: React.ReactNode }) {
-  const viewer = await getSidebarViewer();
+  const viewer = await getHeaderViewer();
   const demoActive = isDemoActive();
   const deckBar = (
     <Suspense fallback={null}>

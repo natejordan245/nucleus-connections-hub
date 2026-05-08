@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import type { SidebarViewer } from "@/components/AppSidebar";
+import type { HeaderViewer } from "@/components/AppShell";
 import { isViewerAdmin } from "@/lib/admin";
 import { getDataStore } from "@/lib/data";
 import { getViewer, type Viewer } from "@/lib/session";
@@ -24,10 +24,10 @@ export async function maybeViewer(): Promise<{ viewer: Viewer; viewerId: string 
 }
 
 /**
- * Builds the data the sidebar needs to render the bottom-of-rail profile chip.
+ * Builds the data the top header needs to render the profile/sign-in slot.
  * Returns null if the viewer is anonymous.
  */
-export async function getSidebarViewer(): Promise<SidebarViewer | null> {
+export async function getHeaderViewer(): Promise<HeaderViewer | null> {
   const { viewer, viewerId } = await maybeViewer();
   if (!viewerId || viewer.kind === "anon") return null;
   const isAdmin = isViewerAdmin(viewer);

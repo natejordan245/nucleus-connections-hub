@@ -25,7 +25,7 @@ export default async function TalentProfilePage({ params }: { params: { id: stri
 
   return (
       <main className="mx-auto w-full max-w-5xl px-8 py-10">
-        <Link href="/matches" className="text-sm font-medium text-warmgray-600 hover:text-ink">
+        <Link href="/dashboard" className="text-sm font-medium text-warmgray-600 hover:text-ink">
           ← Back to matches
         </Link>
 

@@ -30,7 +30,7 @@ export const SLIDES: Slide[] = [
   },
   {
     index: 2,
-    path: "/matches",
+    path: "/dashboard",
     title: "Ranked matches",
     beat: "Each card carries a reason and concerns — no match is sold as perfect.",
   },

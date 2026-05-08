@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { LIVE_SEED_PASSWORD, LIVE_STARTUPS, LIVE_TALENT } from "@/lib/data/live-seed";
+import { baselineResources } from "@/lib/data/seed";
 import { SupabaseDataStore } from "@/lib/data/SupabaseDataStore";
 
 // One-shot seed for live mode. Creates auth users + writes profile rows
@@ -70,9 +71,11 @@ export async function POST(req: Request) {
     results.push(r);
   }
 
-  // Backfill embeddings on resources seeded by SQL (which leaves embedding NULL).
-  // We re-upsert each resource through the data store so the OpenAI embed call
-  // runs and the vector column gets populated.
+  // Insert (or refresh) the baseline resource set, then ensure embeddings.
+  // On a fresh cloud DB the resources table is empty — `db push` doesn't
+  // apply seed.sql — so we seed from `baselineResources` and let putResource
+  // handle the embedding write.
+  const resourcesSeeded = await seedBaselineResources(store);
   const resourcesBackfilled = await backfillResourceEmbeddings(admin, store);
 
   const counts = {
@@ -83,6 +86,7 @@ export async function POST(req: Request) {
     errors: results.filter(
       (r) => r.authStatus === "error" || r.profileStatus === "error",
     ).length,
+    resourcesSeeded,
     resourcesBackfilled,
   };
 
@@ -193,6 +197,32 @@ async function ensureUserAndProfile(args: {
       error: `profile: ${msg}`,
     };
   }
+}
+
+async function seedBaselineResources(store: SupabaseDataStore): Promise<number> {
+  // Skip any resource whose title is already present so re-runs don't dupe.
+  const existing = await store.listResources();
+  const seenTitles = new Set(existing.map((r) => r.title.trim().toLowerCase()));
+  const isUuid = (s: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
+  let n = 0;
+  for (const r of baselineResources) {
+    if (seenTitles.has(r.title.trim().toLowerCase())) continue;
+    // Strip the demo-mode `tal-…` uploader id — it's not in auth.users on cloud
+    // and would FK-fail. Keep the display name.
+    const safe = {
+      ...r,
+      uploadedById: r.uploadedById && isUuid(r.uploadedById) ? r.uploadedById : null,
+    };
+    try {
+      await store.putResource(safe);
+      n++;
+    } catch {
+      // best-effort.
+    }
+  }
+  return n;
 }
 
 function stringifyErr(err: unknown): string {
