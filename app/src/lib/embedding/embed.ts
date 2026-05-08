@@ -129,32 +129,74 @@ export async function embedMany(texts: string[]): Promise<(number[] | null)[]> {
 }
 
 // ── text composers ─────────────────────────────────────────────────────────
-// What we feed the embedder. Keep these focused on matchable signal — never
-// include email / contact handles / display-only fields.
+// What we feed the embedder. Two embeddings per profile so bidirectional
+// matchmaking can ask "does A want what B is?" and "does B want what A is?"
+// independently:
+//
+//   *Profile* — "who I am". Identity-side signal: headline, bio, skills,
+//               sector, what the company does. No lookingFor / needs.
+//   *Wants*   — "who I want to match with". Demand-side signal: lookingFor,
+//               stage preferences, needs, networksWanted, comp expectations.
+//
+// Keep these focused on matchable signal — never include email / contact
+// handles / display-only fields.
 
-export function textForTalent(t: TalentDTO): string {
+export function textForTalentProfile(t: TalentDTO): string {
   return [
     t.headline,
     t.bio,
-    t.lookingFor,
     t.skills.length ? `Skills: ${t.skills.join(", ")}` : "",
-    t.domains.length ? `Domains of interest: ${t.domains.join(", ")}` : "",
+    t.domains.length ? `Domains: ${t.domains.join(", ")}` : "",
     t.networks?.length ? `Networks: ${t.networks.join(", ")}` : "",
   ]
     .filter(Boolean)
     .join("\n\n");
 }
 
-export function textForStartup(s: StartupDTO): string {
+export function textForTalentWants(t: TalentDTO): string {
+  return [
+    t.lookingFor,
+    t.domains.length ? `Domains of interest: ${t.domains.join(", ")}` : "",
+    t.stagePrefs?.length ? `Stage preferences: ${t.stagePrefs.join(", ")}` : "",
+    t.availability ? `Availability: ${t.availability}` : "",
+    t.compensation?.length ? `Comp: ${t.compensation.join(", ")}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+export function textForStartupProfile(s: StartupDTO): string {
   return [
     s.oneLiner,
     s.description,
     s.sector ? `Sector: ${s.sector}` : "",
-    s.needs.length ? `Looking to hire: ${s.needs.join(", ")}` : "",
-    s.networksWanted?.length ? `Pulling from networks: ${s.networksWanted.join(", ")}` : "",
+    s.fundingStage ? `Stage: ${s.fundingStage}` : "",
   ]
     .filter(Boolean)
     .join("\n\n");
+}
+
+export function textForStartupWants(s: StartupDTO): string {
+  return [
+    s.needs.length ? `Looking to hire: ${s.needs.join(", ")}` : "",
+    s.networksWanted?.length
+      ? `Pulling from networks: ${s.networksWanted.join(", ")}`
+      : "",
+    s.fundingStage ? `Hiring for stage: ${s.fundingStage}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+// ── back-compat: search uses single profile-side embedding ────────────────
+// Existing callers (SupabaseDataStore.search) want one embedding per profile.
+// `embedding` column == profile embedding == textFor*Profile.
+export function textForTalent(t: TalentDTO): string {
+  return textForTalentProfile(t);
+}
+
+export function textForStartup(s: StartupDTO): string {
+  return textForStartupProfile(s);
 }
 
 export function textForResource(r: ResourceDTO): string {

@@ -2,6 +2,7 @@ import type {
   AffinityPushDTO,
   InterestDTO,
   MatchDTO,
+  MessageDTO,
   NotificationDTO,
   ResourceDTO,
   StartupDTO,
@@ -19,6 +20,7 @@ import {
   utahOrgs,
 } from "./seed";
 import type { IDataStore, VoteSide } from "./store";
+import { DEMO_PERSONAS } from "@/lib/mode";
 
 // In-memory stores. These are module-scoped so they survive across requests
 // within a single Node process. They reset on dev-server restart, which is the
@@ -37,6 +39,13 @@ const resourceMap = new Map<string, ResourceDTO>(
 let nextNotifId = baselineNotifications.length + 1;
 let nextInterestId = baselineInterests.length + 1;
 let nextPushId = baselinePushes.length + 1;
+
+const messages: MessageDTO[] = [];
+let nextMessageId = 1;
+
+function pairKey(a: string, b: string) {
+  return a < b ? `${a}:${b}` : `${b}:${a}`;
+}
 
 function interestKey(talentId: string, startupId: string) {
   return `${talentId}::${startupId}`;
@@ -200,5 +209,29 @@ export class MockDataStore implements IDataStore {
     };
     pushes.unshift(created);
     return created;
+  }
+
+  async listMessages({ viewerId, otherId }: { viewerId: string; otherId: string }) {
+    const key = pairKey(viewerId, otherId);
+    return messages
+      .filter((m) => m.pairKey === key)
+      .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+  }
+
+  async sendMessage({ senderId, recipientId, body }: { senderId: string; recipientId: string; body: string }) {
+    const created: MessageDTO = {
+      id: `msg-${nextMessageId++}`,
+      pairKey: pairKey(senderId, recipientId),
+      senderId,
+      recipientId,
+      body,
+      createdAt: new Date().toISOString(),
+    };
+    messages.push(created);
+    return created;
+  }
+
+  async resolveAdminUserIds() {
+    return DEMO_PERSONAS.filter((p) => p.role === "admin").map((p) => p.id);
   }
 }

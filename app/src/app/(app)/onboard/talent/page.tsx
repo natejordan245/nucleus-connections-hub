@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChipGroup } from "@/components/ChipGroup";
 import { Field, Input, Select, Textarea } from "@/components/FormField";
+import { PhotoUpload } from "@/components/PhotoUpload";
 import {
   AVAILABILITIES,
   AVAILABILITY_LABELS,
@@ -52,6 +53,9 @@ export default async function OnboardTalentPage({
           action={createTalent}
           className="mt-8 space-y-6 rounded-2xl border border-warmgray-100 bg-white p-6 shadow-sm"
         >
+          <Field id="photoUrl" name="photoUrl" label="Profile photo" hint="Optional, but matches feel more human with one.">
+            <PhotoUpload name="photoUrl" label="Upload photo" fallbackName="You" />
+          </Field>
           <Field id="name" name="name" label="Name" required>
             <Input id="name" name="name" required placeholder="Sarah Chen" />
           </Field>

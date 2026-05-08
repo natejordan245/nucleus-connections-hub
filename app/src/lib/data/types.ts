@@ -139,7 +139,20 @@ export type InterestDTO = {
   mutualAt: string | null;
 };
 
-export type NotificationKind = "interest_received" | "mutual_match" | "system";
+export type NotificationKind =
+  | "interest_received"
+  | "mutual_match"
+  | "system"
+  | "message_received";
+
+export type MessageDTO = {
+  id: string;
+  pairKey: string;
+  senderId: string;
+  recipientId: string;
+  body: string;
+  createdAt: string;
+};
 
 export type NotificationDTO = {
   id: string;

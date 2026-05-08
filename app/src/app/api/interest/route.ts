@@ -49,16 +49,27 @@ export async function POST(req: Request) {
       recipientId: talent.id,
       kind: "mutual_match",
       title: `Mutual match: ${startup.name}`,
-      body: `Both sides flipped to interested. We've sent ${startup.name} to your CRM.`,
-      href: `/handshake?with=${startup.id}`,
+      body: `Both sides flipped to interested. Send a first message →`,
+      href: `/messages?with=${startup.id}`,
     });
     await store.emitNotification({
       recipientId: startup.id,
       kind: "mutual_match",
       title: `Mutual match: ${talent.name}`,
-      body: `Both sides flipped to interested. ${talent.name} is now in your shortlist.`,
-      href: `/handshake?with=${talent.id}`,
+      body: `Both sides flipped to interested. Send a first message →`,
+      href: `/messages?with=${talent.id}`,
     });
+    // Notify the operator(s) so they can broker the intro.
+    const adminIds = await store.resolveAdminUserIds();
+    for (const adminId of adminIds) {
+      await store.emitNotification({
+        recipientId: adminId,
+        kind: "mutual_match",
+        title: `New mutual match: ${talent.name} ↔ ${startup.name}`,
+        body: `Both sides opted in. Open the queue to broker the intro.`,
+        href: "/admin",
+      });
+    }
     await store.recordAffinityPush({
       talentId: talent.id,
       startupId: startup.id,

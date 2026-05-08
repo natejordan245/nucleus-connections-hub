@@ -3,6 +3,7 @@ import type {
   InterestDTO,
   InterestState,
   MatchDTO,
+  MessageDTO,
   NotificationDTO,
   ResourceDTO,
   StartupDTO,
@@ -57,4 +58,12 @@ export interface IDataStore {
   // affinity push log (mutual matches → CRM)
   listAffinityPushes(): Promise<AffinityPushDTO[]>;
   recordAffinityPush(p: Omit<AffinityPushDTO, "id" | "pushedAt">): Promise<AffinityPushDTO>;
+
+  // direct messaging — only enabled between mutually-matched parties
+  listMessages(args: { viewerId: string; otherId: string }): Promise<MessageDTO[]>;
+  sendMessage(args: { senderId: string; recipientId: string; body: string }): Promise<MessageDTO>;
+
+  // admin notification fan-out: resolves the admin user ids the platform
+  // should ping when a mutual match happens.
+  resolveAdminUserIds(): Promise<string[]>;
 }
