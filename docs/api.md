@@ -231,4 +231,4 @@ Any change to a contract is a 3-person review per `DESIGN.md`. Don't import from
 
 ## Rate limiting / auth
 
-**There is none in the prototype.** Identity is switched via the `?as=` query param. Webhook auth is a single shared secret. Real auth (Clerk) is a stretch goal — see [`docs/challenges.md`](challenges.md).
+**There is none in the prototype.** Identity is switched via the `?as=` query param. Webhook auth is a single shared secret. Real auth — **Supabase Auth**, CLI-driven from the same Supabase project as the data layer — is a stretch goal. See [`docs/challenges.md`](challenges.md) and [`docs/integrations.md`](integrations.md#identity--auth) for the bring-up sequence.

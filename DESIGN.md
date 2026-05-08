@@ -813,18 +813,18 @@ Day 1 morning: all three of us land `contracts/` together. After that we fork.
 ### Stretch (whoever finishes first)
 - Talent upskilling recommendations ("you're 80% fit — here's how to close the gap").
 - Ecosystem map visualization (force-directed graph of Utah orgs).
-- Real auth (Clerk).
+- Real auth (Supabase Auth, CLI-driven — same Supabase project as the data layer).
 
 ---
 
 ## 15. Locked decisions
 
-- **Vector DB:** Supabase (Postgres + pgvector + auth-ready if added later).
+- **Vector DB:** Supabase (Postgres + pgvector). Same project also hosts `auth.users` so production auth doesn't need a second vendor.
 - **LLM provider:** OpenAI across the stack. `gpt-5.3-nano` for free-text → structured extraction, `gpt-5.5-instant` for the re-rank + explanation pass.
 - **Embeddings:** OpenAI `text-embedding-3-small` (1536d native).
 - **Service-layer mode:** controlled by `NEXT_PUBLIC_SERVICE_MODE` (`mock` | `real`).
 - **Data-layer mode:** controlled by `DATA_MODE` (`mock` | `real`).
 - **Affinity:** mock-first via `AffinityClient` interface; `AFFINITY_LIVE=true` flips to real API if access is granted before day 2.
-- **Auth:** none for the demo. Identity is switched via a `?as=<userId>` query param. Clerk added only if everything else ships.
+- **Auth:** none for the demo. Identity is switched via a `?as=<userId>` query param. Production path is **Supabase Auth** (CLI-driven; `auth.users` lives in the same Postgres as the data layer, RLS policies key on `auth.uid()`). See [`docs/integrations.md`](docs/integrations.md#identity--auth).
 - **Demo input UX:** double-click any `DemoTextInput` to type out the canonical demo content with animation. Live typing still works for judges who want to try.
 - **Demo navigation:** sequential slides controlled by header chevrons + arrow keys.

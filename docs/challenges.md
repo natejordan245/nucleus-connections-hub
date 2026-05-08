@@ -34,9 +34,15 @@ We deliberately **skipped** these to keep the build inside two days. None of the
 
 Identity is the URL's `?as=<id>` query param. The API trusts whatever id it's handed. Notifications are filtered by recipient on the read side, but nothing prevents a bad actor from reading anyone else's inbox.
 
-**Why it's fine for the demo:** The bell works, the handshake works, the persona-switch story (`?as=tal-marcus-okafor`) works. The technical-judge conversation about auth is "Clerk swap, single-hook change."
+**Why it's fine for the demo:** The bell works, the handshake works, the persona-switch story (`?as=tal-marcus-okafor`) works. The technical-judge conversation about auth is "Supabase Auth swap, single-hook change."
 
-**Cost to fix:** small. Drop in Clerk, change the bell and dashboard to read `useUser().id` instead of `searchParams.get('as')`, gate the API routes with a Clerk middleware.
+**Cost to fix:** small. We're already on Supabase for `pgvector` + the profile store, so auth lives in the same project. Workflow is CLI-driven (see [`docs/integrations.md`](integrations.md#supabase-cli-workflow)):
+
+1. `supabase init` + add the `[auth]` block to `config.toml` (email/password + magic link to start)
+2. `supabase migration new auth_link` — adds `auth_user_id uuid references auth.users(id)` to `talent` / `startup`, plus RLS policies keyed on `auth.uid()`
+3. Add `@supabase/ssr` server + browser clients, an App-Router `middleware.ts` that refreshes the session cookie, and `app/login` + `app/auth/callback` routes
+4. Replace the `searchParams.get('as')` reads in the bell / matches dashboard / handshake page with `supabase.auth.getUser()` — the viewer-id read is already centralized
+5. Gate the API routes with a server-client session check
 
 ### No pagination
 
@@ -159,7 +165,7 @@ Every 4s a `/api/notifications` request fires. In dev that's chatty in the netwo
 |---|---|---|
 | **Ecosystem map visualization** | Force-directed graph of Utah orgs + people + companies, hovering surfaces shared affiliations. The most demo-friendly stretch. | medium |
 | **Talent upskilling recommendations** | "You're 80% fit — here's how to close the gap." Bounty calls this out as an optional high-value feature. | medium |
-| **Real auth (Clerk)** | Necessary for production, easy retrofit. | small |
+| **Real auth (Supabase Auth)** | Necessary for production, easy retrofit — same Supabase project as the data layer, CLI-driven config. | small |
 | **Decided tab + interest filtering** | Already designed (above), not built. ~30min. | small |
 | **Streaming LLM rerank** | UX win — cards appear as they're scored. | small |
 | **Mobile responsive polish** | Currently desktop-first. Cards stack OK but the tab nav and search bar need attention < 640px. | small |

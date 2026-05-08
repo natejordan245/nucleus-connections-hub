@@ -3,6 +3,7 @@ dist/
 build/
 .next/
 .turbo/
+v0-app/
 .env
 .env.local
 .env.*.local

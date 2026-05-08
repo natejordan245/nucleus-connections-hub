@@ -191,9 +191,71 @@ Production: same interface fronts a Redis-backed cache. Fingerprint comparison l
 
 ## Identity & auth
 
-There isn't any. Frontend identity is a `?as=<id>` query param read by every page that cares (matches dashboard, handshake, notification bell). The API trusts whatever ID it's given.
+There isn't any *yet* in the running demo. Frontend identity is a `?as=<id>` query param read by every page that cares (matches dashboard, handshake, notification bell). The API trusts whatever ID it's given.
 
-For real-mode, **Clerk** is the planned auth provider. The bell, the handshake page, and the matches page all already centralize their viewer-id read — switching to a Clerk session is a single hook swap. See [`docs/challenges.md`](challenges.md).
+For real-mode, **Supabase Auth** is the chosen path. We're already on Supabase for `pgvector` + the profile store, so auth lives in the same project — no second vendor, no second SDK, and the same JWT that authorizes data-layer reads can authorize API routes.
+
+### Why Supabase Auth over Clerk
+
+- **Single platform** — `auth.users` is a first-class table in the same Postgres we already run. RLS policies on `talent` / `startup` can reference `auth.uid()` directly; no token bridging.
+- **CLI-native workflow** — the same `supabase` CLI we use for migrations also configures auth providers (`supabase/config.toml` → `[auth]` block). Local dev gets a full auth stack via `supabase start` with no extra setup.
+- **Server-side Next.js helpers** — `@supabase/ssr` gives App-Router-compatible cookie-based session handling, which is what the route handlers need to read the viewer's id.
+
+### Supabase CLI workflow
+
+The CLI is the source of truth for both schema and auth config. The intended layout when this lights up:
+
+```
+v0-app/
+└── supabase/
+    ├── config.toml          # project + auth provider config (committed)
+    └── migrations/
+        ├── 0001_initial_schema.sql   # the existing scripts/migrate.sql, moved
+        └── 0002_auth_link.sql        # adds auth_user_id + RLS policies
+```
+
+Bring-up sequence (one-time):
+
+```bash
+cd v0-app
+supabase init                 # writes supabase/config.toml
+supabase start                # local Postgres + Auth + Studio in Docker
+supabase migration new auth_link
+# ...edit the new migration to add `auth_user_id uuid references auth.users(id)`
+# to talent + startup, plus RLS policies keyed on auth.uid()...
+supabase db reset             # apply all migrations to the local stack
+```
+
+To target the hosted Nucleus project instead of local Docker:
+
+```bash
+supabase login
+supabase link --project-ref <ref>
+supabase db push              # apply migrations to the linked remote
+```
+
+Auth provider config (email/password + magic link to start; OAuth providers like Google/LinkedIn added later) lives in the `[auth]` section of `config.toml` and is version-controlled.
+
+### Wiring into the app
+
+Three new env vars (added to `.env.example`):
+
+| Var | Purpose |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Public — used by the browser client |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public — used by the browser client |
+| `SUPABASE_SERVICE_ROLE_KEY` | Already exists — used by `SupabaseProfileStore` for admin reads |
+
+Code surface (planned, not yet built):
+
+- `lib/supabase/server.ts` — server-component / route-handler client (`createServerClient` from `@supabase/ssr`, cookie store wired to `next/headers`)
+- `lib/supabase/browser.ts` — client-component client (`createBrowserClient`)
+- `middleware.ts` — refreshes the auth session cookie on every request, redirects unauthenticated users away from gated routes
+- `app/login/page.tsx`, `app/auth/callback/route.ts`, `app/auth/signout/route.ts` — auth UI + OAuth callback + signout
+
+The frontend already centralizes its viewer-id read in three places (bell, handshake page, matches page). The retrofit replaces the `?as=` reader with `supabase.auth.getUser()`; the rest of the app sees no change.
+
+See [`docs/challenges.md`](challenges.md) for cost estimate and the punted scope.
 
 ## Environment matrix
 
