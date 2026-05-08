@@ -103,6 +103,7 @@ export async function createTalent(formData: FormData) {
   const location = String(formData.get("location") ?? "Salt Lake City, UT").trim();
   const linkedinUrl = String(formData.get("linkedinUrl") ?? "").trim() || undefined;
   const xUrl = String(formData.get("xUrl") ?? "").trim() || undefined;
+  const photoUrl = String(formData.get("photoUrl") ?? "").trim() || undefined;
 
   if (!name || !email || !bio) {
     redirect("/onboard/talent?error=missing_required");
@@ -125,6 +126,7 @@ export async function createTalent(formData: FormData) {
     location,
     utahOrgIds: [],
     networks: networks.length > 0 ? networks : ["operator"],
+    photoUrl,
     linkedinUrl,
     xUrl,
     createdAt: new Date().toISOString(),
@@ -157,6 +159,7 @@ export async function createStartup(formData: FormData) {
   const location = String(formData.get("location") ?? "Salt Lake City, UT").trim();
   const websiteUrl = String(formData.get("websiteUrl") ?? "").trim() || undefined;
   const linkedinUrl = String(formData.get("linkedinUrl") ?? "").trim() || undefined;
+  const logoUrl = String(formData.get("logoUrl") ?? "").trim() || undefined;
 
   if (!name || !description) {
     redirect("/onboard/startup?error=missing_required");
@@ -176,6 +179,7 @@ export async function createStartup(formData: FormData) {
     networksWanted: networksWanted.length > 0 ? networksWanted : ["operator"],
     location,
     utahOrgIds: [],
+    logoUrl,
     websiteUrl,
     linkedinUrl,
     createdAt: new Date().toISOString(),

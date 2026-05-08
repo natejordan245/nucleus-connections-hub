@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthShell, FieldLabel, PrimaryButton, TextInput } from "@/components/AuthCard";
+import { PasswordInput } from "@/components/PasswordInput";
 import { getAppMode } from "@/lib/mode";
 import { getViewer } from "@/lib/session";
 import { signIn } from "./actions";
@@ -40,10 +41,9 @@ export default async function LoginPage({
           </div>
           <div>
             <FieldLabel htmlFor="password">Password</FieldLabel>
-            <TextInput
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               autoComplete="current-password"
               required={mode === "live"}
               placeholder="••••••••"

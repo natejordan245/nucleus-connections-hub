@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChipGroup } from "@/components/ChipGroup";
 import { Field, Input, Select, Textarea } from "@/components/FormField";
+import { PhotoUpload } from "@/components/PhotoUpload";
 import {
   FUNDING_STATUS_LABELS,
   FUNDING_STATUSES,
@@ -52,6 +53,9 @@ export default async function OnboardStartupPage({
           action={createStartup}
           className="mt-8 space-y-6 rounded-2xl border border-warmgray-100 bg-white p-6 shadow-sm"
         >
+          <Field id="logoUrl" name="logoUrl" label="Company logo" hint="Optional. Helps your card stand out.">
+            <PhotoUpload name="logoUrl" label="Upload logo" fallbackName="Co" />
+          </Field>
           <Field id="name" name="name" label="Company name" required>
             <Input id="name" name="name" required placeholder="Bramble AI" />
           </Field>

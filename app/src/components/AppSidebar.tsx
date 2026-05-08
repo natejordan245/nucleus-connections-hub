@@ -41,7 +41,7 @@ export function AppSidebar({ viewer }: { viewer: SidebarViewer | null }) {
       className="group sticky top-0 z-30 flex h-screen w-16 flex-col border-r border-warmgray-100 bg-white transition-[width] duration-200 ease-out hover:w-60"
     >
       <Link
-        href={viewer ? "/dashboard" : "/"}
+        href="/"
         className="flex h-16 items-center gap-3 overflow-hidden px-4"
       >
         <DelicateArch className="h-7 w-7 shrink-0 text-orange-500" />
