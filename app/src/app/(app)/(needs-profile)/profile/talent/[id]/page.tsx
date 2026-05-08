@@ -8,8 +8,10 @@ import { getDataStore } from "@/lib/data";
 import {
   AVAILABILITY_LABELS,
   COMPENSATION_LABELS,
+  NEED_LABELS,
   SECTOR_LABELS,
   STAGE_LABELS,
+  TALENT_CATEGORY_LABELS,
 } from "@/lib/data/enum-labels";
 import { maybeViewer } from "@/lib/viewer";
 
@@ -61,6 +63,24 @@ export default async function TalentProfilePage({ params }: { params: { id: stri
             </Card>
             <Card title="Looking for">
               <p className="text-sm leading-relaxed text-warmgray-700">{talent.lookingFor}</p>
+              {talent.lookingForNeeds.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {talent.lookingForNeeds.map((need) => (
+                    <Pill key={need} tone="orange">
+                      {NEED_LABELS[need]}
+                    </Pill>
+                  ))}
+                </div>
+              )}
+            </Card>
+            <Card title="Categories">
+              <div className="flex flex-wrap gap-2">
+                {talent.categories.map((category) => (
+                  <Pill key={category} tone="warmgray">
+                    {TALENT_CATEGORY_LABELS[category]}
+                  </Pill>
+                ))}
+              </div>
             </Card>
             <Card title="Skills">
               <div className="flex flex-wrap gap-2">

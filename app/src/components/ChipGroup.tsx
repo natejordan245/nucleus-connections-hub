@@ -7,14 +7,35 @@ export function ChipGroup<T extends string>({
   name,
   options,
   defaultSelected = [],
+  selected,
+  onChange,
   multi = true,
 }: {
   name: string;
   options: { value: T; label: string }[];
   defaultSelected?: readonly T[];
+  selected?: readonly T[];
+  onChange?: (next: T[]) => void;
   multi?: boolean;
 }) {
-  const selectedSet = new Set<string>(defaultSelected);
+  const isControlled = Array.isArray(selected) && typeof onChange === "function";
+  const selectedSet = new Set<string>(isControlled ? selected : defaultSelected);
+
+  function toggle(value: T, checked: boolean) {
+    if (!isControlled || !onChange) return;
+    if (!multi) {
+      onChange(checked ? [value] : []);
+      return;
+    }
+    const next = new Set<string>(selectedSet);
+    if (checked) next.add(value);
+    else next.delete(value);
+    const ordered = options
+      .map((opt) => opt.value)
+      .filter((opt) => next.has(opt));
+    onChange(ordered);
+  }
+
   return (
     <fieldset className="flex flex-wrap gap-2">
       {options.map((opt) => {
@@ -30,7 +51,10 @@ export function ChipGroup<T extends string>({
               type={multi ? "checkbox" : "radio"}
               name={name}
               value={opt.value}
-              defaultChecked={selectedSet.has(opt.value)}
+              {...(isControlled
+                ? { checked: selectedSet.has(opt.value) }
+                : { defaultChecked: selectedSet.has(opt.value) })}
+              onChange={(e) => toggle(opt.value, e.currentTarget.checked)}
               className="peer sr-only"
             />
             {opt.label}

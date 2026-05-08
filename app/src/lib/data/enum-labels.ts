@@ -7,6 +7,7 @@ import type {
   Sector,
   Stage,
   StartupNeed,
+  TalentCategory,
 } from "./types";
 
 export const AVAILABILITY_LABELS: Record<Availability, string> = {
@@ -50,6 +51,18 @@ export const ORIGIN_LABELS: Record<Origin, string> = {
 };
 
 export const NEED_LABELS: Record<StartupNeed, string> = {
+  "executive":    "Executives",
+  "cofounder":    "Co-founders",
+  "coo":          "COO",
+  "fractional":   "Fractional",
+  "operator":     "Operators",
+  "engineer":     "Engineers",
+  "sales":        "Sales",
+  "student":      "Students",
+  "intern":       "Interns",
+  "board-member": "Board members",
+  "advisor-paid": "Advisors (equity/$)",
+  "mentor-free":  "Mentors (free)",
   "ceo":          "CEO",
   "cto":          "CTO",
   "biz-dev":      "Biz dev",
@@ -57,6 +70,22 @@ export const NEED_LABELS: Record<StartupNeed, string> = {
   "sales-lead":   "Sales lead",
   "engineering":  "Engineering",
   "marketing":    "Marketing",
+};
+
+export const TALENT_CATEGORY_LABELS: Record<TalentCategory, string> = {
+  "executive":    "Executives",
+  "cofounder":    "Co-founders",
+  "coo":          "COO",
+  "fractional":   "Fractional",
+  "operator":     "Operators",
+  "engineer":     "Engineers",
+  "sales":        "Sales",
+  "marketing":    "Marketing",
+  "student":      "Students",
+  "intern":       "Interns",
+  "board-member": "Board members",
+  "advisor-paid": "Advisors (equity/$)",
+  "mentor-free":  "Mentors (free)",
 };
 
 export const FUNDING_STATUS_LABELS: Record<FundingStatus, string> = {
@@ -87,5 +116,22 @@ export const STAGES = Object.keys(STAGE_LABELS) as Stage[];
 export const SECTORS = Object.keys(SECTOR_LABELS) as Sector[];
 export const ORIGINS = Object.keys(ORIGIN_LABELS) as Origin[];
 export const NEEDS = Object.keys(NEED_LABELS) as StartupNeed[];
+export const TALENT_CATEGORIES = Object.keys(TALENT_CATEGORY_LABELS) as TalentCategory[];
 export const FUNDING_STATUSES = Object.keys(FUNDING_STATUS_LABELS) as FundingStatus[];
 export const NETWORKS = Object.keys(NETWORK_LABELS) as Network[];
+
+export const ROLE_NEEDS: StartupNeed[] = [
+  "executive",
+  "cofounder",
+  "coo",
+  "fractional",
+  "operator",
+  "engineer",
+  "sales",
+  "marketing",
+  "student",
+  "intern",
+  "board-member",
+  "advisor-paid",
+  "mentor-free",
+];

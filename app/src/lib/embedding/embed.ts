@@ -145,6 +145,9 @@ export function textForTalentProfile(t: TalentDTO): string {
   return [
     t.headline,
     t.bio,
+    t.lookingFor,
+    t.categories.length ? `Profile categories: ${t.categories.join(", ")}` : "",
+    t.lookingForNeeds.length ? `Looking for roles: ${t.lookingForNeeds.join(", ")}` : "",
     t.skills.length ? `Skills: ${t.skills.join(", ")}` : "",
     t.domains.length ? `Domains: ${t.domains.join(", ")}` : "",
     t.networks?.length ? `Networks: ${t.networks.join(", ")}` : "",

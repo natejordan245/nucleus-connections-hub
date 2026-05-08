@@ -88,11 +88,20 @@ export class MockDataStore implements IDataStore {
       };
     }
     const matchTalent = (t: TalentDTO) =>
-      [t.name, t.headline, t.bio, t.lookingFor, t.skills.join(" "), t.domains.join(" ")]
+      [
+        t.name,
+        t.headline,
+        t.bio,
+        t.lookingFor,
+        t.categories.join(" "),
+        t.lookingForNeeds.join(" "),
+        t.skills.join(" "),
+        t.domains.join(" "),
+      ]
         .map(lower)
         .some((s) => s.includes(q));
     const matchStartup = (s: StartupDTO) =>
-      [s.name, s.oneLiner, s.description, s.sector, s.needs.join(" ")]
+      [s.name, s.oneLiner, s.description, s.sector, s.needs.join(" "), s.networksWanted.join(" ")]
         .map(lower)
         .some((s) => s.includes(q));
     const matchResource = (r: ResourceDTO) =>
