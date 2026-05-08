@@ -136,6 +136,20 @@ export type NotificationDTO = {
   readAt: string | null;
 };
 
+export type ResourceKind = "guide" | "video" | "deck" | "playbook" | "link";
+
+export type ResourceDTO = {
+  id: string;
+  title: string;
+  description: string;
+  kind: ResourceKind;
+  url: string;
+  tags: string[];
+  uploadedById: string | null;
+  uploadedByName: string;
+  createdAt: string;
+};
+
 export type AffinityPushDTO = {
   id: string;
   talentId: string;

@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
+  BookOpen,
   Home,
   LayoutGrid,
   type LucideIcon,
+  Search,
   Settings,
 } from "lucide-react";
 import { DelicateArch } from "./DelicateArch";
@@ -15,9 +17,11 @@ import { Avatar } from "./Avatar";
 type Item = { href: string; label: string; icon: LucideIcon };
 
 const NAV: Item[] = [
-  { href: "/dashboard",     label: "Home",        icon: Home       },
-  { href: "/matches",       label: "Matches",     icon: LayoutGrid },
-  { href: "/affinity-push", label: "Activity",    icon: Activity   },
+  { href: "/dashboard",     label: "Home",       icon: Home       },
+  { href: "/matches",       label: "Matches",    icon: LayoutGrid },
+  { href: "/search",        label: "Search",     icon: Search     },
+  { href: "/resources",     label: "Resources",  icon: BookOpen   },
+  { href: "/affinity-push", label: "Activity",   icon: Activity   },
 ];
 
 export type SidebarViewer = {

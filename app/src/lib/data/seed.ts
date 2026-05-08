@@ -3,6 +3,7 @@ import type {
   InterestDTO,
   MatchDTO,
   NotificationDTO,
+  ResourceDTO,
   StartupDTO,
   TalentDTO,
   UtahOrg,
@@ -403,6 +404,69 @@ export const baselineInterests: InterestDTO[] = [
     talentState: "pending",
     startupState: "interested",
     mutualAt: null,
+  },
+];
+
+export const baselineResources: ResourceDTO[] = [
+  {
+    id: "res-uta-tto-handbook",
+    title: "U of U TTO Spinout Handbook",
+    description:
+      "How U of U faculty take inventions through licensing, IP, and the spinout incorporation path. Read this before your first conversation with the TTO.",
+    kind: "guide",
+    url: "https://example.com/uta-tto-handbook",
+    tags: ["tto", "spinout", "ip", "u-of-u"],
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-04-22T15:30:00.000Z",
+  },
+  {
+    id: "res-utah-cap-table",
+    title: "Utah seed-stage cap-table primer",
+    description:
+      "Common term-sheet shapes from Pelion, Park City Angels, and the local family offices. Pre-seed → Series A.",
+    kind: "playbook",
+    url: "https://example.com/utah-cap-table",
+    tags: ["fundraising", "cap-table", "term-sheet"],
+    uploadedById: "tal-david",
+    uploadedByName: "David Holm",
+    createdAt: "2026-04-30T09:15:00.000Z",
+  },
+  {
+    id: "res-pmf-checklist",
+    title: "Product-market fit checklist",
+    description:
+      "10 signals investors at Pelion look for before a Series A. Curated from the founders they've backed.",
+    kind: "guide",
+    url: "https://example.com/pmf-checklist",
+    tags: ["pmf", "fundraising", "growth"],
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-04-15T12:00:00.000Z",
+  },
+  {
+    id: "res-microfluidics-101",
+    title: "Microfluidics 101 — for diagnostics builders",
+    description:
+      "A primer from a U of U bioengineering grad student covering wet-lab basics through device prototyping.",
+    kind: "video",
+    url: "https://example.com/microfluidics-101",
+    tags: ["bioengineering", "diagnostics", "u-of-u"],
+    uploadedById: "tal-priya",
+    uploadedByName: "Priya Patel",
+    createdAt: "2026-05-01T20:00:00.000Z",
+  },
+  {
+    id: "res-affinity-template",
+    title: "Affinity intro-email template",
+    description:
+      "How Nucleus formats double-opt-in introductions when a match goes mutual. Drop-in template, customize the why.",
+    kind: "deck",
+    url: "https://example.com/affinity-intro-template",
+    tags: ["intro", "affinity", "ops"],
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-05T14:30:00.000Z",
   },
 ];
 

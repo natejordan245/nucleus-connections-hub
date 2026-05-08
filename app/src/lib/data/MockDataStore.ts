@@ -3,6 +3,7 @@ import type {
   InterestDTO,
   MatchDTO,
   NotificationDTO,
+  ResourceDTO,
   StartupDTO,
   TalentDTO,
   UtahOrg,
@@ -12,6 +13,7 @@ import {
   baselineMatches,
   baselineNotifications,
   baselinePushes,
+  baselineResources,
   startups,
   talents,
   utahOrgs,
@@ -28,6 +30,9 @@ const interestMap = new Map<string, InterestDTO>(
 );
 const notifications: NotificationDTO[] = [...baselineNotifications];
 const pushes: AffinityPushDTO[] = [...baselinePushes];
+const resourceMap = new Map<string, ResourceDTO>(
+  baselineResources.map((r) => [r.id, r]),
+);
 
 let nextNotifId = baselineNotifications.length + 1;
 let nextInterestId = baselineInterests.length + 1;
@@ -66,7 +71,13 @@ export class MockDataStore implements IDataStore {
 
   async search(query: string) {
     const q = lower(query.trim());
-    if (!q) return { talent: [...talentMap.values()], startups: [...startupMap.values()] };
+    if (!q) {
+      return {
+        talent: [...talentMap.values()],
+        startups: [...startupMap.values()],
+        resources: [...resourceMap.values()],
+      };
+    }
     const matchTalent = (t: TalentDTO) =>
       [t.name, t.headline, t.bio, t.lookingFor, t.skills.join(" "), t.domains.join(" ")]
         .map(lower)
@@ -75,9 +86,14 @@ export class MockDataStore implements IDataStore {
       [s.name, s.oneLiner, s.description, s.sector, s.needs.join(" ")]
         .map(lower)
         .some((s) => s.includes(q));
+    const matchResource = (r: ResourceDTO) =>
+      [r.title, r.description, r.tags.join(" ")]
+        .map(lower)
+        .some((s) => s.includes(q));
     return {
       talent: [...talentMap.values()].filter(matchTalent),
       startups: [...startupMap.values()].filter(matchStartup),
+      resources: [...resourceMap.values()].filter(matchResource),
     };
   }
 
@@ -155,6 +171,21 @@ export class MockDataStore implements IDataStore {
         n.readAt = now;
       }
     }
+  }
+
+  async listResources() {
+    return [...resourceMap.values()].sort((a, b) =>
+      a.createdAt < b.createdAt ? 1 : -1,
+    );
+  }
+
+  async getResource(id: string) {
+    return resourceMap.get(id) ?? null;
+  }
+
+  async putResource(r: ResourceDTO) {
+    resourceMap.set(r.id, r);
+    return r;
   }
 
   async listAffinityPushes() {

@@ -4,6 +4,7 @@ import type {
   InterestDTO,
   MatchDTO,
   NotificationDTO,
+  ResourceDTO,
   StartupDTO,
   TalentDTO,
   UtahOrg,
@@ -175,7 +176,7 @@ export class SupabaseDataStore implements IDataStore {
     const q = query.trim();
     if (!q) {
       const [talent, startups] = await Promise.all([this.listTalent(), this.listStartups()]);
-      return { talent, startups };
+      return { talent, startups, resources: [] as ResourceDTO[] };
     }
     const pattern = `%${q.replace(/[%_]/g, "\\$&")}%`;
     const { data, error } = await sb
@@ -188,7 +189,18 @@ export class SupabaseDataStore implements IDataStore {
     return {
       talent: rows.filter((r) => r.kind === "talent").map((r) => this.rowToTalent(r)),
       startups: rows.filter((r) => r.kind === "startup").map((r) => this.rowToStartup(r)),
+      resources: [] as ResourceDTO[], // resources table not yet wired for live mode
     };
+  }
+
+  async listResources(): Promise<ResourceDTO[]> {
+    return [];
+  }
+  async getResource(_id: string): Promise<ResourceDTO | null> {
+    return null;
+  }
+  async putResource(_r: ResourceDTO) {
+    return this.notImplemented("putResource");
   }
 
   // ── writes ───────────────────────────────────────────────────────────────

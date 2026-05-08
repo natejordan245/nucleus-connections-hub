@@ -4,6 +4,7 @@ import type {
   InterestState,
   MatchDTO,
   NotificationDTO,
+  ResourceDTO,
   StartupDTO,
   TalentDTO,
   UtahOrg,
@@ -22,11 +23,17 @@ export interface IDataStore {
   // matches: returns the candidates ranked for a given subject
   matchesFor(subjectId: string): Promise<MatchDTO[]>;
 
-  // search across both pools (very simple: bag-of-words substring for now)
+  // search across the three pools (simple substring match for now)
   search(query: string): Promise<{
     talent: TalentDTO[];
     startups: StartupDTO[];
+    resources: ResourceDTO[];
   }>;
+
+  // resources — uploaded guides / videos / decks / playbooks
+  listResources(): Promise<ResourceDTO[]>;
+  getResource(id: string): Promise<ResourceDTO | null>;
+  putResource(r: ResourceDTO): Promise<ResourceDTO>;
 
   // ── writes ──
   putTalent(t: TalentDTO): Promise<TalentDTO>;
