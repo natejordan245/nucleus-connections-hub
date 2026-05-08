@@ -858,6 +858,283 @@ export const baselineResources: ResourceDTO[] = [
     uploadedByName: "Nucleus team",
     createdAt: "2026-05-07T15:00:00.000Z",
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Utah community resources — programs, funding, networks, mentors, events.
+  // These are the "what's available to you in Utah" entries that the gap-
+  // closer routes a partial-match user toward. Each summary is written to
+  // embed well against weak/miss factors in the LLM gate verdict.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // ── Programs / accelerators ───────────────────────────────────────────────
+  {
+    id: "res-prog-boomstartup",
+    title: "BoomStartup accelerator",
+    description:
+      "12-week Salt Lake City accelerator for pre-seed and seed B2B software founders. Cohort-based, mentor-driven, alumni network across Utah SaaS.",
+    kind: "program",
+    url: "https://example.com/boomstartup",
+    tags: ["accelerator", "pre-seed", "seed", "saas", "ceo", "fundraising", "operator-network"],
+    summary: "Closes the gap for first-time founders missing operator mentorship and a fundraising-ready narrative — BoomStartup pairs a Salt Lake cohort with weekly partner sessions, intros to Pelion / Kickstart / Park City Angels, and a demo day that lands seed checks.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T16:00:00.000Z",
+  },
+  {
+    id: "res-prog-lassonde-founders",
+    title: "Lassonde Founder Track (U of U)",
+    description:
+      "U of U Lassonde Entrepreneur Institute's flagship undergrad-and-grad founder program. Studio space, founding-team matching, $20k Get Seeded grants.",
+    kind: "program",
+    url: "https://example.com/lassonde-founders",
+    tags: ["u-of-u", "lassonde", "students", "early-stage", "founding-team", "spinout", "ceo"],
+    summary: "Closes the gap for student or new-grad founders without a co-founder or capital — Lassonde provides studio workspace, weekly founder labs, Get Seeded micro-grants, and the strongest U of U undergrad founder network in the state.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T16:05:00.000Z",
+  },
+  {
+    id: "res-prog-crocker",
+    title: "Crocker Innovation Fellows (BYU)",
+    description:
+      "Year-long BYU fellowship for cross-disciplinary student founders. Heavy mentorship from BYU faculty and Utah operator alumni.",
+    kind: "program",
+    url: "https://example.com/crocker-fellows",
+    tags: ["byu", "crocker", "students", "founding-team", "spinout", "mentorship"],
+    summary: "Closes the gap for BYU undergrads who have a thesis but not a team — the Crocker Fellowship pairs students across business, engineering, and design, gives them a faculty advisor, and plugs them into the BYU operator alumni network.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T16:10:00.000Z",
+  },
+  {
+    id: "res-prog-pivot-icorps",
+    title: "PIVOT Center I-Corps (U of U)",
+    description:
+      "NSF I-Corps regional node run out of the U of U PIVOT Center. Customer-discovery training and grant for university-research-based founders.",
+    kind: "program",
+    url: "https://example.com/pivot-icorps",
+    tags: ["u-of-u", "pivot", "tto", "customer-discovery", "spinout", "deep-tech", "regulatory"],
+    summary: "Closes the gap for deep-tech founders coming straight from a U of U research lab — I-Corps forces 100 customer-discovery interviews, surfaces the real beachhead, and unlocks NSF non-dilutive funding before the spinout has its first hire.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T16:15:00.000Z",
+  },
+  {
+    id: "res-prog-wayne-brown",
+    title: "Wayne Brown Institute — VentureCapital.org",
+    description:
+      "Salt Lake-based program that walks pre-Series-A founders through investor-ready due diligence. Mentor-judge sessions and a pitch event that draws Utah and Mountain West investors.",
+    kind: "program",
+    url: "https://example.com/wayne-brown",
+    tags: ["fundraising", "due-diligence", "pitch", "ceo", "seed", "series-a", "mentorship"],
+    summary: "Closes the gap for founders raising their first priced round — the Wayne Brown Institute simulates investor due diligence, sharpens the deck and data room, and ends in a pitch event where Utah angels and seed funds actually write checks.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T16:20:00.000Z",
+  },
+  {
+    id: "res-prog-bioinnovations-gateway",
+    title: "BioInnovations Gateway",
+    description:
+      "Utah-Valley life-sciences incubator with shared wet-lab space, equipment, and a cohort of bio founders.",
+    kind: "program",
+    url: "https://example.com/bioinnovations-gateway",
+    tags: ["life-sciences", "wet-lab", "biotech", "incubator", "diagnostics", "regulatory"],
+    summary: "Closes the gap for life-sciences founders who can't afford their own wet lab — BioInnovations Gateway gives bench space, shared equipment, and a peer cohort of Utah biotech teams navigating early R&D and FDA pathway questions together.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T16:25:00.000Z",
+  },
+
+  // ── Funding (Utah-specific funds, angels, non-dilutive) ───────────────────
+  {
+    id: "res-fund-kickstart",
+    title: "Kickstart Seed Fund",
+    description:
+      "The largest dedicated seed fund in Utah. Writes $250k–$2M first checks across software, SaaS, fintech, and select life-sciences and energy.",
+    kind: "funding",
+    url: "https://example.com/kickstart-seed",
+    tags: ["fundraising", "seed", "vc", "kickstart", "ceo", "saas", "fintech"],
+    summary: "Closes the gap for seed-stage Utah founders looking for a credible local lead — Kickstart writes the first institutional check most weeks, brings the largest mentor network in the state, and signals to coastal VCs that the round is real.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T16:30:00.000Z",
+  },
+  {
+    id: "res-fund-pelion",
+    title: "Pelion Venture Partners",
+    description:
+      "Series A / B Utah-headquartered VC. Sweet spot is enterprise SaaS, fintech, and infrastructure software in the $5M–$15M check range.",
+    kind: "funding",
+    url: "https://example.com/pelion",
+    tags: ["fundraising", "series-a", "series-b", "vc", "pelion", "ceo", "saas", "enterprise-sales"],
+    summary: "Closes the gap for post-seed founders raising their Series A — Pelion is the most active Utah-based growth-stage lead, board-active, and well-networked into the operator pool that helps a Series-A company hire a real GTM org.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T16:35:00.000Z",
+  },
+  {
+    id: "res-fund-park-city-angels",
+    title: "Park City Angels",
+    description:
+      "Active Utah angel group. Members write $25k–$100k checks across all sectors with a mild lean toward consumer and SaaS.",
+    kind: "funding",
+    url: "https://example.com/park-city-angels",
+    tags: ["fundraising", "pre-seed", "angels", "park-city-angels", "saas", "consumer"],
+    summary: "Closes the gap for pre-seed founders missing a Utah angel base — Park City Angels meets monthly, takes warm intros from Nucleus and Lassonde, and frequently lead-syndicates with Wasatch Angels into a $250k–$500k pre-seed.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T16:40:00.000Z",
+  },
+  {
+    id: "res-fund-album-vc",
+    title: "Album VC",
+    description:
+      "Lehi-based seed fund focused on B2B SaaS and developer-tools founders in the Mountain West.",
+    kind: "funding",
+    url: "https://example.com/album-vc",
+    tags: ["fundraising", "seed", "vc", "album", "saas", "dev-tools", "ceo"],
+    summary: "Closes the gap for Lehi / Silicon-Slopes B2B SaaS founders who want a local seed lead — Album writes $500k–$2M checks, takes board seats sparingly, and is one of the fastest decision-makers in the Utah seed ecosystem.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T16:45:00.000Z",
+  },
+  {
+    id: "res-fund-utah-innovation-fund",
+    title: "Utah Innovation Fund",
+    description:
+      "State-affiliated fund providing non-dilutive grants and matching capital for Utah research-stage spinouts. Particularly active with U of U, BYU, and USU TTOs.",
+    kind: "funding",
+    url: "https://example.com/utah-innovation-fund",
+    tags: ["non-dilutive", "grants", "spinout", "tto", "u-of-u", "byu", "usu", "deep-tech"],
+    summary: "Closes the gap for university spinout founders pre-VC — the Utah Innovation Fund layers state grant capital and matching dollars onto TTO-licensed IP so research teams can fund 6–12 months of de-risking before raising priced equity.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T16:50:00.000Z",
+  },
+
+  // ── Networks (community / industry groups) ────────────────────────────────
+  {
+    id: "res-net-silicon-slopes",
+    title: "Silicon Slopes",
+    description:
+      "Utah's flagship tech community. Slack of 30k+ operators, monthly events across SLC / Lehi / Provo, and an annual summit that pulls coastal speakers.",
+    kind: "network",
+    url: "https://example.com/silicon-slopes",
+    tags: ["community", "silicon-slopes", "operators", "saas", "intros", "events"],
+    summary: "Closes the gap for newcomers to Utah tech who don't yet know who's who — Silicon Slopes is the default operator Slack, a credible signal in any Utah intro email, and the fastest path to discovering which other founders, operators, and investors are already working on adjacent problems.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T17:00:00.000Z",
+  },
+  {
+    id: "res-net-biohive",
+    title: "BioHive — Utah life-sciences community",
+    description:
+      "The umbrella community for Utah life-sciences operators, scientists, and founders. Monthly socials, sector-specific working groups, and direct ties to the BioInnovations Gateway and PIVOT Center.",
+    kind: "network",
+    url: "https://example.com/biohive",
+    tags: ["life-sciences", "biotech", "biohive", "diagnostics", "wet-lab", "regulatory", "community"],
+    summary: "Closes the gap for life-sciences founders or operators isolated from peers — BioHive is the connective tissue between Utah biotech, diagnostics, and med-device teams; the place to find a wet-lab partner, a regulatory mentor, or a scientific co-founder without flying to Boston.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T17:05:00.000Z",
+  },
+  {
+    id: "res-net-uada",
+    title: "Utah Aerospace and Defense Association",
+    description:
+      "Industry association for Utah aerospace and defense companies. Monthly briefings on DoD priorities, supplier intros, and ITAR-cleared events.",
+    kind: "network",
+    url: "https://example.com/uada",
+    tags: ["aerospace", "defense-tech", "dod", "itar", "supply-chain", "community"],
+    summary: "Closes the gap for aerospace and defense founders who need to talk to DoD primes and Utah suppliers but don't have the cleared-relationships flywheel yet — UADA's events surface program-of-record opportunities, supplier-of-the-year candidates, and the right point-of-contact at Hill AFB or the local primes.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T17:10:00.000Z",
+  },
+  {
+    id: "res-net-women-tech-council",
+    title: "Women Tech Council (Utah)",
+    description:
+      "Active Utah professional network for women in tech. Mentorship circles, founder-funder match events, and an annual summit.",
+    kind: "network",
+    url: "https://example.com/women-tech-council",
+    tags: ["community", "mentorship", "women-tech-council", "leadership", "operators"],
+    summary: "Closes the gap for women operators and founders in Utah tech — the Women Tech Council runs structured mentorship cohorts, founder-funder match events, and is one of the highest-trust networks in the state for moving between roles or finding a board member.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T17:15:00.000Z",
+  },
+  {
+    id: "res-net-mountain-west-capital",
+    title: "Mountain West Capital Network",
+    description:
+      "Investor and operator network spanning Utah, Idaho, Wyoming, and Colorado. Annual deal-flow summit and a year-round member-only Slack.",
+    kind: "network",
+    url: "https://example.com/mwcn",
+    tags: ["investors", "fundraising", "community", "mwcn", "operators", "intros"],
+    summary: "Closes the gap for founders raising outside Utah but inside the region — MWCN is the cross-state network that surfaces Idaho family offices, Boulder seed funds, and Wyoming-resident angels that wouldn't show up in a Crunchbase search.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T17:20:00.000Z",
+  },
+
+  // ── Mentor pools ──────────────────────────────────────────────────────────
+  {
+    id: "res-mentor-kickstart-network",
+    title: "Kickstart Seed Fund Mentor Network",
+    description:
+      "Curated pool of Utah operators and former founders who advise Kickstart portfolio companies. Open to non-portfolio founders for one-off office hours by warm intro.",
+    kind: "mentor",
+    url: "https://example.com/kickstart-mentors",
+    tags: ["mentorship", "kickstart", "operators", "fundraising", "ceo", "scaling", "intros"],
+    summary: "Closes the gap for founders with a real ask but no personal advisor bench — the Kickstart mentor network is the deepest in the state for SaaS, fintech, and B2B operators, and warm intros via Nucleus or Lassonde reliably land an office-hours slot.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T17:30:00.000Z",
+  },
+  {
+    id: "res-mentor-pivot-pool",
+    title: "PIVOT Center mentor pool (U of U)",
+    description:
+      "Industry mentors curated by the U of U PIVOT Center to support university spinouts in commercialization, regulatory strategy, and first-customer development.",
+    kind: "mentor",
+    url: "https://example.com/pivot-mentors",
+    tags: ["mentorship", "pivot", "u-of-u", "tto", "spinout", "regulatory", "fda", "deep-tech"],
+    summary: "Closes the gap for U of U spinout founders with deep technical chops but no commercialization mentor — PIVOT's mentor pool covers FDA pathway, hospital procurement, sales-engineering for deep tech, and ex-CEO advisors who've taken Utah research-stage companies to revenue.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T17:35:00.000Z",
+  },
+
+  // ── Events / conferences ──────────────────────────────────────────────────
+  {
+    id: "res-event-silicon-slopes-summit",
+    title: "Silicon Slopes Summit (annual)",
+    description:
+      "Two-day winter conference in Salt Lake City. The single largest Utah tech gathering of the year — operators, founders, investors, and coastal speakers.",
+    kind: "event",
+    url: "https://example.com/silicon-slopes-summit",
+    tags: ["events", "silicon-slopes", "summit", "saas", "investors", "community"],
+    summary: "Closes the gap for founders or operators who need to compress months of Utah relationship-building into 48 hours — Silicon Slopes Summit is where Pelion partners, Kickstart, Album, and a wide slice of the Utah operator pool actually show up in person.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T17:45:00.000Z",
+  },
+  {
+    id: "res-event-biohive-summit",
+    title: "BioHive Summit",
+    description:
+      "Annual Utah life-sciences industry summit. Showcases Utah biotech and med-device companies; draws regional regulators and strategic acquirers.",
+    kind: "event",
+    url: "https://example.com/biohive-summit",
+    tags: ["events", "life-sciences", "biotech", "biohive", "regulatory", "fda", "diagnostics"],
+    summary: "Closes the gap for biotech founders trying to surface in front of strategic partners — BioHive Summit is the once-a-year venue where Utah's life-sciences cluster compresses, regulatory alumni from the FDA appear, and pharma BD teams actually take meetings.",
+    uploadedById: null,
+    uploadedByName: "Nucleus team",
+    createdAt: "2026-05-07T17:50:00.000Z",
+  },
 ];
 
 export const baselinePushes: AffinityPushDTO[] = [

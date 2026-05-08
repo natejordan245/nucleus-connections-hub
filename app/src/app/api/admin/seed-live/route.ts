@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { LIVE_SEED_PASSWORD, LIVE_STARTUPS, LIVE_TALENT } from "@/lib/data/live-seed";
 import { baselineResources } from "@/lib/data/seed";
 import { SupabaseDataStore } from "@/lib/data/SupabaseDataStore";
+import type { ResourceDTO } from "@/lib/data/types";
 
 // One-shot seed for live mode. Creates auth users + writes profile rows
 // (with embeddings) for the personas in `live-seed.ts`. Idempotent — re-running
@@ -121,7 +122,7 @@ async function backfillResourceEmbeddings(
         id: row.id,
         title: row.title,
         description: row.description,
-        kind: row.kind as "guide" | "video" | "deck" | "playbook" | "link",
+        kind: row.kind as ResourceDTO["kind"],
         url: row.url,
         tags: row.tags ?? [],
         summary: row.summary ?? "",

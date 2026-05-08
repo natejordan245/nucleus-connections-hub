@@ -26,6 +26,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Built and ran go-to-market for two Utah seed-stage SaaS companies through Series A. Looking for a technical co-founder energy I can pair with on the commercial side.",
     lookingFor:
       "Sales-leader role at a seed-to-Series-A B2B software company, ideally Utah-based. Open to advisor seats at deep-tech.",
+    categories: ["executive", "operator", "sales"],
+    lookingForNeeds: ["sales", "executive", "cofounder"],
     skills: ["sales-leadership", "gtm-strategy", "pricing", "enterprise-sales"],
     domains: ["software", "fintech"],
     availability: "full-time",
@@ -47,6 +49,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Eight years building ML infrastructure at NVIDIA and a YC fintech. Recently moved to Utah and want to apply ML to something with real-world physical stakes — bio, materials, or climate.",
     lookingFor:
       "Founding engineer or ML lead at a deep-tech spinout. Comfortable being employee #1.",
+    categories: ["engineer", "operator"],
+    lookingForNeeds: ["engineer", "cofounder"],
     skills: [
       "machine-learning",
       "ml-infra",
@@ -74,6 +78,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Graduating in May from the U with research experience in microfluidic diagnostics. Co-author on three papers. Want to work on something where the science is the moat.",
     lookingFor:
       "Junior R&D scientist or engineer at a Utah deep-tech / med-device spinout. Open to internship-to-full-time.",
+    categories: ["student", "intern", "engineer"],
+    lookingForNeeds: ["intern", "engineer", "student"],
     skills: ["microfluidics", "wet-lab", "python", "bioinformatics"],
     domains: ["life-sciences"],
     availability: "internship",
@@ -95,6 +101,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Sold my last company to ServiceNow in 2022. Spent the last two years writing small checks into Utah seed deals. Looking to take 2–3 advisor seats where I can be genuinely useful.",
     lookingFor:
       "Advisor seats, light operating support, occasional angel checks. Sweet spot is post-PMF, pre-Series-B.",
+    categories: ["advisor-paid", "board-member", "mentor-free", "executive"],
+    lookingForNeeds: ["advisor-paid", "board-member", "mentor-free", "fractional"],
     skills: ["fundraising", "operator-experience", "scaling", "board-coaching"],
     domains: ["software", "fintech"],
     availability: "advisory",
@@ -116,6 +124,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Lead designer on the original Pluralsight Skills product. Last two years at a stealth fintech that didn't pan out. Want to design something physical, or at least something that touches the physical world.",
     lookingFor:
       "Founding designer at a hardware-adjacent or industrial-tech seed startup.",
+    categories: ["operator", "marketing"],
+    lookingForNeeds: ["cofounder", "operator", "marketing"],
     skills: ["product-design", "design-systems", "research", "prototyping"],
     domains: ["advanced-manufacturing", "ai"],
     availability: "full-time",
@@ -137,6 +147,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Post-doctoral researcher at Utah State studying low-temperature deposition for next-gen photovoltaics. Lead author on six peer-reviewed papers. Open to leaving academia for the right founding-team seat.",
     lookingFor:
       "Founding scientist or chief scientist role at an early energy / advanced-materials startup. Open to advisory seats while I finish my post-doc.",
+    categories: ["engineer", "advisor-paid"],
+    lookingForNeeds: ["cofounder", "engineer", "advisor-paid"],
     skills: [
       "materials-science",
       "thin-film-deposition",
@@ -164,6 +176,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Six years shipping product at Pluralsight, the last two on the platform team. I love early-stage codebases — small teams, fast feedback, real users. Strongest in TypeScript, Postgres, and developer-experience tooling.",
     lookingFor:
       "Founding engineer at a seed B2B SaaS company. I want to write the code that's still running on day 1000.",
+    categories: ["engineer", "operator"],
+    lookingForNeeds: ["engineer", "cofounder"],
     skills: [
       "typescript",
       "react",
@@ -192,6 +206,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Built and led customer-success orgs at two vertical-SaaS companies, the most recent through their Series B. I think CS is the team that owns retention, expansion, and the truth of the product roadmap.",
     lookingFor:
       "Head of customer success at a post-seed B2B software company. Strong preference for vertical SaaS or anything compliance-heavy.",
+    categories: ["executive", "operator"],
+    lookingForNeeds: ["executive", "operator"],
     skills: [
       "customer-success",
       "retention",
@@ -219,6 +235,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Made my money in real-estate-adjacent SaaS in the 2010s. Since then I've written 30+ angel checks into Utah seed-stage companies — software, fintech, and one or two life-sciences swings. I take board-observer seats only.",
     lookingFor:
       "Pre-seed and seed founders raising $250k–$2M. Especially interested in vertical SaaS and infrastructure plays. I bring intros and a real Rolodex, not just the check.",
+    categories: ["advisor-paid", "board-member", "mentor-free"],
+    lookingForNeeds: ["advisor-paid", "board-member"],
     skills: ["angel-investing", "term-sheets", "fundraising-coaching", "intros"],
     domains: ["software", "fintech", "life-sciences"],
     availability: "advisory",
@@ -240,6 +258,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Spent the last decade in enterprise security — five years at Domo running their security org through their IPO and beyond. Now consulting and advising. I help early-stage security and infra startups talk to enterprise buyers without sounding like an SE deck.",
     lookingFor:
       "Advisor seats at security-tooling, identity, or compliance-automation startups. Especially useful for the first design-partner conversations and the SOC 2 readiness lift.",
+    categories: ["advisor-paid", "mentor-free"],
+    lookingForNeeds: ["advisor-paid", "mentor-free"],
     skills: [
       "enterprise-security",
       "soc-2",
@@ -267,6 +287,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Partner at a small Salt Lake firm that does almost exclusively startup work — incorporation, IP assignment, university-spinout licensing, and seed/Series-A documents. I know the U of U TTO and BYU TTO playbooks well.",
     lookingFor:
       "Founders who need their first 'real' lawyer — especially U of U / BYU spinouts navigating IP-assignment conversations. I take fixed-fee packages for incorporation through your seed round.",
+    categories: ["advisor-paid"],
+    lookingForNeeds: ["advisor-paid"],
     skills: [
       "startup-law",
       "ip-licensing",
@@ -294,6 +316,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Most recently VP Engineering at a Utah series-C SaaS company. Before that I was the third hire at a fintech that exited to Square. I've taken three engineering orgs from five engineers to fifty and survived to tell the story.",
     lookingFor:
       "CTO or VP-Eng seat at a post-PMF startup raising or about to raise Series A. Strongest fit for SaaS, fintech, or developer infrastructure.",
+    categories: ["executive", "operator", "engineer"],
+    lookingForNeeds: ["executive", "engineer", "cofounder"],
     skills: [
       "engineering-leadership",
       "team-scaling",
@@ -323,6 +347,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Six years at Epic shipping clinical-decision-support modules into 200+ hospital systems. Now interested in early-stage healthcare AI where the regulatory + workflow constraints are the moat.",
     lookingFor:
       "Founding product lead at a Series-A-bound healthcare AI startup. Strongest fit for clinical workflow tooling or revenue-cycle automation.",
+    categories: ["operator", "executive"],
+    lookingForNeeds: ["operator", "executive"],
     skills: ["product-management", "healthcare-it", "fhir", "clinical-workflows", "regulatory-strategy"],
     domains: ["life-sciences", "ai", "software"],
     availability: "full-time",
@@ -343,6 +369,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Built and ran the operations org at a 50-state telemedicine startup acquired in 2024. Spent the last year advising rural Utah clinics on virtual-care rollouts.",
     lookingFor:
       "Head of operations seat at a healthcare startup serving Medicaid populations or rural geographies.",
+    categories: ["operator", "executive"],
+    lookingForNeeds: ["operator", "executive"],
     skills: ["healthcare-operations", "telemedicine", "medicaid-strategy", "clinic-rollouts"],
     domains: ["life-sciences"],
     availability: "full-time",
@@ -365,6 +393,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Eight years at PacifiCorp building real-time grid-balancing software. Want to leave the utility and apply that experience to climate-tech startups doing demand response, virtual power plants, or grid edge.",
     lookingFor:
       "Founding engineer or eng lead at a seed-stage climate-tech / grid-software startup.",
+    categories: ["engineer", "operator"],
+    lookingForNeeds: ["engineer", "cofounder"],
     skills: ["grid-software", "real-time-systems", "energy-markets", "scada", "python"],
     domains: ["energy", "software"],
     availability: "full-time",
@@ -385,6 +415,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "PhD in chemical engineering. Two years post-doc on direct-air capture sorbent chemistry. Just relocated to Salt Lake City for personal reasons and looking for a startup that needs deep DAC expertise.",
     lookingFor:
       "Chief scientist or founding scientist role at a carbon-removal or industrial-decarb startup.",
+    categories: ["engineer"],
+    lookingForNeeds: ["cofounder", "engineer"],
     skills: ["chemical-engineering", "sorbent-chemistry", "process-design", "dac"],
     domains: ["energy", "advanced-manufacturing"],
     availability: "full-time",
@@ -407,6 +439,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Five years at a drone-imagery startup serving row-crop farms in Idaho and eastern Oregon. Comfortable with the messy intersection of remote sensing, agronomy, and grower psychology.",
     lookingFor:
       "Founding engineer at an ag-tech startup. Especially excited about precision irrigation and soil-health sensing.",
+    categories: ["engineer", "operator"],
+    lookingForNeeds: ["engineer", "cofounder"],
     skills: ["computer-vision", "remote-sensing", "geospatial", "python", "agronomy"],
     domains: ["advanced-manufacturing", "ai"],
     availability: "full-time",
@@ -427,6 +461,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Spent ten years selling crop-input chemistries (fertilizers, biologicals) to row-crop and orchard customers across the Mountain West. Know every co-op buyer west of the Rockies.",
     lookingFor:
       "Head of field sales / GTM at a Series-A ag-tech startup. I bring the rolodex and the trust.",
+    categories: ["sales", "operator"],
+    lookingForNeeds: ["sales", "executive"],
     skills: ["enterprise-sales", "field-sales", "ag-distribution", "channel-partnerships"],
     domains: ["advanced-manufacturing"],
     availability: "full-time",
@@ -449,6 +485,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Twenty years in solid-propellant rocket motor design. Most recently at the Air Force Research Lab in Utah. Looking for advisor seats at small-sat or hypersonics startups where my IP-clearance and supplier relationships are useful.",
     lookingFor:
       "Advisor seats at aerospace / defense-tech startups. Especially the ones that need to navigate ITAR + DoD procurement.",
+    categories: ["advisor-paid", "mentor-free"],
+    lookingForNeeds: ["advisor-paid", "mentor-free"],
     skills: ["propulsion", "solid-rocket-motors", "itar", "dod-procurement", "supplier-network"],
     domains: ["advanced-manufacturing"],
     availability: "advisory",
@@ -469,6 +507,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Ex-SpaceX avionics engineer. Spent the last two years at a Utah small-sat startup that didn't make it to Series A. Looking for the next deep-space-adjacent gig.",
     lookingFor:
       "Founding engineer at an aerospace or defense-tech startup needing flight-software / avionics depth.",
+    categories: ["engineer", "operator"],
+    lookingForNeeds: ["engineer", "cofounder"],
     skills: ["embedded-systems", "rtos", "satellite-avionics", "c", "rust"],
     domains: ["advanced-manufacturing"],
     availability: "full-time",
@@ -491,6 +531,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Twelve years designing K-12 STEM curricula. Most recently at a Utah ed-tech startup that exited to a publisher. Want to do it again — but with AI tutoring as the wedge this time.",
     lookingFor:
       "Founding curriculum / pedagogy lead at an AI-tutoring or workforce-skills startup.",
+    categories: ["operator"],
+    lookingForNeeds: ["operator", "cofounder"],
     skills: ["curriculum-design", "instructional-design", "k-12", "edtech-product"],
     domains: ["software", "ai"],
     availability: "full-time",
@@ -511,6 +553,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Ran enterprise-skills sales at Pluralsight. Sold to L&D buyers at every Fortune 100 you've heard of. Excited about workforce-AI startups now that the buyer is finally listening.",
     lookingFor:
       "Head of enterprise sales at a workforce-AI or upskilling startup.",
+    categories: ["sales", "operator"],
+    lookingForNeeds: ["sales", "executive"],
     skills: ["enterprise-sales", "l-and-d-buyers", "saas-sales", "channel-partnerships"],
     domains: ["software", "ai"],
     availability: "full-time",
@@ -533,6 +577,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Built the planning systems at a regional 3PL serving Mountain West retail. Six years deep in WMS / TMS / dock scheduling at scale.",
     lookingFor:
       "Founding engineer at a logistics / supply-chain SaaS startup.",
+    categories: ["engineer", "operator"],
+    lookingForNeeds: ["engineer", "cofounder"],
     skills: ["supply-chain-software", "wms", "tms", "operations-research", "python"],
     domains: ["software", "advanced-manufacturing"],
     availability: "full-time",
@@ -555,6 +601,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Eight years shipping live-service games at Disney Interactive. Burned out on triple-A; want to be employee #1 or #2 at a small studio with a sharp creative thesis.",
     lookingFor:
       "Founding engineer or technical co-founder at an indie or seed-stage gaming studio.",
+    categories: ["engineer"],
+    lookingForNeeds: ["cofounder", "engineer"],
     skills: ["game-engines", "unity", "unreal", "live-service", "graphics"],
     domains: ["software", "ai"],
     availability: "full-time",
@@ -577,6 +625,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Five years writing motion-planning + control code at a warehouse-robotics company. Ready to be a founding engineer somewhere where my code is the product, not buried under a sales motion.",
     lookingFor:
       "Founding robotics engineer at an industrial-automation or fulfillment-robotics startup.",
+    categories: ["engineer"],
+    lookingForNeeds: ["engineer"],
     skills: ["motion-planning", "control-theory", "ros", "c++", "python"],
     domains: ["advanced-manufacturing", "ai"],
     availability: "full-time",
@@ -599,6 +649,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Stanford PhD in atomic physics. Three years building trapped-ion quantum sensors at a national lab. Open to advising any Utah deep-tech startup that touches precision sensing.",
     lookingFor:
       "Advisor or founding-scientist seats at quantum-sensing, navigation, or precision-measurement startups.",
+    categories: ["advisor-paid", "engineer"],
+    lookingForNeeds: ["advisor-paid", "cofounder"],
     skills: ["quantum-sensing", "trapped-ions", "precision-measurement", "experimental-physics"],
     domains: ["advanced-manufacturing"],
     availability: "advisory",
@@ -621,6 +673,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Ten years at Entrata in Lehi. Most recently VP Product over the leasing-and-renewals product line. Want to build a small thing about a specific corner of the resident experience.",
     lookingFor:
       "Founder seat at a proptech startup serving multifamily property managers. Open to co-founder if the technical match is right.",
+    categories: ["operator", "executive"],
+    lookingForNeeds: ["cofounder", "executive"],
     skills: ["product-management", "proptech", "multifamily", "saas-product"],
     domains: ["software"],
     availability: "full-time",
@@ -643,6 +697,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Founded and sold a small commercial-lines MGA in 2023. Spent fifteen years in insurance distribution before that. Excited about insurtech where AI actually changes the underwriting math.",
     lookingFor:
       "Founding ops or chief underwriting officer seat at a seed-stage insurtech.",
+    categories: ["operator", "executive"],
+    lookingForNeeds: ["operator", "executive"],
     skills: ["underwriting", "mga-operations", "p-and-c-insurance", "actuarial-strategy"],
     domains: ["fintech", "ai"],
     availability: "full-time",
@@ -665,6 +721,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Ten years building platform-eng tooling at scale. Lately a staff engineer on a self-serve k8s platform for a 600-engineer company. Want to apply that to a dev-tools startup.",
     lookingFor:
       "Founding engineer or principal eng at a dev-infra or developer-tools SaaS startup.",
+    categories: ["engineer", "operator"],
+    lookingForNeeds: ["engineer", "cofounder"],
     skills: ["kubernetes", "observability", "platform-engineering", "go", "rust"],
     domains: ["software"],
     availability: "full-time",
@@ -685,6 +743,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Built and ran developer relations at a YC dev-tools company for four years. Comfortable being the public face: conferences, docs, podcast, the works.",
     lookingFor:
       "Head of devrel at a seed-to-Series-A dev-tools company. Open to hands-on PMM if the team is small.",
+    categories: ["operator", "marketing"],
+    lookingForNeeds: ["operator", "marketing"],
     skills: ["developer-relations", "community", "technical-writing", "conference-speaking"],
     domains: ["software"],
     availability: "full-time",
@@ -707,6 +767,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Eight years in offensive security at a boutique consultancy. Discovered four CVEs in the last two years. Looking for the right early-stage security product team to plug into.",
     lookingFor:
       "Founding security researcher at a security-tooling or red-team SaaS startup.",
+    categories: ["engineer"],
+    lookingForNeeds: ["engineer"],
     skills: ["offensive-security", "vulnerability-research", "binary-exploitation", "rust", "python"],
     domains: ["cyber"],
     availability: "full-time",
@@ -729,6 +791,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Five years on radiology-AI models at a healthtech startup that sold to a hospital system. Comfortable with the regulatory + clinical-validation reality of medical-imaging AI.",
     lookingFor:
       "Founding ML engineer at a medical-imaging or clinical-AI startup. Strong preference for cardiology or oncology.",
+    categories: ["engineer", "operator"],
+    lookingForNeeds: ["engineer", "cofounder"],
     skills: ["medical-imaging", "deep-learning", "clinical-validation", "fda-submissions", "python"],
     domains: ["life-sciences", "ai"],
     availability: "full-time",
@@ -751,6 +815,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Took two Utah-based SaaS companies from their seed round through Series C. Closed three priced rounds with Pelion in the mix. Now consulting and advising 4-5 founders at a time.",
     lookingFor:
       "Fractional CFO seats or advisory roles at seed-to-Series-A startups. Sweet spot is the 12 months before a Series A close.",
+    categories: ["fractional", "advisor-paid", "executive"],
+    lookingForNeeds: ["fractional", "advisor-paid"],
     skills: ["fundraising", "fp-and-a", "saas-metrics", "board-management"],
     domains: ["software", "fintech"],
     availability: "advisory",
@@ -771,6 +837,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Three years at a Mountain West early-stage fund. Realized I want to build, not invest. Looking to land a founding ops or biz-dev role at a portfolio-shaped (seed-to-A) company.",
     lookingFor:
       "Founding biz-ops or chief-of-staff seat at a Series-A-bound startup. I bring fundraising muscle and the investor rolodex.",
+    categories: ["operator"],
+    lookingForNeeds: ["operator", "cofounder"],
     skills: ["fundraising-strategy", "competitive-analysis", "biz-dev", "investor-network"],
     domains: ["software", "fintech"],
     availability: "full-time",
@@ -791,6 +859,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Just finished my CS degree at the U with a focus on systems. Built a side-project distributed key-value store that hit 800 stars on GitHub. Want to start at a tiny team where I'll learn the most.",
     lookingFor:
       "Junior or new-grad engineer role at a seed-stage Utah startup. Open to anything in software, infra, or developer tools.",
+    categories: ["student", "engineer"],
+    lookingForNeeds: ["engineer", "student"],
     skills: ["distributed-systems", "go", "rust", "python", "operating-systems"],
     domains: ["software"],
     availability: "full-time",
@@ -811,6 +881,8 @@ export const LIVE_TALENT: TalentDTO[] = [
     bio: "Solo design consultant, eight years in. Built brand systems for a dozen seed-stage startups. Open to a founding-design role, but only if the founder cares about design as a strategic asset, not a deliverable.",
     lookingFor:
       "Founding designer at a pre-seed / seed startup, OR design contracts (12 weeks, fixed fee).",
+    categories: ["fractional", "marketing"],
+    lookingForNeeds: ["cofounder", "fractional", "marketing"],
     skills: ["brand-design", "visual-systems", "design-strategy", "logo-and-identity"],
     domains: ["software", "fintech"],
     availability: "advisory",
