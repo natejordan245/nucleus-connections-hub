@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { ExplainabilityPanel } from "@/components/ExplainabilityPanel";
+import { GapCloser } from "@/components/GapCloser";
 import { Pill } from "@/components/Pill";
 import { SocialLinks } from "@/components/SocialLinks";
 import { getDataStore } from "@/lib/data";
@@ -14,10 +15,15 @@ export default async function StartupProfilePage({ params }: { params: { id: str
   const startup = await store.getStartup(params.id);
   if (!startup) notFound();
 
-  const matches = viewerId ? await store.matchesFor(viewerId) : [];
+  const [matches, viewerTalent, resources] = await Promise.all([
+    viewerId ? store.matchesFor(viewerId) : Promise.resolve([]),
+    viewerId ? store.getTalent(viewerId) : Promise.resolve(null),
+    store.listResources(),
+  ]);
   const match = matches.find(
     (m) => m.candidateId === startup.id && m.candidateKind === "startup",
   );
+  const showGapCloser = Boolean(viewerTalent && (match ? match.score < 1 : true));
 
   return (
       <main className="mx-auto w-full max-w-5xl px-8 py-10">
@@ -84,6 +90,13 @@ export default async function StartupProfilePage({ params }: { params: { id: str
                   This profile isn't currently in your matches.
                 </p>
               </Card>
+            )}
+            {showGapCloser && viewerTalent && (
+              <GapCloser
+                talent={viewerTalent}
+                startup={startup}
+                resources={resources}
+              />
             )}
           </aside>
         </div>

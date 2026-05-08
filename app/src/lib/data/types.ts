@@ -145,6 +145,12 @@ export type ResourceDTO = {
   kind: ResourceKind;
   url: string;
   tags: string[];
+  /**
+   * Short text suitable for an embedding — captures *what gap this closes*.
+   * Used by the gap-closer recommender (and, eventually, vectorized for
+   * semantic match against a talent ↔ startup gap description from an LLM).
+   */
+  summary: string;
   uploadedById: string | null;
   uploadedByName: string;
   createdAt: string;

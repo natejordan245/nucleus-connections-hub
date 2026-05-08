@@ -24,6 +24,7 @@ export async function POST(req: Request) {
     kind: body.kind ?? "link",
     url: body.url,
     tags: body.tags ?? [],
+    summary: body.summary ?? body.description ?? "",
     uploadedById: body.uploadedById ?? null,
     uploadedByName: body.uploadedByName ?? "Anonymous",
     createdAt: body.createdAt ?? new Date().toISOString(),

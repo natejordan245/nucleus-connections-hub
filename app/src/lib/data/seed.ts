@@ -415,7 +415,9 @@ export const baselineResources: ResourceDTO[] = [
       "How U of U faculty take inventions through licensing, IP, and the spinout incorporation path. Read this before your first conversation with the TTO.",
     kind: "guide",
     url: "https://example.com/uta-tto-handbook",
-    tags: ["tto", "spinout", "ip", "u-of-u"],
+    tags: ["tto", "spinout", "ip", "u-of-u", "regulatory"],
+    summary:
+      "Closes the gap for operators new to university-spinout mechanics — IP assignment, sponsored research, and the equity-split conversation with the TTO. Especially useful for first-time CEOs joining a U of U or BYU spinout.",
     uploadedById: null,
     uploadedByName: "Nucleus team",
     createdAt: "2026-04-22T15:30:00.000Z",
@@ -427,7 +429,9 @@ export const baselineResources: ResourceDTO[] = [
       "Common term-sheet shapes from Pelion, Park City Angels, and the local family offices. Pre-seed → Series A.",
     kind: "playbook",
     url: "https://example.com/utah-cap-table",
-    tags: ["fundraising", "cap-table", "term-sheet"],
+    tags: ["fundraising", "cap-table", "term-sheet", "ceo", "cfo"],
+    summary:
+      "Closes the gap on fundraising mechanics for first-time CEOs and founding GTM leaders — SAFEs vs priced rounds, dilution math through Series A, and the Utah-specific norms set by Pelion and the local angel groups.",
     uploadedById: "tal-david",
     uploadedByName: "David Holm",
     createdAt: "2026-04-30T09:15:00.000Z",
@@ -439,7 +443,9 @@ export const baselineResources: ResourceDTO[] = [
       "10 signals investors at Pelion look for before a Series A. Curated from the founders they've backed.",
     kind: "guide",
     url: "https://example.com/pmf-checklist",
-    tags: ["pmf", "fundraising", "growth"],
+    tags: ["pmf", "fundraising", "growth", "biz-dev", "ceo"],
+    summary:
+      "Closes the gap for sales-leaders or operators stepping into a CEO seat — how to read pre-Series-A traction, distinguish PMF from churn-masked growth, and frame the metrics narrative for Utah investors.",
     uploadedById: null,
     uploadedByName: "Nucleus team",
     createdAt: "2026-04-15T12:00:00.000Z",
@@ -451,7 +457,9 @@ export const baselineResources: ResourceDTO[] = [
       "A primer from a U of U bioengineering grad student covering wet-lab basics through device prototyping.",
     kind: "video",
     url: "https://example.com/microfluidics-101",
-    tags: ["bioengineering", "diagnostics", "u-of-u"],
+    tags: ["bioengineering", "diagnostics", "u-of-u", "engineering", "regulatory"],
+    summary:
+      "Closes the wet-lab fluency gap for ML / dry-lab engineers joining a diagnostics or life-sciences spinout — enough microfluidics literacy to talk shop with the bench scientists on the team.",
     uploadedById: "tal-priya",
     uploadedByName: "Priya Patel",
     createdAt: "2026-05-01T20:00:00.000Z",
@@ -463,10 +471,40 @@ export const baselineResources: ResourceDTO[] = [
       "How Nucleus formats double-opt-in introductions when a match goes mutual. Drop-in template, customize the why.",
     kind: "deck",
     url: "https://example.com/affinity-intro-template",
-    tags: ["intro", "affinity", "ops"],
+    tags: ["intro", "affinity", "ops", "biz-dev"],
+    summary:
+      "Closes the gap for biz-dev folks new to operator-mediated intros — what a Nucleus-quality introduction looks like, what to put in the 'why' line, and how to keep both sides leaning in.",
     uploadedById: null,
     uploadedByName: "Nucleus team",
     createdAt: "2026-05-05T14:30:00.000Z",
+  },
+  {
+    id: "res-enterprise-sales-discovery",
+    title: "Enterprise sales discovery in regulated sectors",
+    description:
+      "Discovery-call frameworks for selling into healthcare, security, and other compliance-heavy markets. Walks through MEDDIC adapted for procurement-led buyers.",
+    kind: "playbook",
+    url: "https://example.com/enterprise-sales-discovery",
+    tags: ["sales-lead", "enterprise-sales", "discovery", "regulatory", "cyber"],
+    summary:
+      "Closes the gap for vertical-SaaS sales leaders moving into compliance or security buyers — discovery questions that surface budget, authority, and procurement timelines specific to regulated industries.",
+    uploadedById: "tal-david",
+    uploadedByName: "David Holm",
+    createdAt: "2026-05-06T11:00:00.000Z",
+  },
+  {
+    id: "res-ml-infra-bio",
+    title: "ML infrastructure for life-sciences teams",
+    description:
+      "How to set up reproducible training + inference pipelines for biotech R&D, including the LIMS-adjacent integrations.",
+    kind: "guide",
+    url: "https://example.com/ml-infra-bio",
+    tags: ["ml-infra", "engineering", "cto", "life-sciences"],
+    summary:
+      "Closes the gap for ML / dry-lab engineers joining a biotech spinout — reproducible training, GPU choices, and the LIMS / wet-lab data integrations that come up in real bio engineering.",
+    uploadedById: "tal-marcus",
+    uploadedByName: "Marcus Okafor",
+    createdAt: "2026-05-04T16:45:00.000Z",
   },
 ];
 
