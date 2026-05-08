@@ -811,6 +811,140 @@ export class SupabaseDataStore implements IDataStore {
     return message;
   }
 
+  // ── gap-closing resource recommender ──────────────────────────────────────
+  // Pulls the cached LLM verdict for the pair, builds a "gap text" out of the
+  // weak/miss factors + concerns, embeds it, and cosine-matches against every
+  // embedded resource. Falls back to a structural gap text if no LLM verdict
+  // is cached.
+  async recommendGapResources({
+    subjectId,
+    candidateId,
+    limit = 3,
+  }: {
+    subjectId: string;
+    candidateId: string;
+    limit?: number;
+  }): Promise<{ gapText: string; resources: ResourceDTO[] }> {
+    const sb = await this.getClient();
+
+    // 1. Find an LLM verdict — try (subject, candidate) first, then reverse
+    // (the cache is direction-specific but both sides give us the gap signal).
+    const { data: verdictRows } = await sb
+      .from("match_summaries")
+      .select("subject_id, candidate_id, factors, concerns")
+      .or(
+        `and(subject_id.eq.${subjectId},candidate_id.eq.${candidateId}),and(subject_id.eq.${candidateId},candidate_id.eq.${subjectId})`,
+      );
+    const verdict = (verdictRows ?? []).find(
+      (r) => (r as { subject_id: string }).subject_id === subjectId,
+    ) ?? verdictRows?.[0];
+
+    // 2. Build the gap text. The LLM gave us per-factor verdicts (strong / ok /
+    // weak / miss) plus short concern strings — the weak/miss factors and the
+    // concerns are exactly the gap signal we want to embed.
+    const gapText = await this.buildGapText(
+      sb,
+      subjectId,
+      candidateId,
+      verdict as
+        | {
+            factors?: Array<{ label: string; verdict: string; detail: string }>;
+            concerns?: string[];
+          }
+        | undefined,
+    );
+    if (!gapText) return { gapText: "", resources: [] };
+
+    // 3. Embed + cosine-rank resources.
+    const queryVec = await embed(gapText);
+    if (!queryVec) return { gapText, resources: [] };
+
+    const { data: resourceRows } = await sb
+      .from("resources")
+      .select("*")
+      .not("embedding", "is", null);
+
+    const ranked = ((resourceRows ?? []) as ResourceRow[])
+      .map((r) => {
+        const vec = parseVector(r.embedding);
+        if (!vec) return null;
+        return { row: r, sim: cosineSimilarity(queryVec, vec) };
+      })
+      .filter((x): x is { row: ResourceRow; sim: number } => x !== null)
+      .sort((a, b) => b.sim - a.sim)
+      .slice(0, limit);
+
+    return {
+      gapText,
+      resources: ranked.map((r) => this.rowToResource(r.row)),
+    };
+  }
+
+  private async buildGapText(
+    sb: SupabaseClient,
+    subjectId: string,
+    candidateId: string,
+    verdict?: {
+      factors?: Array<{ label: string; verdict: string; detail: string }>;
+      concerns?: string[];
+    },
+  ): Promise<string> {
+    // Preferred path: LLM verdict in cache. Take the weak/miss factor details
+    // and the concerns — they describe the gap in natural language.
+    if (verdict?.factors?.length || verdict?.concerns?.length) {
+      const weak = (verdict.factors ?? [])
+        .filter((f) => f.verdict === "weak" || f.verdict === "miss")
+        .map((f) => `${f.label}: ${f.detail}`);
+      const concerns = verdict.concerns ?? [];
+      const parts = [...weak, ...concerns].filter(Boolean);
+      if (parts.length > 0) {
+        return [
+          "What would close the gap between this match:",
+          ...parts.map((p) => `- ${p}`),
+        ].join("\n");
+      }
+    }
+
+    // Fallback: no LLM cache yet. Pull both rows and synthesize a structural
+    // gap text from raw embedding_text fields. Less precise, still useful.
+    const { data: rows } = await sb
+      .from("profiles")
+      .select("id, kind, name, embedding_wants_text, embedding_text")
+      .in("id", [subjectId, candidateId]);
+    if (!rows || rows.length < 2) return "";
+    const subject = rows.find(
+      (r) => (r as { id: string }).id === subjectId,
+    ) as
+      | {
+          id: string;
+          kind: string;
+          name: string;
+          embedding_text: string | null;
+          embedding_wants_text: string | null;
+        }
+      | undefined;
+    const candidate = rows.find(
+      (r) => (r as { id: string }).id === candidateId,
+    ) as
+      | {
+          id: string;
+          kind: string;
+          name: string;
+          embedding_text: string | null;
+          embedding_wants_text: string | null;
+        }
+      | undefined;
+    if (!subject || !candidate) return "";
+
+    return [
+      `${subject.name} is interested in ${candidate.name} but isn't a perfect match.`,
+      `What ${subject.name} is currently looking for: ${subject.embedding_wants_text ?? "(unknown)"}`,
+      `What ${candidate.name} is looking for: ${candidate.embedding_wants_text ?? "(unknown)"}`,
+      `What ${candidate.name} is: ${candidate.embedding_text ?? "(unknown)"}`,
+      "Surface resources that would help close the gap.",
+    ].join("\n\n");
+  }
+
   // ── admin lookup ──────────────────────────────────────────────────────────
   // Public so the API layer can fan out admin notifications without reaching
   // into internals. Resolves ADMIN_EMAILS to profile ids.

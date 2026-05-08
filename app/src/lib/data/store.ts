@@ -66,4 +66,13 @@ export interface IDataStore {
   // admin notification fan-out: resolves the admin user ids the platform
   // should ping when a mutual match happens.
   resolveAdminUserIds(): Promise<string[]>;
+
+  // gap-closing resources: for a (subject, candidate) pair, build a
+  // description of why they're not a perfect match and surface the top
+  // resources whose summary embeddings nearest-neighbor that gap.
+  recommendGapResources(args: {
+    subjectId: string;
+    candidateId: string;
+    limit?: number;
+  }): Promise<{ gapText: string; resources: ResourceDTO[] }>;
 }

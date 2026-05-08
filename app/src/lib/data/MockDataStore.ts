@@ -234,4 +234,32 @@ export class MockDataStore implements IDataStore {
   async resolveAdminUserIds() {
     return DEMO_PERSONAS.filter((p) => p.role === "admin").map((p) => p.id);
   }
+
+  // Mock gap-resource recommender. The demo data layer can't run real OpenAI
+  // calls server-side every page load (no auth / no key), so this falls back
+  // to the keyword-overlap heuristic in lib/match/gap.ts. It still returns
+  // reasonable results because baselineResources have hand-tuned tags.
+  async recommendGapResources({
+    subjectId,
+    candidateId,
+    limit = 3,
+  }: {
+    subjectId: string;
+    candidateId: string;
+    limit?: number;
+  }) {
+    const talent = talentMap.get(subjectId) ?? talentMap.get(candidateId);
+    const startup = startupMap.get(candidateId) ?? startupMap.get(subjectId);
+    if (!talent || !startup) {
+      return { gapText: "", resources: [] as ResourceDTO[] };
+    }
+    const { analyzeGap, recommendResourcesForGap } = await import("@/lib/match/gap");
+    const analysis = analyzeGap(talent, startup);
+    const resources = recommendResourcesForGap(
+      analysis.gaps,
+      [...resourceMap.values()],
+      limit,
+    );
+    return { gapText: analysis.description, resources };
+  }
 }
