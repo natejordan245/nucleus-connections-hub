@@ -1,37 +1,70 @@
-import { AppSidebar, type SidebarViewer } from "./AppSidebar";
+import Link from "next/link";
+import { DelicateArch } from "./DelicateArch";
 import { ModeBadge } from "./ModeBadge";
-import { NotificationBell } from "./NotificationBell";
+
+export type HeaderViewer = {
+  id: string;
+  name: string;
+  photoUrl?: string;
+  profileHref: string | null;
+  isAdmin?: boolean;
+};
 
 export function AppShell({
   viewer,
   deckBar,
   children,
 }: {
-  viewer: SidebarViewer | null;
+  viewer: HeaderViewer | null;
   deckBar?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-paper">
-      <AppSidebar viewer={viewer} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        {deckBar}
-        <header className="flex h-16 items-center justify-end gap-3 border-b border-warmgray-100 bg-white px-6">
-          <ModeBadge />
-          {viewer && <NotificationBell viewerId={viewer.id} />}
-          {viewer && (
-            <form action="/auth/signout" method="post">
-              <button
-                type="submit"
+    <div className="min-h-screen bg-paper">
+      {deckBar}
+      <header className="border-b border-warmgray-100 bg-white">
+        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-8">
+          <Link
+            href={viewer ? "/dashboard" : "/"}
+            className="flex items-center gap-3"
+          >
+            <DelicateArch className="h-7 w-7 text-orange-500" aria-hidden />
+            <span className="font-serif text-base font-semibold text-ink">
+              Nucleus
+            </span>
+          </Link>
+
+          <div className="flex items-center gap-3">
+            <ModeBadge />
+            {viewer ? (
+              <>
+                <Link
+                  href={viewer.profileHref ?? "/profile"}
+                  className="text-sm font-medium text-warmgray-700 hover:text-ink"
+                >
+                  Profile
+                </Link>
+                <form action="/auth/signout" method="post">
+                  <button
+                    type="submit"
+                    className="text-sm font-medium text-warmgray-700 hover:text-ink"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              </>
+            ) : (
+              <Link
+                href="/login"
                 className="text-sm font-medium text-warmgray-700 hover:text-ink"
               >
-                Sign out
-              </button>
-            </form>
-          )}
-        </header>
-        <div className="flex-1">{children}</div>
-      </div>
+                Sign in
+              </Link>
+            )}
+          </div>
+        </div>
+      </header>
+      <div>{children}</div>
     </div>
   );
 }
