@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { DelicateArch } from "@/components/DelicateArch";
 import { ModeBadge } from "@/components/ModeBadge";
-import { APP_MODE } from "@/lib/mode";
+import { getAppMode } from "@/lib/mode";
 import { getViewer } from "@/lib/session";
 
 export default async function LandingPage() {
   const viewer = await getViewer();
   const signedIn = viewer.kind !== "anon";
   const ctaHref = signedIn ? "/dashboard" : "/login";
-  const ctaLabel = signedIn ? "Open dashboard" : APP_MODE === "demo" ? "Try the demo" : "Sign in";
+  const mode = getAppMode();
+  const ctaLabel = signedIn ? "Open dashboard" : mode === "demo" ? "Try the demo" : "Sign in";
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -53,10 +54,10 @@ export default async function LandingPage() {
           </h1>
 
           <p className="mt-7 max-w-lg text-base leading-relaxed text-warmgray-600">
-            We pair operators, executives, students, and advisors with Utah
-            deep-tech startups and university spinouts — using embeddings, an
-            LLM re-ranker that explains every match, and a Utah-specific
-            ecosystem graph that LinkedIn cannot see.
+            Operators, executives, students, and advisors — paired with Utah's
+            deep-tech startups and university spinouts. Every introduction comes
+            with a clear reason it was made, drawn from Utah's labs,
+            accelerators, and alumni networks.
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-4">
@@ -68,7 +69,7 @@ export default async function LandingPage() {
               <span aria-hidden className="transition group-hover:translate-x-0.5">→</span>
             </Link>
 
-            {!signedIn && APP_MODE === "real" && (
+            {!signedIn && mode === "live" && (
               <Link
                 href="/login?mode=demo"
                 className="text-sm font-medium text-warmgray-600 hover:text-ink"
@@ -78,11 +79,11 @@ export default async function LandingPage() {
             )}
           </div>
 
-          <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6">
-            <Stat label="Utah orgs" value="42" />
-            <Stat label="Embedding dim" value="1536" />
-            <Stat label="Match modes" value="3" />
-          </dl>
+          <ul className="mt-12 grid max-w-lg grid-cols-1 gap-3 text-sm text-warmgray-700">
+            <Bullet>Find your next hire, advisor, or co-founder.</Bullet>
+            <Bullet>See exactly why each match was suggested.</Bullet>
+            <Bullet>Built around Utah's research, capital, and talent.</Bullet>
+          </ul>
         </div>
 
         <ArchPanel />
@@ -96,12 +97,12 @@ export default async function LandingPage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Bullet({ children }: { children: React.ReactNode }) {
   return (
-    <div>
-      <dt className="eyebrow text-warmgray-400">{label}</dt>
-      <dd className="mt-1 font-serif text-2xl font-semibold text-ink">{value}</dd>
-    </div>
+    <li className="flex items-start gap-3">
+      <span aria-hidden className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-orange-500" />
+      <span>{children}</span>
+    </li>
   );
 }
 

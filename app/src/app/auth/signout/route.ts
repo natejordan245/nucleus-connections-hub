@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
-import { APP_MODE, DEMO_COOKIE } from "@/lib/mode";
+import { DEMO_COOKIE, getAppMode } from "@/lib/mode";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
-  if (APP_MODE === "demo") {
+  if (getAppMode() === "demo") {
     cookies().delete(DEMO_COOKIE);
   } else {
     try {
