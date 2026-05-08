@@ -197,21 +197,48 @@ export class SupabaseDataStore implements IDataStore {
     const sb = await this.getClient();
     const q = query.trim();
     if (!q) {
-      const [talent, startups] = await Promise.all([this.listTalent(), this.listStartups()]);
-      return { talent, startups, resources: [] as ResourceDTO[] };
+      const [talent, startups, resources] = await Promise.all([
+        this.listTalent(),
+        this.listStartups(),
+        this.listResources(),
+      ]);
+      return { talent, startups, resources };
     }
     const pattern = `%${q.replace(/[%_]/g, "\\$&")}%`;
-    const { data, error } = await sb
+
+    // ILIKE the columnar fields; also reach into the `data` JSONB so
+    // skills / lookingFor / needs participate in keyword search.
+    const profilesQuery = sb
       .from("profiles")
       .select("*")
-      .or(`name.ilike.${pattern},headline.ilike.${pattern},bio.ilike.${pattern}`)
+      .or(
+        [
+          `name.ilike.${pattern}`,
+          `headline.ilike.${pattern}`,
+          `bio.ilike.${pattern}`,
+          `embedding_text.ilike.${pattern}`,
+        ].join(","),
+      )
       .limit(50);
-    if (error) throw error;
-    const rows = (data ?? []) as ProfileRow[];
+
+    const resourcesQuery = sb
+      .from("resources")
+      .select("*")
+      .or(
+        `title.ilike.${pattern},description.ilike.${pattern},summary.ilike.${pattern}`,
+      )
+      .limit(25);
+
+    const [{ data: profileRows, error: profileErr }, { data: resourceRows, error: resourceErr }] =
+      await Promise.all([profilesQuery, resourcesQuery]);
+    if (profileErr) throw profileErr;
+    if (resourceErr) throw resourceErr;
+
+    const rows = (profileRows ?? []) as ProfileRow[];
     return {
       talent: rows.filter((r) => r.kind === "talent").map((r) => this.rowToTalent(r)),
       startups: rows.filter((r) => r.kind === "startup").map((r) => this.rowToStartup(r)),
-      resources: [] as ResourceDTO[], // resources table not yet wired for live mode
+      resources: ((resourceRows ?? []) as ResourceRow[]).map((r) => this.rowToResource(r)),
     };
   }
 
