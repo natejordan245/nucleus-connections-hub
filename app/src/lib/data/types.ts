@@ -215,7 +215,17 @@ export type NotificationDTO = {
   readAt: string | null;
 };
 
-export type ResourceKind = "guide" | "video" | "deck" | "playbook" | "link";
+export type ResourceKind =
+  | "guide"
+  | "video"
+  | "deck"
+  | "playbook"
+  | "link"
+  | "program"
+  | "funding"
+  | "network"
+  | "mentor"
+  | "event";
 
 export type ResourceDTO = {
   id: string;

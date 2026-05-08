@@ -4,6 +4,7 @@ import type {
   FundingStatus,
   Network,
   Origin,
+  ResourceKind,
   Sector,
   Stage,
   StartupNeed,
@@ -110,6 +111,19 @@ export const NETWORK_BLURBS: Record<Network, string> = {
   "service-provider": "Lawyers, designers, accountants, agencies.",
 };
 
+export const RESOURCE_KIND_LABELS: Record<ResourceKind, string> = {
+  "guide":    "Guide",
+  "video":    "Video",
+  "deck":     "Deck",
+  "playbook": "Playbook",
+  "link":     "Link",
+  "program":  "Program",
+  "funding":  "Funding",
+  "network":  "Network",
+  "mentor":   "Mentor",
+  "event":    "Event",
+};
+
 export const AVAILABILITIES = Object.keys(AVAILABILITY_LABELS) as Availability[];
 export const COMPENSATIONS = Object.keys(COMPENSATION_LABELS) as Compensation[];
 export const STAGES = Object.keys(STAGE_LABELS) as Stage[];
@@ -119,6 +133,7 @@ export const NEEDS = Object.keys(NEED_LABELS) as StartupNeed[];
 export const TALENT_CATEGORIES = Object.keys(TALENT_CATEGORY_LABELS) as TalentCategory[];
 export const FUNDING_STATUSES = Object.keys(FUNDING_STATUS_LABELS) as FundingStatus[];
 export const NETWORKS = Object.keys(NETWORK_LABELS) as Network[];
+export const RESOURCE_KINDS = Object.keys(RESOURCE_KIND_LABELS) as ResourceKind[];
 
 export const ROLE_NEEDS: StartupNeed[] = [
   "executive",
