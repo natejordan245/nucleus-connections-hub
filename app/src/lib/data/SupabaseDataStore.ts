@@ -10,6 +10,13 @@ import type {
   UtahOrg,
 } from "./types";
 import type { IDataStore, VoteSide } from "./store";
+import {
+  cosineSimilarity,
+  embed,
+  textForResource,
+  textForStartup,
+  textForTalent,
+} from "@/lib/embedding/embed";
 
 /**
  * Live-mode data store. Reads/writes the `profiles` table (see migration
@@ -99,6 +106,21 @@ export class SupabaseDataStore implements IDataStore {
       location,
       photo_url: photoUrl ?? null,
       data: rest,
+    };
+  }
+
+  private rowToResource(row: ResourceRow): ResourceDTO {
+    return {
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      kind: row.kind,
+      url: row.url,
+      tags: row.tags ?? [],
+      summary: row.summary,
+      uploadedById: row.uploaded_by_id,
+      uploadedByName: row.uploaded_by_name,
+      createdAt: row.created_at,
     };
   }
 
@@ -194,13 +216,51 @@ export class SupabaseDataStore implements IDataStore {
   }
 
   async listResources(): Promise<ResourceDTO[]> {
-    return [];
+    const sb = await this.getClient();
+    const { data, error } = await sb
+      .from("resources")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((r) => this.rowToResource(r as ResourceRow));
   }
-  async getResource(_id: string): Promise<ResourceDTO | null> {
-    return null;
+  async getResource(id: string): Promise<ResourceDTO | null> {
+    const sb = await this.getClient();
+    const { data, error } = await sb
+      .from("resources")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? this.rowToResource(data as ResourceRow) : null;
   }
-  async putResource(_r: ResourceDTO) {
-    return this.notImplemented("putResource");
+  async putResource(r: ResourceDTO): Promise<ResourceDTO> {
+    const sb = await this.getClient();
+    const embText = textForResource(r);
+    const vec = await embed(embText);
+    const payload: ResourceRowInsert = {
+      title: r.title,
+      description: r.description,
+      kind: r.kind,
+      url: r.url,
+      tags: r.tags,
+      summary: r.summary,
+      uploaded_by_id: r.uploadedById,
+      uploaded_by_name: r.uploadedByName,
+      embedding_text: embText,
+      embedding: vec ? toVectorLiteral(vec) : null,
+    };
+    // Use the DTO id when it's a UUID; otherwise let the DB generate one.
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(r.id);
+    if (isUuid) (payload as ResourceRowInsert & { id?: string }).id = r.id;
+
+    const { data, error } = await sb
+      .from("resources")
+      .upsert(payload, { onConflict: "id" })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return this.rowToResource(data as ResourceRow);
   }
 
   // ── writes ───────────────────────────────────────────────────────────────
@@ -208,9 +268,16 @@ export class SupabaseDataStore implements IDataStore {
   async putTalent(t: TalentDTO): Promise<TalentDTO> {
     const sb = await this.getClient();
     const row = this.talentToRow(t);
+    const embText = textForTalent(t);
+    const vec = await embed(embText);
+    const payload = {
+      ...row,
+      embedding_text: embText,
+      embedding: vec ? toVectorLiteral(vec) : null,
+    };
     const { data, error } = await sb
       .from("profiles")
-      .upsert(row, { onConflict: "id" })
+      .upsert(payload, { onConflict: "id" })
       .select("*")
       .single();
     if (error) throw error;
@@ -220,9 +287,16 @@ export class SupabaseDataStore implements IDataStore {
   async putStartup(s: StartupDTO): Promise<StartupDTO> {
     const sb = await this.getClient();
     const row = this.startupToRow(s);
+    const embText = textForStartup(s);
+    const vec = await embed(embText);
+    const payload = {
+      ...row,
+      embedding_text: embText,
+      embedding: vec ? toVectorLiteral(vec) : null,
+    };
     const { data, error } = await sb
       .from("profiles")
-      .upsert(row, { onConflict: "id" })
+      .upsert(payload, { onConflict: "id" })
       .select("*")
       .single();
     if (error) throw error;
@@ -239,10 +313,75 @@ export class SupabaseDataStore implements IDataStore {
     );
   }
 
-  async matchesFor(_id: string): Promise<MatchDTO[]> {
-    // Match table doesn't exist yet — return empty so live-mode pages render
-    // without throwing.
-    return [];
+  async matchesFor(viewerId: string): Promise<MatchDTO[]> {
+    const sb = await this.getClient();
+    const { data: viewerRow, error: viewerErr } = await sb
+      .from("profiles")
+      .select("*")
+      .eq("id", viewerId)
+      .maybeSingle();
+    if (viewerErr || !viewerRow) return [];
+    const viewer = viewerRow as ProfileRow;
+
+    if (!viewer.embedding) return []; // no signal yet
+
+    const oppositeKind: "talent" | "startup" =
+      viewer.kind === "talent" ? "startup" : "talent";
+
+    // Pull every candidate of the opposite kind that's already been embedded.
+    // The pgvector index will eventually drive this via ORDER BY <=>; for now
+    // we cosine in JS so the supabase-js / vector serialization quirks don't
+    // block us from a working pipeline.
+    const { data: candRows, error: candErr } = await sb
+      .from("profiles")
+      .select("*")
+      .eq("kind", oppositeKind)
+      .not("embedding", "is", null);
+    if (candErr || !candRows) return [];
+
+    const viewerVec = parseVector(viewer.embedding);
+    if (!viewerVec) return [];
+
+    const ranked = candRows
+      .map((row) => {
+        const r = row as ProfileRow;
+        const candVec = parseVector(r.embedding);
+        if (!candVec) return null;
+        const sim = cosineSimilarity(viewerVec, candVec);
+        return { row: r, sim };
+      })
+      .filter((x): x is { row: ProfileRow; sim: number } => x !== null)
+      .sort((a, b) => b.sim - a.sim)
+      .slice(0, 10);
+
+    return ranked.map((m) => this.toMatchDTO(viewer, m.row, m.sim));
+  }
+
+  private toMatchDTO(
+    viewer: ProfileRow,
+    cand: ProfileRow,
+    sim: number,
+  ): MatchDTO {
+    const score = clamp01((sim + 1) / 2); // map cosine [-1,1] → [0,1]
+    const reason = `Top semantic match against ${viewer.name}'s bio and lookingFor. (Live ranker is vector-only today; LLM rerank lands next.)`;
+    return {
+      id: `live-${viewer.id}-${cand.id}`,
+      subjectId: viewer.id,
+      candidateId: cand.id,
+      candidateKind: cand.kind,
+      score,
+      reason,
+      concerns: [],
+      factors: [
+        {
+          label: "Semantic similarity",
+          weight: score,
+          detail: `Cosine ${sim.toFixed(3)} against ${cand.name}'s embedding text.`,
+        },
+      ],
+      proximityBoost: 0,
+      sharedOrgIds: [],
+    };
   }
   async vote(_args: { talentId: string; startupId: string; side: VoteSide; state: "interested" | "pass" }) {
     return this.notImplemented("vote");
@@ -270,6 +409,39 @@ export class SupabaseDataStore implements IDataStore {
   }
 }
 
+// ── pgvector helpers ────────────────────────────────────────────────────────
+// pgvector wants `vector` literals as `'[v1,v2,...]'` strings on the wire.
+// supabase-js will pass them through as-is when the column type is `vector`.
+
+function toVectorLiteral(v: number[]): string {
+  return `[${v.join(",")}]`;
+}
+
+function parseVector(input: unknown): number[] | null {
+  if (!input) return null;
+  if (Array.isArray(input)) {
+    return (input as unknown[]).every((n) => typeof n === "number")
+      ? (input as number[])
+      : null;
+  }
+  if (typeof input === "string") {
+    try {
+      const parsed = JSON.parse(input);
+      if (Array.isArray(parsed) && parsed.every((n) => typeof n === "number")) {
+        return parsed as number[];
+      }
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function clamp01(n: number): number {
+  if (Number.isNaN(n)) return 0;
+  return n < 0 ? 0 : n > 1 ? 1 : n;
+}
+
 // ── row shapes ──────────────────────────────────────────────────────────────
 
 type ProfileRow = {
@@ -284,6 +456,8 @@ type ProfileRow = {
   data: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+  embedding_text: string | null;
+  embedding: unknown;
 };
 
 type ProfileRowInsert = {
@@ -296,4 +470,33 @@ type ProfileRowInsert = {
   location: string | null;
   photo_url: string | null;
   data: Record<string, unknown>;
+};
+
+type ResourceRow = {
+  id: string;
+  title: string;
+  description: string;
+  kind: ResourceDTO["kind"];
+  url: string;
+  tags: string[];
+  summary: string;
+  uploaded_by_id: string | null;
+  uploaded_by_name: string;
+  created_at: string;
+  updated_at: string;
+  embedding_text: string | null;
+  embedding: unknown;
+};
+
+type ResourceRowInsert = {
+  title: string;
+  description: string;
+  kind: ResourceDTO["kind"];
+  url: string;
+  tags: string[];
+  summary: string;
+  uploaded_by_id: string | null;
+  uploaded_by_name: string;
+  embedding_text: string | null;
+  embedding: string | null;
 };
