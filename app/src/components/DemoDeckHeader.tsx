@@ -24,13 +24,20 @@ export function DemoDeckHeader({ active }: { active: boolean }) {
 
   useEffect(() => {
     if (!active) return;
+    function go(path: string, external: boolean | undefined) {
+      if (external) {
+        window.location.href = path;
+      } else {
+        router.push(path);
+      }
+    }
     function onKey(e: KeyboardEvent) {
       if (e.target instanceof HTMLElement) {
         const tag = e.target.tagName;
         if (tag === "INPUT" || tag === "TEXTAREA" || e.target.isContentEditable) return;
       }
-      if (e.key === "ArrowRight" && next) router.push(next.path);
-      if (e.key === "ArrowLeft" && prev) router.push(prev.path);
+      if (e.key === "ArrowRight" && next) go(next.path, next.external);
+      if (e.key === "ArrowLeft" && prev) go(prev.path, prev.external);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -48,21 +55,28 @@ export function DemoDeckHeader({ active }: { active: boolean }) {
         <nav className="flex flex-1 items-center gap-0.5 overflow-x-auto">
           {SLIDES.map((s) => {
             const isActive = s.index === idx;
-            return (
-              <Link
-                key={s.index}
-                href={s.path}
-                className={
-                  "relative inline-flex items-center gap-2 whitespace-nowrap px-3 py-2 text-xs font-medium transition " +
-                  (isActive
-                    ? "text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-orange-500"
-                    : "text-warmgray-600 hover:text-ink")
-                }
-              >
+            const className =
+              "relative inline-flex items-center gap-2 whitespace-nowrap px-3 py-2 text-xs font-medium transition " +
+              (isActive
+                ? "text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-orange-500"
+                : s.external
+                  ? "text-orange-600 hover:text-orange-700"
+                  : "text-warmgray-600 hover:text-ink");
+            const inner = (
+              <>
                 <span className="font-mono text-[10px] text-warmgray-400">
                   {s.index + 1}
                 </span>
                 {s.title}
+              </>
+            );
+            return s.external ? (
+              <a key={s.index} href={s.path} className={className}>
+                {inner}
+              </a>
+            ) : (
+              <Link key={s.index} href={s.path} className={className}>
+                {inner}
               </Link>
             );
           })}
@@ -72,7 +86,11 @@ export function DemoDeckHeader({ active }: { active: boolean }) {
           <button
             type="button"
             disabled={!prev}
-            onClick={() => prev && router.push(prev.path)}
+            onClick={() => {
+              if (!prev) return;
+              if (prev.external) window.location.href = prev.path;
+              else router.push(prev.path);
+            }}
             aria-label="Previous slide"
             className="inline-flex h-8 w-8 items-center justify-center rounded-full text-warmgray-700 transition hover:bg-warmgray-50 hover:text-ink disabled:opacity-30"
           >
@@ -81,11 +99,27 @@ export function DemoDeckHeader({ active }: { active: boolean }) {
           <button
             type="button"
             disabled={!next}
-            onClick={() => next && router.push(next.path)}
+            onClick={() => {
+              if (!next) return;
+              if (next.external) window.location.href = next.path;
+              else router.push(next.path);
+            }}
             aria-label="Next slide"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-ink text-white transition hover:bg-warmgray-800 disabled:opacity-30"
+            className={
+              "inline-flex h-8 items-center justify-center rounded-full text-white transition disabled:opacity-30 " +
+              (next?.external
+                ? "gap-1 bg-orange-500 px-3 hover:bg-orange-600"
+                : "w-8 bg-ink hover:bg-warmgray-800")
+            }
           >
-            <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden />
+            {next?.external ? (
+              <>
+                <span className="text-xs font-semibold">Try it for real</span>
+                <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden />
+              </>
+            ) : (
+              <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden />
+            )}
           </button>
 
           <form action="/api/demo/exit" method="post" className="ml-1 border-l border-warmgray-100 pl-1">

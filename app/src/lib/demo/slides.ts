@@ -3,6 +3,10 @@ export type Slide = {
   path: string;
   title: string;
   beat: string;
+  /** True when the slide path is an API route or external exit — the deck
+   *  header renders it as a plain anchor so the browser does a real
+   *  navigation (cookies on Set-Cookie are honored). */
+  external?: boolean;
 };
 
 /**
@@ -47,6 +51,13 @@ export const SLIDES: Slide[] = [
     path: "/affinity-push",
     title: "Activity log",
     beat: "Mutual match queues an introduction in the Nucleus CRM.",
+  },
+  {
+    index: 6,
+    path: "/api/demo/exit?to=login",
+    title: "Try it for real",
+    beat: "Sign in or create an account to use Nucleus on your own data.",
+    external: true,
   },
 ];
 
