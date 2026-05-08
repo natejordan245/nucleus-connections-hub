@@ -67,7 +67,7 @@ export default async function StartupProfilePage({ params }: { params: { id: str
             <Card title="Origin">
               <p className="text-sm text-warmgray-700">{ORIGIN_LABELS[startup.origin]}</p>
             </Card>
-            <Card title="What they're looking for">
+            <Card title="Talent they're looking for">
               <div className="flex flex-wrap gap-2">
                 {startup.needs.map((n) => (
                   <Pill key={n} tone="orange">
@@ -76,7 +76,7 @@ export default async function StartupProfilePage({ params }: { params: { id: str
                 ))}
               </div>
             </Card>
-            <Card title="Sector">
+            <Card title="Core sector focus">
               <Pill tone="warmgray">{SECTOR_LABELS[startup.sector]}</Pill>
             </Card>
           </section>

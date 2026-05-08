@@ -18,14 +18,14 @@ export default async function OnboardChooserPage() {
           <ChoiceCard
             href="/onboard/talent"
             icon={<Briefcase className="h-6 w-6" strokeWidth={1.75} aria-hidden />}
-            title="I'm an operator, advisor, or candidate"
-            body="Find your next role, advisor seat, or co-founder fit at a Utah startup."
+            title="I'm talent"
+            body="Operators, executives, engineers, students, interns, advisors, and mentors."
           />
           <ChoiceCard
             href="/onboard/startup"
             icon={<Building2 className="h-6 w-6" strokeWidth={1.75} aria-hidden />}
             title="I'm building a company"
-            body="Surface the operators, scientists, and advisors who match what you need."
+            body="Set your core sector focus and the exact talent profiles you're looking for."
           />
         </div>
 

@@ -60,6 +60,8 @@ export class SupabaseDataStore implements IDataStore {
       headline: row.headline ?? "",
       bio: row.bio ?? "",
       lookingFor: d.lookingFor ?? "",
+      categories: d.categories ?? ["operator"],
+      lookingForNeeds: d.lookingForNeeds ?? [],
       skills: d.skills ?? [],
       domains: d.domains ?? [],
       availability: d.availability ?? "full-time",
@@ -73,6 +75,7 @@ export class SupabaseDataStore implements IDataStore {
       linkedinUrl: d.linkedinUrl,
       xUrl: d.xUrl,
       websiteUrl: d.websiteUrl,
+      resumeExtract: d.resumeExtract,
       createdAt: row.created_at,
     };
   }

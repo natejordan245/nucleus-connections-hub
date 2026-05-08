@@ -29,6 +29,8 @@ function fillTalent(p: Partial<TalentDTO>): TalentDTO {
     headline: p.headline ?? "",
     bio: p.bio!,
     lookingFor: p.lookingFor ?? "",
+    categories: p.categories ?? ["operator"],
+    lookingForNeeds: p.lookingForNeeds ?? [],
     skills: p.skills ?? [],
     domains: p.domains ?? [],
     availability: p.availability ?? "full-time",
@@ -42,6 +44,7 @@ function fillTalent(p: Partial<TalentDTO>): TalentDTO {
     linkedinUrl: p.linkedinUrl,
     xUrl: p.xUrl,
     websiteUrl: p.websiteUrl,
+    resumeExtract: p.resumeExtract,
     createdAt: p.createdAt ?? new Date().toISOString(),
   };
 }

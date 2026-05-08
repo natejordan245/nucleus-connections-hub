@@ -13,13 +13,25 @@ import type {
  * an embedding-based recommender will replace later.
  */
 const NEED_TO_KEYWORDS: Record<StartupNeed, string[]> = {
+  "executive":    ["executive", "leadership", "founder", "operating", "scaling", "ceo"],
+  "cofounder":    ["cofounder", "founder", "zero-to-one", "0-1", "ownership"],
+  "coo":          ["coo", "operations", "process", "operating", "execution"],
+  "fractional":   ["fractional", "part-time", "advisor", "interim"],
+  "operator":     ["operator", "operating", "execution", "cross-functional"],
+  "engineer":     ["engineer", "engineering", "technical", "systems", "architecture", "ml-infra"],
+  "sales":        ["sales", "gtm", "enterprise-sales", "sales-leadership", "biz-dev"],
+  "marketing":    ["marketing", "branding", "demand-gen", "content", "growth"],
+  "student":      ["student", "new-grad", "entry-level", "research-assistant"],
+  "intern":       ["intern", "internship", "co-op", "student"],
+  "board-member": ["board", "governance", "board-coaching", "strategy"],
+  "advisor-paid": ["advisor", "advisory", "fractional", "subject-matter", "sme"],
+  "mentor-free":  ["mentor", "mentorship", "volunteer", "coach"],
   "ceo":         ["ceo", "fundraising", "operating", "scaling", "leadership", "operator-experience"],
   "cto":         ["cto", "engineering", "ml-infra", "machine-learning", "systems", "architecture"],
   "biz-dev":     ["business-development", "partnerships", "biz-dev"],
   "regulatory":  ["regulatory", "compliance", "fda", "policy"],
   "sales-lead":  ["sales-leadership", "sales-lead", "enterprise-sales", "gtm-strategy", "pricing", "gtm"],
   "engineering": ["engineering", "machine-learning", "ml-infra", "python", "infra", "systems", "microfluidics", "wet-lab", "bioinformatics"],
-  "marketing":   ["marketing", "branding", "demand-gen", "content"],
 };
 
 export type GapAnalysis = {

@@ -15,6 +15,21 @@ export type Network =
   | "venture"
   | "service-provider";
 
+export type TalentCategory =
+  | "executive"
+  | "cofounder"
+  | "coo"
+  | "fractional"
+  | "operator"
+  | "engineer"
+  | "sales"
+  | "marketing"
+  | "student"
+  | "intern"
+  | "board-member"
+  | "advisor-paid"
+  | "mentor-free";
+
 export type Availability = "full-time" | "fractional" | "advisory" | "internship";
 
 export type Compensation = "cash" | "equity" | "mentor";
@@ -44,6 +59,20 @@ export type Origin =
   | "vc-backed";
 
 export type StartupNeed =
+  | "executive"
+  | "cofounder"
+  | "coo"
+  | "fractional"
+  | "operator"
+  | "engineer"
+  | "sales"
+  | "marketing"
+  | "student"
+  | "intern"
+  | "board-member"
+  | "advisor-paid"
+  | "mentor-free"
+  // Legacy values kept for backward compatibility with seeded demo rows.
   | "ceo"
   | "cto"
   | "biz-dev"
@@ -69,6 +98,10 @@ export type TalentDTO = {
   bio: string;
   /** Free-text answer to "what are you looking for?" — drives match intent. */
   lookingFor: string;
+  /** Structured role categories this person can fill in a company. */
+  categories: TalentCategory[];
+  /** Structured intent: role shapes this person wants from startups. */
+  lookingForNeeds: StartupNeed[];
   skills: string[];
   domains: Sector[];
   availability: Availability;
@@ -83,7 +116,24 @@ export type TalentDTO = {
   linkedinUrl?: string;
   xUrl?: string;
   websiteUrl?: string;
+  /**
+   * Optional resume-ingestion metadata used by onboarding autofill.
+   * We persist extracted text (not the raw file) for debugging/reprocessing.
+   */
+  resumeExtract?: ResumeExtractMeta;
   createdAt: string;
+};
+
+export type ResumeExtractMeta = {
+  sourceFilename: string;
+  extractedAt: string;
+  parser: "pdf" | "docx";
+  charCount: number;
+  model: string;
+  extractedText: string;
+  passesUsed?: Array<"text" | "image">;
+  warnings?: string[];
+  truncatedFlags?: Array<"model_input" | "stored_text" | "pdf_pages" | "docx_images">;
 };
 
 export type StartupDTO = {

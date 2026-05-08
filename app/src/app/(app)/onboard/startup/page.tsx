@@ -6,11 +6,11 @@ import {
   FUNDING_STATUS_LABELS,
   FUNDING_STATUSES,
   NEED_LABELS,
-  NEEDS,
   NETWORK_LABELS,
   NETWORKS,
   ORIGIN_LABELS,
   ORIGINS,
+  ROLE_NEEDS,
   SECTOR_LABELS,
   SECTORS,
   STAGE_LABELS,
@@ -26,7 +26,7 @@ export default async function OnboardStartupPage({
 }) {
   const { viewerId } = await maybeViewer();
 
-  const needOpts = NEEDS.map((v) => ({ value: v, label: NEED_LABELS[v] }));
+  const needOpts = ROLE_NEEDS.map((v) => ({ value: v, label: NEED_LABELS[v] }));
   const networkOpts = NETWORKS.map((v) => ({ value: v, label: NETWORK_LABELS[v] }));
 
   return (
@@ -71,7 +71,7 @@ export default async function OnboardStartupPage({
             />
           </Field>
 
-          <Field id="sector" name="sector" label="Sector">
+          <Field id="sector" name="sector" label="Core sector focus">
             <Select id="sector" name="sector" defaultValue="software">
               {SECTORS.map((v) => (
                 <option key={v} value={v}>
@@ -91,7 +91,12 @@ export default async function OnboardStartupPage({
             </Select>
           </Field>
 
-          <Field id="needs" name="needs" label="What you need" hint="Pick all that apply.">
+          <Field
+            id="needs"
+            name="needs"
+            label="What talent are you looking for?"
+            hint="These options match the talent-side categories and intent chips."
+          >
             <ChipGroup name="needs" options={needOpts} />
           </Field>
 
