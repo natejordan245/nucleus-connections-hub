@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
 import { ChipGroup } from "@/components/ChipGroup";
 import { Field, Input, Select, Textarea } from "@/components/FormField";
 import {
@@ -14,7 +13,7 @@ import {
   STAGE_LABELS,
   STAGES,
 } from "@/lib/data/enum-labels";
-import { getSidebarViewer, maybeViewer } from "@/lib/viewer";
+import { maybeViewer } from "@/lib/viewer";
 import { createStartup } from "../actions";
 
 export default async function OnboardStartupPage({
@@ -23,12 +22,10 @@ export default async function OnboardStartupPage({
   searchParams?: { error?: string };
 }) {
   const { viewerId } = await maybeViewer();
-  const sidebarViewer = await getSidebarViewer();
 
   const needOpts = NEEDS.map((v) => ({ value: v, label: NEED_LABELS[v] }));
 
   return (
-    <AppShell viewer={sidebarViewer}>
       <main className="mx-auto w-full max-w-2xl px-8 py-10">
         <Link href="/onboard" className="text-sm font-medium text-warmgray-600 hover:text-ink">
           ← Back
@@ -133,6 +130,5 @@ export default async function OnboardStartupPage({
           </div>
         </form>
       </main>
-    </AppShell>
   );
 }

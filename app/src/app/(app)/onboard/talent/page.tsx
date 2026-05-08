@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
 import { ChipGroup } from "@/components/ChipGroup";
 import { Field, Input, Select, Textarea } from "@/components/FormField";
 import {
@@ -12,7 +11,7 @@ import {
   STAGE_LABELS,
   STAGES,
 } from "@/lib/data/enum-labels";
-import { getSidebarViewer, maybeViewer } from "@/lib/viewer";
+import { maybeViewer } from "@/lib/viewer";
 import { createTalent } from "../actions";
 
 export default async function OnboardTalentPage({
@@ -21,14 +20,12 @@ export default async function OnboardTalentPage({
   searchParams?: { error?: string };
 }) {
   const { viewerId } = await maybeViewer();
-  const sidebarViewer = await getSidebarViewer();
 
   const sectorOpts = SECTORS.map((v) => ({ value: v, label: SECTOR_LABELS[v] }));
   const compOpts = COMPENSATIONS.map((v) => ({ value: v, label: COMPENSATION_LABELS[v] }));
   const stageOpts = STAGES.map((v) => ({ value: v, label: STAGE_LABELS[v] }));
 
   return (
-    <AppShell viewer={sidebarViewer}>
       <main className="mx-auto w-full max-w-2xl px-8 py-10">
         <Link href="/onboard" className="text-sm font-medium text-warmgray-600 hover:text-ink">
           ← Back
@@ -132,6 +129,5 @@ export default async function OnboardTalentPage({
           </div>
         </form>
       </main>
-    </AppShell>
   );
 }

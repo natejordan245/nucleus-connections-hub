@@ -8,7 +8,6 @@ import {
   LayoutGrid,
   type LucideIcon,
   Settings,
-  UserPlus,
 } from "lucide-react";
 import { DelicateArch } from "./DelicateArch";
 import { Avatar } from "./Avatar";
@@ -19,7 +18,6 @@ const NAV: Item[] = [
   { href: "/dashboard",     label: "Home",        icon: Home       },
   { href: "/matches",       label: "Matches",     icon: LayoutGrid },
   { href: "/affinity-push", label: "Activity",    icon: Activity   },
-  { href: "/onboard",       label: "Onboarding",  icon: UserPlus   },
 ];
 
 export type SidebarViewer = {

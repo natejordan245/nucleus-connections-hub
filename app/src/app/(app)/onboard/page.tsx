@@ -1,13 +1,10 @@
 import Link from "next/link";
 import { Briefcase, Building2 } from "lucide-react";
-import { AppShell } from "@/components/AppShell";
-import { getSidebarViewer, maybeViewer } from "@/lib/viewer";
+import { maybeViewer } from "@/lib/viewer";
 
 export default async function OnboardChooserPage() {
   const { viewerId } = await maybeViewer();
-  const sidebarViewer = await getSidebarViewer();
   return (
-    <AppShell viewer={sidebarViewer}>
       <main className="mx-auto w-full max-w-3xl px-8 py-12">
         <span className="eyebrow text-orange-500">Get started</span>
         <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight text-ink">
@@ -36,7 +33,6 @@ export default async function OnboardChooserPage() {
           You can edit any of this later from your profile.
         </p>
       </main>
-    </AppShell>
   );
 }
 

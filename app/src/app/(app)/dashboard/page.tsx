@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
 import { getDataStore } from "@/lib/data";
-import { getSidebarViewer, requireViewer } from "@/lib/viewer";
+import { requireViewer } from "@/lib/viewer";
 
 export default async function DashboardPage() {
   const { viewer, viewerId } = await requireViewer();
-  const sidebarViewer = await getSidebarViewer();
 
   const store = getDataStore();
   const [talent, startup, matches, interests, notifications] = await Promise.all([
@@ -35,7 +33,6 @@ export default async function DashboardPage() {
   const hasProfile = Boolean(talent || startup);
 
   return (
-    <AppShell viewer={sidebarViewer}>
       <main className="mx-auto w-full max-w-6xl px-8 py-10">
         <span className="eyebrow text-orange-500">{role}</span>
         <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight text-ink">
@@ -150,7 +147,6 @@ export default async function DashboardPage() {
           </aside>
         </div>
       </main>
-    </AppShell>
   );
 }
 

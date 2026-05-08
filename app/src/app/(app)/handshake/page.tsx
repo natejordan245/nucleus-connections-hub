@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Check, Heart, X } from "lucide-react";
-import { AppShell } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
 import { ExplainabilityPanel } from "@/components/ExplainabilityPanel";
 import { Pill } from "@/components/Pill";
 import { getDataStore } from "@/lib/data";
 import type { InterestState, StartupDTO, TalentDTO } from "@/lib/data/types";
-import { getSidebarViewer, requireViewer } from "@/lib/viewer";
+import { requireViewer } from "@/lib/viewer";
 import { vote } from "./actions";
 
 export default async function HandshakePage({
@@ -16,7 +15,6 @@ export default async function HandshakePage({
   searchParams?: { with?: string };
 }) {
   const { viewerId } = await requireViewer();
-  const sidebarViewer = await getSidebarViewer();
   const otherId = searchParams?.with;
   if (!otherId) notFound();
 
@@ -65,7 +63,6 @@ export default async function HandshakePage({
   const isMutual = interest?.mutualAt !== null && interest?.mutualAt !== undefined;
 
   return (
-    <AppShell viewer={sidebarViewer}>
       <main className="mx-auto w-full max-w-4xl px-8 py-10">
         <Link href="/matches" className="text-sm font-medium text-warmgray-600 hover:text-ink">
           ← Back to matches
@@ -155,7 +152,6 @@ export default async function HandshakePage({
           )}
         </div>
       </main>
-    </AppShell>
   );
 }
 

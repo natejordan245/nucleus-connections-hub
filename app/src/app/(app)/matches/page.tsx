@@ -1,13 +1,11 @@
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
 import { MatchCard } from "@/components/MatchCard";
 import { getDataStore } from "@/lib/data";
 import type { MatchDTO, StartupDTO, TalentDTO } from "@/lib/data/types";
-import { getSidebarViewer, requireViewer } from "@/lib/viewer";
+import { requireViewer } from "@/lib/viewer";
 
 export default async function MatchesPage() {
   const { viewerId } = await requireViewer();
-  const sidebarViewer = await getSidebarViewer();
   const store = getDataStore();
 
   const [matches, allTalent, allStartups, utahOrgs] = await Promise.all([
@@ -18,7 +16,6 @@ export default async function MatchesPage() {
   ]);
 
   return (
-    <AppShell viewer={sidebarViewer}>
       <main className="mx-auto w-full max-w-5xl px-8 py-10">
         <span className="eyebrow text-orange-500">Matches</span>
         <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight text-ink">
@@ -55,7 +52,6 @@ export default async function MatchesPage() {
           </div>
         )}
       </main>
-    </AppShell>
   );
 }
 
