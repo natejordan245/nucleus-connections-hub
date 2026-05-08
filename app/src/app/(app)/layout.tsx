@@ -1,4 +1,7 @@
+import { Suspense } from "react";
 import { AppShell } from "@/components/AppShell";
+import { DemoSlideBar } from "@/components/DemoSlideBar";
+import { isDemoActive } from "@/lib/demo/cookie";
 import { getSidebarViewer } from "@/lib/viewer";
 
 /**
@@ -8,5 +11,13 @@ import { getSidebarViewer } from "@/lib/viewer";
  */
 export default async function AppGroupLayout({ children }: { children: React.ReactNode }) {
   const viewer = await getSidebarViewer();
-  return <AppShell viewer={viewer}>{children}</AppShell>;
+  const demoActive = isDemoActive();
+  return (
+    <AppShell viewer={viewer}>
+      {children}
+      <Suspense fallback={null}>
+        <DemoSlideBar active={demoActive} />
+      </Suspense>
+    </AppShell>
+  );
 }

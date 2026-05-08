@@ -69,12 +69,12 @@ export default async function LandingPage() {
               <span aria-hidden className="transition group-hover:translate-x-0.5">→</span>
             </Link>
 
-            {!signedIn && mode === "live" && (
+            {!signedIn && (
               <Link
-                href="/login?mode=demo"
+                href="/api/demo/start"
                 className="text-sm font-medium text-warmgray-600 hover:text-ink"
               >
-                Just looking? Try the demo →
+                Or take the guided tour →
               </Link>
             )}
           </div>
