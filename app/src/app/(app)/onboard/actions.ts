@@ -7,17 +7,19 @@ import { getDataStore } from "@/lib/data";
 import {
   AVAILABILITIES,
   COMPENSATIONS,
+  FUNDING_STATUSES,
   NEEDS,
+  NETWORKS,
   ORIGINS,
   SECTORS,
   STAGES,
-  FUNDING_STATUSES,
 } from "@/lib/data/enum-labels";
 import { getViewer } from "@/lib/session";
 import type {
   Availability,
   Compensation,
   FundingStatus,
+  Network,
   Origin,
   Sector,
   Stage,
@@ -97,6 +99,7 @@ export async function createTalent(formData: FormData) {
     "full-time",
   );
   const riskTolerance = clampRisk(String(formData.get("riskTolerance") ?? "3"));
+  const networks = pick<Network>(formData.getAll("networks"), NETWORKS);
   const location = String(formData.get("location") ?? "Salt Lake City, UT").trim();
   const linkedinUrl = String(formData.get("linkedinUrl") ?? "").trim() || undefined;
   const xUrl = String(formData.get("xUrl") ?? "").trim() || undefined;
@@ -121,6 +124,7 @@ export async function createTalent(formData: FormData) {
     riskTolerance,
     location,
     utahOrgIds: [],
+    networks: networks.length > 0 ? networks : ["operator"],
     linkedinUrl,
     xUrl,
     createdAt: new Date().toISOString(),
@@ -149,6 +153,7 @@ export async function createStartup(formData: FormData) {
     "pre-revenue",
   );
   const needs = pick<StartupNeed>(formData.getAll("needs"), NEEDS);
+  const networksWanted = pick<Network>(formData.getAll("networksWanted"), NETWORKS);
   const location = String(formData.get("location") ?? "Salt Lake City, UT").trim();
   const websiteUrl = String(formData.get("websiteUrl") ?? "").trim() || undefined;
   const linkedinUrl = String(formData.get("linkedinUrl") ?? "").trim() || undefined;
@@ -168,6 +173,7 @@ export async function createStartup(formData: FormData) {
     fundingStage,
     fundingStatus,
     needs,
+    networksWanted: networksWanted.length > 0 ? networksWanted : ["operator"],
     location,
     utahOrgIds: [],
     websiteUrl,

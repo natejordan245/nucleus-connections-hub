@@ -139,6 +139,7 @@ export function textForTalent(t: TalentDTO): string {
     t.lookingFor,
     t.skills.length ? `Skills: ${t.skills.join(", ")}` : "",
     t.domains.length ? `Domains of interest: ${t.domains.join(", ")}` : "",
+    t.networks?.length ? `Networks: ${t.networks.join(", ")}` : "",
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -150,6 +151,7 @@ export function textForStartup(s: StartupDTO): string {
     s.description,
     s.sector ? `Sector: ${s.sector}` : "",
     s.needs.length ? `Looking to hire: ${s.needs.join(", ")}` : "",
+    s.networksWanted?.length ? `Pulling from networks: ${s.networksWanted.join(", ")}` : "",
   ]
     .filter(Boolean)
     .join("\n\n");

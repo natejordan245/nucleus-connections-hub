@@ -6,6 +6,8 @@ import {
   FUNDING_STATUSES,
   NEED_LABELS,
   NEEDS,
+  NETWORK_LABELS,
+  NETWORKS,
   ORIGIN_LABELS,
   ORIGINS,
   SECTOR_LABELS,
@@ -24,6 +26,7 @@ export default async function OnboardStartupPage({
   const { viewerId } = await maybeViewer();
 
   const needOpts = NEEDS.map((v) => ({ value: v, label: NEED_LABELS[v] }));
+  const networkOpts = NETWORKS.map((v) => ({ value: v, label: NETWORK_LABELS[v] }));
 
   return (
       <main className="mx-auto w-full max-w-2xl px-8 py-10">
@@ -86,6 +89,10 @@ export default async function OnboardStartupPage({
 
           <Field id="needs" name="needs" label="What you need" hint="Pick all that apply.">
             <ChipGroup name="needs" options={needOpts} />
+          </Field>
+
+          <Field id="networksWanted" name="networksWanted" label="Which Nucleus networks do you want help from?" hint="Pick all that apply.">
+            <ChipGroup name="networksWanted" options={networkOpts} defaultSelected={["operator"]} />
           </Field>
 
           <Field id="fundingStage" name="fundingStage" label="Funding stage">

@@ -3,6 +3,18 @@
 // source of truth; UI selects reuse them via the labels in `enum-labels.ts`.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * The five Nucleus networks (mirror of the role list on nucleusutah.org/contact).
+ * A person can belong to more than one — e.g. an advisor / angel sits in both
+ * Mentor and Venture.
+ */
+export type Network =
+  | "operator"
+  | "mentor"
+  | "sme-advisory"
+  | "venture"
+  | "service-provider";
+
 export type Availability = "full-time" | "fractional" | "advisory" | "internship";
 
 export type Compensation = "cash" | "equity" | "mentor";
@@ -65,6 +77,8 @@ export type TalentDTO = {
   riskTolerance: 1 | 2 | 3 | 4 | 5;
   location: string;
   utahOrgIds: string[];
+  /** Which Nucleus networks this person sits in. */
+  networks: Network[];
   photoUrl?: string;
   linkedinUrl?: string;
   xUrl?: string;
@@ -84,6 +98,8 @@ export type StartupDTO = {
   fundingStage: Stage;
   fundingStatus: FundingStatus;
   needs: StartupNeed[];
+  /** Which Nucleus networks this startup wants to pull from. */
+  networksWanted: Network[];
   location: string;
   utahOrgIds: string[];
   logoUrl?: string;
