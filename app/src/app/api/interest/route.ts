@@ -96,7 +96,7 @@ export async function POST(req: Request) {
         kind: "interest_received",
         title: `${candidate.name} is interested`,
         body: `Take a look — they're a fit on stage and focus.`,
-        href: `/handshake?with=${candidate.id}`,
+        href: `/profile/candidate/${candidate.id}`,
       });
     } else {
       await store.emitNotification({
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
         kind: "interest_received",
         title: `${business.name} is interested`,
         body: `Take a look — they flagged you as a top candidate.`,
-        href: `/handshake?with=${business.id}`,
+        href: `/profile/business/${business.id}`,
       });
     }
   }

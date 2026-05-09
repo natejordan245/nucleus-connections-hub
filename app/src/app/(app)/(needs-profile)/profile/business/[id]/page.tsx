@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { ExplainabilityPanel } from "@/components/ExplainabilityPanel";
@@ -9,6 +10,7 @@ import { SocialLinks } from "@/components/SocialLinks";
 import { getDataStore } from "@/lib/data";
 import { FUNDING_STATUS_LABELS, NEED_LABELS, ORIGIN_LABELS, SECTOR_LABELS, STAGE_LABELS } from "@/lib/data/enum-labels";
 import { maybeViewer } from "@/lib/viewer";
+import { requestIntro } from "../../actions";
 
 export default async function BusinessProfilePage({ params }: { params: { id: string } }) {
   const { viewerId } = await maybeViewer();
@@ -16,16 +18,19 @@ export default async function BusinessProfilePage({ params }: { params: { id: st
   const business = await store.getBusiness(params.id);
   if (!business) notFound();
 
-  const [matches, viewerCandidate, resources] = await Promise.all([
-    viewerId ? store.matchesFor(viewerId) : Promise.resolve([]),
+  const isOwner = viewerId === business.id;
+  const [match, viewerCandidate, resources] = await Promise.all([
+    viewerId && !isOwner
+      ? store.computeMatch({ subjectId: viewerId, candidateId: business.id })
+      : Promise.resolve(null),
     viewerId ? store.getCandidate(viewerId) : Promise.resolve(null),
     store.listResources(),
   ]);
-  const match = matches.find(
-    (m) => m.candidateId === business.id && m.candidateKind === "business",
-  );
   const showGapCloser = Boolean(viewerCandidate && (match ? match.score < 1 : true));
-  const isOwner = viewerId === business.id;
+  const interest = viewerCandidate && !isOwner
+    ? await store.getInterest({ candidateId: viewerCandidate.id, businessId: business.id })
+    : null;
+  const alreadyRequested = interest?.talentState === "interested";
 
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-8">
@@ -64,13 +69,32 @@ export default async function BusinessProfilePage({ params }: { params: { id: st
             Edit profile
           </Link>
         ) : (
-          viewerId && match && (
-            <Link
-              href={`/handshake?with=${business.id}`}
-              className="inline-flex h-7 items-center rounded-md bg-ink px-2.5 text-[11px] font-semibold text-white transition hover:bg-warmgray-800"
-            >
-              Open handshake →
-            </Link>
+          viewerCandidate && (
+            <form action={requestIntro}>
+              <input type="hidden" name="candidateId" value={viewerCandidate.id} />
+              <input type="hidden" name="businessId" value={business.id} />
+              <input type="hidden" name="side" value="candidate" />
+              <input type="hidden" name="state" value="interested" />
+              <button
+                type="submit"
+                disabled={alreadyRequested}
+                className="group inline-flex h-7 items-center gap-1.5 rounded-md bg-ink px-2.5 text-[11px] font-semibold text-white transition hover:bg-warmgray-800 disabled:cursor-default disabled:opacity-80 disabled:hover:bg-ink"
+              >
+                {alreadyRequested ? (
+                  <>
+                    <Check className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                    Requested
+                  </>
+                ) : (
+                  <>
+                    Request intro
+                    <span aria-hidden className="transition group-hover:translate-x-0.5">
+                      →
+                    </span>
+                  </>
+                )}
+              </button>
+            </form>
           )
         )}
       </header>

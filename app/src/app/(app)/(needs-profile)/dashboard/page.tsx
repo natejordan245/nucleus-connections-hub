@@ -180,9 +180,6 @@ function DenseRow({
     cand.kind === "candidate"
       ? `/profile/candidate/${cand.candidate.id}`
       : `/profile/business/${cand.business.id}`;
-  const handshakeHref = `/handshake?with=${
-    cand.kind === "candidate" ? cand.candidate.id : cand.business.id
-  }`;
   const pct = match.score * 100;
   const pctLabel = pct.toFixed(1);
   const tone =
@@ -223,7 +220,7 @@ function DenseRow({
       </td>
       <td className="px-4 py-2 text-right align-middle">
         <Link
-          href={handshakeHref}
+          href={detailHref}
           className="inline-flex h-7 items-center rounded-md bg-ink px-2.5 text-[11px] font-semibold text-white transition hover:bg-warmgray-800"
         >
           Open
