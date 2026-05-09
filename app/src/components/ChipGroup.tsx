@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Chip-style checkbox group for multi-select form fields. Renders a fieldset of
  * checkboxes styled as toggle pills. Each box submits with `name` and its own
