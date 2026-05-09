@@ -39,7 +39,7 @@ export default async function OnboardInvestorPage({
   const errorMessage = decodeOnboardError(searchParams?.error);
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-8 py-10">
+    <main className="mx-auto w-full max-w-2xl px-6 py-8">
       <DemoFiller />
       <Link href="/onboard" className="text-sm font-medium text-warmgray-600 hover:text-ink">
         ← Back
@@ -48,7 +48,7 @@ export default async function OnboardInvestorPage({
       <span className="eyebrow mt-6 block text-orange-500">
         {isEdit ? "Edit VC profile" : "VC profile"}
       </span>
-      <h1 className="mt-3 font-serif text-3xl font-semibold leading-tight text-ink">
+      <h1 className="mt-2 text-2xl font-bold text-ink">
         {isEdit ? "Edit your profile." : "Tell us how you invest."}
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
@@ -59,7 +59,7 @@ export default async function OnboardInvestorPage({
 
       <form
         action={createInvestor}
-        className="mt-6 space-y-6 rounded-2xl border border-warmgray-100 bg-white p-6 shadow-sm"
+        className="mt-4 space-y-5 rounded-lg border border-warmgray-200 bg-white p-5"
       >
         <Field id="photoUrl" name="photoUrl" label="Profile / fund photo" hint="Optional.">
           <PhotoUpload

@@ -21,27 +21,29 @@ export default async function AffinityPushPage() {
   const queued = pushes.filter((p) => p.syncState === "queued" || p.syncState === "syncing").length;
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-8 py-10">
-      <span className="eyebrow text-orange-500">Activity · Affinity CRM</span>
-      <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight text-ink">
-        Mutual matches → CRM.
-      </h1>
-      <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
-        Every mutual match is upserted as an Organization + Person in Affinity,
-        added to the deal-flow lists, and tagged with Nucleus match metadata.
-      </p>
+    <main className="mx-auto w-full max-w-7xl px-6 py-8">
+      <div className="flex items-baseline justify-between">
+        <div>
+          <span className="eyebrow text-orange-500">Activity · Affinity CRM</span>
+          <h1 className="mt-2 text-2xl font-bold text-ink">Mutual matches → CRM.</h1>
+          <p className="mt-1 max-w-2xl text-sm text-warmgray-500">
+            Every mutual match is upserted as an Organization + Person in Affinity,
+            added to deal-flow lists, and tagged with Nucleus match metadata.
+          </p>
+        </div>
+      </div>
 
       <ConnectionPanel synced={synced} queued={queued} failed={failed} />
 
       {pushes.length === 0 ? (
-        <div className="mt-10 rounded-2xl border border-dashed border-warmgray-200 bg-white p-10 text-center">
-          <p className="font-serif text-xl font-semibold text-ink">No introductions yet.</p>
-          <p className="mt-2 text-sm text-warmgray-600">
+        <div className="mt-4 rounded-lg border border-dashed border-warmgray-200 bg-white px-6 py-12 text-center">
+          <p className="text-base font-semibold text-ink">No introductions yet.</p>
+          <p className="mt-1 text-xs text-warmgray-500">
             They'll show up here as they happen.
           </p>
         </div>
       ) : (
-        <ul className="mt-8 space-y-4">
+        <ul className="mt-4 space-y-3">
           {pushes.map((p) => {
             const c = allCandidates.find((c) => c.id === p.talentId);
             const b = allBusinesses.find((b) => b.id === p.startupId);
@@ -62,41 +64,58 @@ export default async function AffinityPushPage() {
   );
 }
 
-function ConnectionPanel({ synced, queued, failed }: { synced: number; queued: number; failed: number }) {
+function ConnectionPanel({
+  synced,
+  queued,
+  failed,
+}: {
+  synced: number;
+  queued: number;
+  failed: number;
+}) {
   return (
-    <div className="mt-8 rounded-2xl border border-warmgray-100 bg-white p-5 shadow-sm">
+    <div className="mt-4 rounded-lg border border-warmgray-200 bg-white px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
-          <span className="eyebrow text-emerald-700">Connected · sandbox</span>
-          <span className="text-xs text-warmgray-500">
-            Workspace · Lists{" "}
-            <code className="rounded bg-warmgray-50 px-1.5 py-0.5 font-mono text-[11px] text-warmgray-700">
-              #{AFFINITY_CONFIG.organizationListId}
-            </code>{" "}
-            /{" "}
-            <code className="rounded bg-warmgray-50 px-1.5 py-0.5 font-mono text-[11px] text-warmgray-700">
-              #{AFFINITY_CONFIG.personListId}
-            </code>
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+          <span className="font-mono text-[11px] uppercase tracking-wider text-emerald-700">
+            connected · sandbox
+          </span>
+          <span className="font-mono text-[11px] text-warmgray-500">
+            lists #{AFFINITY_CONFIG.organizationListId} / #{AFFINITY_CONFIG.personListId}
           </span>
         </div>
         <div className="flex items-center gap-4 text-xs">
-          <Stat label="Synced" value={synced} tone="emerald" />
-          <Stat label="Queued" value={queued} tone="warmgray" />
-          <Stat label="Failed" value={failed} tone={failed > 0 ? "orange" : "warmgray"} />
+          <Stat label="synced" value={synced} tone="emerald" />
+          <Stat label="queued" value={queued} tone="warmgray" />
+          <Stat label="failed" value={failed} tone={failed > 0 ? "orange" : "warmgray"} />
         </div>
       </div>
     </div>
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: number; tone: "emerald" | "warmgray" | "orange" }) {
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "emerald" | "warmgray" | "orange";
+}) {
   const color =
-    tone === "emerald" ? "text-emerald-700" : tone === "orange" ? "text-orange-700" : "text-warmgray-700";
+    tone === "emerald"
+      ? "text-emerald-700"
+      : tone === "orange"
+        ? "text-orange-700"
+        : "text-warmgray-700";
   return (
     <span className="flex items-baseline gap-1.5">
-      <span className={`font-mono text-base font-semibold ${color}`}>{value}</span>
-      <span className="eyebrow text-warmgray-400">{label}</span>
+      <span className={`font-mono text-sm font-bold ${color}`}>{value}</span>
+      <span className="font-mono text-[10px] uppercase tracking-wider text-warmgray-500">
+        {label}
+      </span>
     </span>
   );
 }
@@ -122,12 +141,12 @@ function PushRow({
   });
 
   return (
-    <li className="rounded-2xl border border-warmgray-100 bg-white p-5 shadow-sm">
-      <div className="flex items-start gap-4">
-        <ArrowUpRight className="mt-0.5 h-5 w-5 text-orange-500" strokeWidth={1.75} aria-hidden />
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-3">
-            <h3 className="font-serif text-lg font-semibold text-ink">
+    <li className="rounded-lg border border-warmgray-200 bg-white p-4">
+      <div className="flex items-start gap-3">
+        <ArrowUpRight className="mt-0.5 h-4 w-4 text-orange-500" strokeWidth={2} aria-hidden />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h3 className="text-sm font-semibold text-ink">
               {candidateName} ↔ {businessName}
             </h3>
             <SyncPill state={push.syncState} />
@@ -135,8 +154,8 @@ function PushRow({
               <Pill tone="warmgray">{prettyStage(push.pipelineStage)}</Pill>
             )}
           </div>
-          <p className="mt-1 text-xs text-warmgray-500">{when}</p>
-          <p className="mt-3 text-sm leading-relaxed text-warmgray-700">{push.reason}</p>
+          <p className="mt-1 font-mono text-[11px] text-warmgray-500">{when}</p>
+          <p className="mt-2 text-sm leading-relaxed text-warmgray-700">{push.reason}</p>
 
           {push.syncError && (
             <div className="mt-3 rounded-lg border border-orange-200 bg-sand-50 px-3 py-2 text-xs text-warmgray-700">
@@ -209,7 +228,7 @@ function PushRow({
 
 function RecordCard({ push }: { push: AffinityPushDTO }) {
   return (
-    <div className="rounded-xl border border-warmgray-100 bg-warmgray-50 p-3">
+    <div className="rounded-md border border-warmgray-200 bg-warmgray-50 p-3">
       <span className="eyebrow text-warmgray-400">Affinity record</span>
       <dl className="mt-2 space-y-1 text-xs text-warmgray-700">
         {push.affinityOrganizationId != null && (
@@ -238,7 +257,7 @@ function RecordCard({ push }: { push: AffinityPushDTO }) {
 
 function FieldValuesCard({ values }: { values: Array<{ label: string; value: string }> }) {
   return (
-    <div className="rounded-xl border border-warmgray-100 bg-warmgray-50 p-3">
+    <div className="rounded-md border border-warmgray-200 bg-warmgray-50 p-3">
       <span className="eyebrow text-warmgray-400">Field values</span>
       <dl className="mt-2 space-y-1 text-xs text-warmgray-700">
         {values.map((v) => (

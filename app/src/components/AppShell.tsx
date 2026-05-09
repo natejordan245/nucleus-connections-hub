@@ -21,31 +21,29 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-paper">
       {deckBar}
-      <header className="border-b border-warmgray-100 bg-white">
-        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-8">
+      <header className="border-b border-warmgray-200 bg-white">
+        <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between px-6">
           <Link
             href={viewer ? "/dashboard" : "/"}
-            className="flex items-center gap-3"
+            className="flex items-center gap-2.5"
           >
-            <DelicateArch className="h-7 w-7 text-orange-500" aria-hidden />
-            <span className="font-serif text-base font-semibold text-ink">
-              Connections Hub
-            </span>
+            <DelicateArch className="h-6 w-6 text-orange-500" aria-hidden />
+            <span className="text-sm font-bold text-ink">Connections Hub</span>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {viewer ? (
               <>
                 <Link
                   href={viewer.profileHref ?? "/profile"}
-                  className="text-sm font-medium text-warmgray-700 hover:text-ink"
+                  className="text-xs font-medium text-warmgray-700 hover:text-ink"
                 >
                   Profile
                 </Link>
                 <form action="/auth/signout" method="post">
                   <button
                     type="submit"
-                    className="text-sm font-medium text-warmgray-700 hover:text-ink"
+                    className="text-xs font-medium text-warmgray-700 hover:text-ink"
                   >
                     Sign out
                   </button>
@@ -54,7 +52,7 @@ export function AppShell({
             ) : (
               <Link
                 href="/login"
-                className="text-sm font-medium text-warmgray-700 hover:text-ink"
+                className="text-xs font-medium text-warmgray-700 hover:text-ink"
               >
                 Sign in
               </Link>

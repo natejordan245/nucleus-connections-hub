@@ -21,7 +21,7 @@ export function OnboardAccountFields({
 }) {
   if (signedIn) return null;
   return (
-    <section className="rounded-2xl border border-warmgray-100 bg-orange-50/30 p-5">
+    <section className="rounded-lg border border-warmgray-200 bg-orange-50/30 p-4">
       <div className="flex items-center gap-2">
         <Lock className="h-4 w-4 text-orange-500" strokeWidth={1.75} aria-hidden />
         <span className="eyebrow text-orange-500">Create your account</span>
