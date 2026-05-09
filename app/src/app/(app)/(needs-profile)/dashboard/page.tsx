@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search, ChevronDown, Filter } from "lucide-react";
 import { AnimatedSearchInput } from "@/components/AnimatedSearchInput";
 import { Avatar } from "@/components/Avatar";
+import { MatchCard } from "@/components/MatchCard";
 import { getDataStore } from "@/lib/data";
 import type {
   BusinessDTO,
@@ -80,38 +81,71 @@ export default async function DashboardPage() {
 
       {/* Two-col split */}
       <div className="mt-6 grid flex-1 grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
-        <section className="flex flex-col rounded-lg border border-warmgray-200 bg-white">
-          <div className="flex items-center justify-between border-b border-warmgray-200 px-4 py-2.5">
-            <h2 className="text-sm font-semibold text-ink">
-              {copy.matchesHeading}
-              <span className="ml-2 font-mono text-xs text-warmgray-500">{matches.length}</span>
-            </h2>
-            <span className="font-mono text-xs text-warmgray-500">↻ refresh</span>
-          </div>
-
+        <div className="flex flex-col gap-6">
           {matches.length === 0 ? (
-            <EmptyState viewerKind={viewerKind} />
+            <section className="flex flex-col rounded-lg border border-warmgray-200 bg-white">
+              <div className="flex items-center justify-between border-b border-warmgray-200 px-4 py-2.5">
+                <h2 className="text-sm font-semibold text-ink">{copy.matchesHeading}</h2>
+                <span className="font-mono text-xs text-warmgray-500">↻ refresh</span>
+              </div>
+              <EmptyState viewerKind={viewerKind} />
+            </section>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="border-b border-warmgray-200 bg-warmgray-50 text-left font-mono text-[11px] uppercase tracking-wider text-warmgray-500">
-                <tr>
-                  <th className="px-4 py-2 font-semibold">#</th>
-                  <th className="py-2 font-semibold">Name</th>
-                  <th className="py-2 font-semibold">Score</th>
-                  <th className="hidden py-2 font-semibold md:table-cell">Location</th>
-                  <th className="px-4 py-2 text-right font-semibold">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-warmgray-100">
-                {matches.map((m, i) => {
-                  const cand = resolveCandidate(m, allCandidates, allBusinesses);
-                  if (!cand) return null;
-                  return <DenseRow key={m.id} idx={i} match={m} cand={cand} />;
-                })}
-              </tbody>
-            </table>
+            <>
+              {/* Top matches as full cards — same component slide 3 renders. */}
+              <section>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-ink">
+                    {copy.matchesHeading}
+                    <span className="ml-2 font-mono text-xs text-warmgray-500">
+                      {matches.length}
+                    </span>
+                  </h2>
+                  <span className="font-mono text-xs text-warmgray-500">↻ refresh</span>
+                </div>
+                <div className="space-y-4">
+                  {matches.slice(0, 3).map((m) => {
+                    const cand = resolveCandidate(m, allCandidates, allBusinesses);
+                    if (!cand) return null;
+                    return <MatchCard key={m.id} match={m} candidate={cand} />;
+                  })}
+                </div>
+              </section>
+
+              {/* Dense leaderboard for everything past the top 3. */}
+              {matches.length > 3 && (
+                <section className="flex flex-col rounded-lg border border-warmgray-200 bg-white">
+                  <div className="flex items-center justify-between border-b border-warmgray-200 px-4 py-2.5">
+                    <h2 className="text-sm font-semibold text-ink">
+                      More matches
+                      <span className="ml-2 font-mono text-xs text-warmgray-500">
+                        {matches.length - 3}
+                      </span>
+                    </h2>
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead className="border-b border-warmgray-200 bg-warmgray-50 text-left font-mono text-[11px] uppercase tracking-wider text-warmgray-500">
+                      <tr>
+                        <th className="px-4 py-2 font-semibold">#</th>
+                        <th className="py-2 font-semibold">Name</th>
+                        <th className="py-2 font-semibold">Score</th>
+                        <th className="hidden py-2 font-semibold md:table-cell">Location</th>
+                        <th className="px-4 py-2 text-right font-semibold">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-warmgray-100">
+                      {matches.slice(3).map((m, i) => {
+                        const cand = resolveCandidate(m, allCandidates, allBusinesses);
+                        if (!cand) return null;
+                        return <DenseRow key={m.id} idx={i + 3} match={m} cand={cand} />;
+                      })}
+                    </tbody>
+                  </table>
+                </section>
+              )}
+            </>
           )}
-        </section>
+        </div>
 
         <aside className="flex flex-col gap-4">
           <section className="flex flex-1 flex-col rounded-lg border border-warmgray-200 bg-white">

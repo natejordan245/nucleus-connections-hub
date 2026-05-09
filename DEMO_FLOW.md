@@ -16,7 +16,7 @@ Every slide except the bookends renders the same components judges see in the li
 - **Zero visual drift.** The pitch and the proof look identical. There's no "the slide showed something prettier than the actual app" gap.
 - **The components carry the explanation.** Score, reason, factor chips, concerns, bridges all live on the cards already. We don't need to reinvent the trust surfaces in slide form.
 
-The slideshow imports from `lib/demo/show-fixtures.ts` — hardcoded `CandidateDTO`, `BusinessDTO`, `MatchDTO`, `ResourceDTO`, `AffinityPushDTO` for the canonical Sarah Chen ↔ Lumen Bio pair.
+The slideshow imports from `lib/demo/show-fixtures.ts` — hardcoded `CandidateDTO`, `BusinessDTO`, `MatchDTO`, `ResourceDTO`, `AffinityPushDTO` for the canonical Zac Hales ↔ Plaibook pair (a former Qualtrics VP of Sales advising a BYU-alum vertical-SaaS startup). The exported variable names are still `SARAH` / `LUMEN` / `SARAH_LUMEN_*` for historical reasons — they're internal symbols, not user-facing.
 
 ## Rubric coverage
 
@@ -57,12 +57,12 @@ Match Quality + Innovation share Slide 3 because they share a card in the live p
 **Beat:** Show a real candidate profile. Hand-rolled would feel like a mockup; the real component feels like a product.
 
 **On screen:**
-- Real `<CandidateProfileCard>` rendering Sarah Chen from `show-fixtures.ts`.
+- Real `<CandidateProfileCard>` rendering Zac Hales from `show-fixtures.ts`.
 - Aside slot holds a small royal-blue panel: *"Generated from 2 paragraphs"* with a one-line note crediting `gpt-5.3-nano`.
 - All the other cards — About, Looking for, Categories, Skills, Domains, Compensation fit — render as production.
 
 **Narration (~30 s):**
-> "From two text paragraphs — who Sarah is, and what she's looking for — the model extracts a complete structured profile. Skills, availability, comp, stage, domains, even her Utah org affiliations. We don't make her fill a 40-field form. The 'Looking for' card is the trust differentiator: every other talent platform buries intent in a search filter. We promote it because every match is explained against this exact text."
+> "From two text paragraphs — who Zac is, and what he's looking for — the model extracts a complete structured profile. Skills, availability, comp, stage, domains, even his Utah org affiliations. We don't make him fill a 40-field form. The 'Looking for' card is the trust differentiator: every other talent platform buries intent in a search filter. We promote it because every match is explained against this exact text."
 
 **Files:**
 - `app/src/app/demo/profile/page.tsx` (slide page, ~30 lines)
@@ -75,12 +75,12 @@ Match Quality + Innovation share Slide 3 because they share a card in the live p
 **Beat:** The whole match-quality + bridges story in one card.
 
 **On screen:**
-- Real `<MatchCard>` with `match={SARAH_LUMEN_MATCH}` and `candidate={{ kind: "business", business: LUMEN }}`.
-- Score 78%, full reason paragraph, 5 factor chips (Stage strong / Skills ok / Wants strong / Networks strong / Comp ok), concerns block ("no FDA / regulatory background").
-- Because the match is partial (< 0.85), the inline `<GapCloserView>` renders below the concerns block — passed via the new `gapCloser` prop on MatchCard so the slide doesn't need to fetch from the data store. Three Utah resources visible: PIVOT Center FDA mentor program, BioHive Regulatory cohort, FDA pathway playbook.
+- Real `<MatchCard>` with `match={SARAH_LUMEN_MATCH}` and `candidate={{ kind: "business", business: LUMEN }}` (Zac ↔ Plaibook under the hood).
+- Score 78%, full reason paragraph, 5 factor chips (Stage strong / Skills ok / Wants strong / Networks strong / Comp ok), concerns block ("no field-services / vertical-SaaS background"). The card now also surfaces a "BYU spinout" pill in the location row.
+- Because the match is partial (< 0.85), the inline `<GapCloserView>` renders below the concerns block — passed via the new `gapCloser` prop on MatchCard so the slide doesn't need to fetch from the data store. Three Utah resources visible: Stoke Mountain vertical-SaaS GTM mentors, Silicon Slopes field-services GTM cohort, vertical-SaaS playbook.
 
 **Narration (~45 s):**
-> "Every match carries the same trust surface — score, reason, factor chips, concerns. Calibrated honestly: the model is told to land in the 65–85% range when the fit is real but imperfect, and we surface what's weak instead of inflating the number. The differentiator: when the score is partial, the gap-closer drawer routes Sarah to three Utah-specific resources that close the distance. PIVOT Center, BioHive, a founder-written playbook. Most platforms hand you a 78% and walk away. We tell you what's missing and hand you the bridge."
+> "Every match carries the same trust surface — score, reason, factor chips, concerns. Calibrated honestly: the model is told to land in the 65–85% range when the fit is real but imperfect, and we surface what's weak instead of inflating the number. The differentiator: when the score is partial, the gap-closer drawer routes Zac to three Utah-specific resources that close the distance. Stoke Mountain mentors, a Silicon Slopes field-services cohort, a founder-written vertical-SaaS playbook. Most platforms hand you a 78% and walk away. We tell you what's missing and hand you the bridge."
 
 **Files:**
 - `app/src/app/demo/match/page.tsx` (slide, ~30 lines)
@@ -95,7 +95,7 @@ Match Quality + Innovation share Slide 3 because they share a card in the live p
 
 **On screen:**
 - Real `<AffinityConnectionPanel>` (sandbox-connected dot, sync counters: 1 / 0 / 0).
-- One real `<AffinityPushCard>` for the Sarah ↔ Lumen Bio mutual match: timestamp, sync pill, pipeline-stage pill, full reason paragraph, two-card grid showing the Affinity record (organization #80421, person #152904, list-entry #220887) and the structured field values (Stage / Match score / Reason hash / Source).
+- One real `<AffinityPushCard>` for the Zac ↔ Plaibook mutual match: timestamp, sync pill, pipeline-stage pill, full reason paragraph, two-card grid showing the Affinity record (organization #80421, person #152904, list-entry #220887) and the structured field values (Stage / Match score / Reason hash / Source).
 - Collapsible API timeline with 4 calls: `POST /v2/organizations` 200, `POST /v2/persons` 200, `POST /v2/lists/.../list-entries` 201, `PUT /v2/list-entries/.../field-values` 200.
 - Footer pill: `transport: mock · flip AFFINITY_LIVE=true for api.affinity.co`.
 
@@ -116,7 +116,7 @@ Match Quality + Innovation share Slide 3 because they share a card in the live p
 - Dark bookend (`bg-warmgray-900`).
 - Centered headline: *"Now let's use it."*
 - Single CTA button in royal-blue: **"Open the product →"**.
-- The CTA is a `<form action="/api/demo/start" method="POST">` — POSTing drops the demo cookies (`nch_app_mode=demo`, `nch_demo_user=tal-sarah`, `nch_demo_active=1`) and 303s to `/dashboard`. **Only slide that talks to the backend.**
+- The CTA is a `<form action="/api/demo/start" method="POST">` — POSTing drops the demo cookies (`nch_app_mode=demo`, `nch_demo_user=tal-zac`, `nch_demo_active=1`) and 303s to `/dashboard`. **Only slide that talks to the backend.**
 
 **Narration (~10 s):**
 > "Now let's actually use it."
@@ -133,19 +133,19 @@ The header gets a **`Finish demo`** affordance (a small pill-button left of Sign
 
 ## Live 1 — Dashboard (`/dashboard`)
 
-The real dashboard with Sarah's matches pre-warmed. Three top matches visible. Highlight the search bar.
+The real dashboard with Zac's matches pre-warmed. Three top matches visible. Highlight the search bar.
 
-> *(15 s)* "I'm Sarah, just signed in. Three matches, ranked, with reasons. Search is where every interaction starts."
+> *(15 s)* "I'm Zac, just signed in. Three matches, ranked, with reasons. Search is where every interaction starts."
 
 ## Live 2 — Search (`/search?q=...`)
 
-Type or paste *"life-sciences CEO with FDA experience"*. Cards populate; top result is Lumen Bio at 78% and the reason quotes the search phrase. Toggle People ↔ Businesses. Expand the bridges drawer on the partial match — the real `<GapCloser>` opens with three Utah resources for the FDA gap.
+Type or paste *"vertical-SaaS GTM advisor for a seed-stage Utah startup"*. Cards populate; top result is Plaibook at 78% and the reason quotes the search phrase. Toggle People ↔ Businesses. Expand the bridges drawer on the partial match — the real `<GapCloser>` opens with three Utah resources for the field-services GTM gap.
 
 > *(50 s)* Narration covers natural-language search → reasoning → calibrated scoring → bridges. The same talking points as Slide 3, but now it's live.
 
-## Live 3 — Handshake (`/handshake?with=sup-lumen`)
+## Live 3 — Handshake (`/handshake?with=sup-plaibook`)
 
-Click "I'm interested" on Lumen. Bramble-equivalent counter is pre-seeded so it goes mutual. Header bell lights up; click it to see "Mutual match. Time to talk."
+Click "I'm interested" on Plaibook. Counter-party interest is pre-seeded so it goes mutual. Header bell lights up; click it to see "Mutual match. Time to talk."
 
 > *(25 s)* "Dual opt-in. Contact info isn't shared until both sides flip to interested. The bell tracks per-viewer."
 
@@ -188,7 +188,7 @@ Footer: GitHub CTA.
 | `app/src/components/demo/SlideShellNav.tsx` | Top progress bar + bottom keyboard pill + `→` / `←` / `space` / `esc` listeners. |
 | `app/src/components/demo/DemoExitButton.tsx` | "Finish demo" pill in `<AppShell>`, gated on the demo cookie, `cmd+.` shortcut. |
 | `app/src/lib/demo/show-slides.ts` | The 5-slide registry. |
-| `app/src/lib/demo/show-fixtures.ts` | Hardcoded DTOs (Sarah, Lumen, match, gap text, resources, push). |
+| `app/src/lib/demo/show-fixtures.ts` | Hardcoded DTOs (Zac Hales, Plaibook, match, gap text, resources, push). Internal symbols still named `SARAH` / `LUMEN` for historical reasons. |
 | `app/src/app/demo/open/page.tsx` | Slide 1 — bottleneck. |
 | `app/src/app/demo/profile/page.tsx` | Slide 2 — uses `<CandidateProfileCard>`. |
 | `app/src/app/demo/match/page.tsx` | Slide 3 — uses `<MatchCard>` + `<GapCloserView>`. |
@@ -215,7 +215,7 @@ Footer: GitHub CTA.
 
 - [ ] `npm run typecheck` clean
 - [ ] All 5 slide routes return 200; old routes 404
-- [ ] Slide 5 → `/dashboard` lands with Sarah's matches in <1 s
+- [ ] Slide 5 → `/dashboard` lands with Zac's matches in <1 s
 - [ ] Live 2 search query renders cards instantly (cache hot)
 - [ ] Live 3 "I'm interested" fires the bell + queues an Affinity push
 - [ ] `Finish demo` icon visible in header on live pages, `cmd+.` jumps to `/demo/closing`

@@ -1,10 +1,20 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AlertCircle } from "lucide-react";
-import type { BusinessDTO, CandidateDTO, MatchDTO, MatchFactor } from "@/lib/data/types";
+import type { BusinessDTO, CandidateDTO, MatchDTO, MatchFactor, Origin } from "@/lib/data/types";
+import { ORIGIN_LABELS } from "@/lib/data/enum-labels";
 import { Avatar } from "./Avatar";
 import { GapCloser } from "./GapCloser";
 import { Pill } from "./Pill";
+
+// Origins worth surfacing as a pill on the match card. The brief opens with
+// university-spinout commercialization as the core problem, so promote those
+// signals; treat bootstrapped / vc-backed as background and skip the pill.
+const SPINOUT_ORIGINS: ReadonlySet<Origin> = new Set([
+  "u-of-u-spinout",
+  "byu-spinout",
+  "usu-spinout",
+]);
 
 type Candidate =
   | { kind: "candidate"; candidate: CandidateDTO }
@@ -48,6 +58,10 @@ export function MatchCard({
     candidate.kind === "candidate"
       ? `/profile/candidate/${candidateId}`
       : `/profile/business/${candidateId}`;
+  const spinoutOrigin =
+    candidate.kind === "business" && SPINOUT_ORIGINS.has(candidate.business.origin)
+      ? candidate.business.origin
+      : null;
   const isPartial = match.score < STRONG_THRESHOLD;
 
   return (
@@ -66,6 +80,9 @@ export function MatchCard({
           <p className="mt-1 truncate text-sm text-warmgray-600">{headline}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Pill tone="warmgray">{location}</Pill>
+            {spinoutOrigin && (
+              <Pill tone="orange">{ORIGIN_LABELS[spinoutOrigin]}</Pill>
+            )}
           </div>
         </div>
       </header>

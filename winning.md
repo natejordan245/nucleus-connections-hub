@@ -26,9 +26,9 @@ This is stronger because:
 
 ### The 90-second demo arc
 
-1. Sarah's matches load. Top hit: 78%, not 99%.
-2. Card itself reads: *"Strong on enterprise GTM. Weaker on FDA / regulatory."* Inline: *"3 Utah resources can close this gap →"*
-3. Click expands: PIVOT Center FDA mentor, BioHive accelerator, "FDA pathway for Utah biotech" guide.
+1. Zac's matches load. Top hit: 78%, not 99%.
+2. Card itself reads: *"Strong on enterprise GTM. Weaker on field-services / vertical-SaaS."* Inline: *"3 Utah resources can close this gap →"*
+3. Click expands: Stoke Mountain vertical-SaaS GTM mentors, Silicon Slopes field-services cohort, vertical-SaaS playbook.
 4. Voice-over: *"Every other platform sells you a perfect match. We tell you what's missing and hand you the bridge."*
 
 That's the screenshot judges remember. That's the rubric answer.

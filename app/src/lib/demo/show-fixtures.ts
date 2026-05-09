@@ -54,7 +54,7 @@ export const LUMEN: BusinessDTO = {
     "follow-ups. Live with pest control operators today; expanding into " +
     "adjacent home-services verticals. Raising a seed round.",
   sector: "software",
-  origin: "vc-backed",
+  origin: "byu-spinout",
   trl: 7,
   fundingStage: "seed",
   fundingStatus: "revenue",

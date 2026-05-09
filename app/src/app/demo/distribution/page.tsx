@@ -22,12 +22,14 @@ export default function DistributionSlidePage() {
     <main className="mx-auto w-full max-w-5xl px-6 pt-12 pb-24">
       <span className="eyebrow text-orange-500">Distribution</span>
       <h1 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.01em] text-ink">
-        Drop the form into any site.
+        Replace the Typeform. Same paste-in surface.
       </h1>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-warmgray-600">
-        One snippet. Lives inside the partner&apos;s own page — Nucleus, BioHive, a
-        Stoke Mtn launch site.{" "}
-        <span className="text-warmgray-500">(Squarespace compatible.)</span>
+        Today Nucleus collects intake through a Squarespace embed →
+        Typeform → spreadsheet. We replace the embed, not the page —
+        one snippet drops the same widget straight into{" "}
+        <span className="font-mono text-[12px] text-ink">nucleusutah.org/contact</span>,
+        and structured profiles come out the back instead of free-text rows.
       </p>
 
       <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-warmgray-200 bg-white px-3 py-1.5 font-mono text-[11px] text-warmgray-700">
