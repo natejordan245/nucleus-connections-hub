@@ -12,7 +12,7 @@ export default async function LoginPage({
   searchParams?: { error?: string };
 }) {
   const viewer = await getViewer();
-  if (viewer.kind !== "anon") redirect("/profile");
+  if (viewer.kind !== "anon") redirect("/dashboard");
 
   const mode = getAppMode();
   const error = searchParams?.error;
