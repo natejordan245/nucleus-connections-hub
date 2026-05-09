@@ -678,6 +678,49 @@ export class SupabaseDataStore implements IDataStore {
     return this.toMatchDTO(viewer, cand, viewerWantsCand, candWantsViewer, verdict);
   }
 
+  async bulkScoresFor({
+    subjectId,
+    candidateIds,
+  }: {
+    subjectId: string;
+    candidateIds: string[];
+  }): Promise<Map<string, number>> {
+    const out = new Map<string, number>();
+    if (candidateIds.length === 0) return out;
+    const ids = Array.from(new Set(candidateIds.filter((id) => id !== subjectId)));
+    if (ids.length === 0) return out;
+
+    const sb = await this.getClient();
+    const { data, error } = await sb
+      .from("profiles")
+      .select("id, embedding, embedding_wants")
+      .in("id", [subjectId, ...ids]);
+    if (error || !data) return out;
+
+    const rows = data as Array<{
+      id: string;
+      embedding: ProfileRow["embedding"];
+      embedding_wants: ProfileRow["embedding_wants"];
+    }>;
+    const viewer = rows.find((r) => r.id === subjectId);
+    if (!viewer) return out;
+    const viewerProfile = parseVector(viewer.embedding);
+    const viewerWants = parseVector(viewer.embedding_wants);
+    if (!viewerProfile || !viewerWants) return out;
+
+    for (const row of rows) {
+      if (row.id === subjectId) continue;
+      const candProfile = parseVector(row.embedding);
+      const candWants = parseVector(row.embedding_wants);
+      if (!candProfile || !candWants) continue;
+      const viewerWantsCand = cosineSimilarity(viewerWants, candProfile);
+      const candWantsViewer = cosineSimilarity(candWants, viewerProfile);
+      const composite = Math.min(viewerWantsCand, candWantsViewer);
+      out.set(row.id, normalizeMatchScore(composite));
+    }
+    return out;
+  }
+
   async matchesFor(viewerId: string): Promise<MatchDTO[]> {
     const sb = await this.getClient();
     const { data: viewerRow, error: viewerErr } = await sb
@@ -861,11 +904,14 @@ export class SupabaseDataStore implements IDataStore {
   ): MatchDTO {
     const composite = Math.min(viewerWantsCand, candWantsViewer);
     const score = normalizeMatchScore(composite);
-    const verdictWeight: Record<LLMGateVerdict["factors"][number]["verdict"], number> = {
-      strong: 0.95,
-      ok: 0.75,
-      weak: 0.45,
-      miss: 0.15,
+    // Anchor each factor's weight around the overall match score so the
+    // breakdown tells the same story as the headline number. The verdict
+    // shifts the factor up or down relative to that anchor.
+    const verdictOffset: Record<LLMGateVerdict["factors"][number]["verdict"], number> = {
+      strong: 0.2,
+      ok: 0.0,
+      weak: -0.2,
+      miss: -0.4,
     };
     return {
       id: `live-${viewer.id}-${cand.id}`,
@@ -877,7 +923,7 @@ export class SupabaseDataStore implements IDataStore {
       concerns: verdict.concerns,
       factors: verdict.factors.map((f) => ({
         label: f.label,
-        weight: verdictWeight[f.verdict] ?? 0.5,
+        weight: Math.max(0.05, Math.min(1, score + (verdictOffset[f.verdict] ?? 0))),
         detail: f.detail,
       })),
       proximityBoost: 0,

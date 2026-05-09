@@ -52,6 +52,16 @@ export interface IDataStore {
     candidateId: string;
   }): Promise<MatchDTO | null>;
 
+  // Lightweight bulk scoring used by surfaces (search results) that want to
+  // show a "% match" on every card without running the full LLM-gated
+  // pipeline. Returns a normalized [0, 1] score per candidateId based on
+  // cosine similarity only — no hard filters, no LLM verdict. Missing entries
+  // mean we couldn't compute a score (e.g. either profile lacks embeddings).
+  bulkScoresFor(args: {
+    subjectId: string;
+    candidateIds: string[];
+  }): Promise<Map<string, number>>;
+
   // search across the four pools (simple substring match for now)
   search(query: string): Promise<{
     candidates: CandidateDTO[];

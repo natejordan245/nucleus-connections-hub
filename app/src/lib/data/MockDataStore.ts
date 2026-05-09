@@ -140,6 +140,22 @@ export class MockDataStore implements IDataStore {
     return null;
   }
 
+  async bulkScoresFor({
+    subjectId,
+    candidateIds,
+  }: {
+    subjectId: string;
+    candidateIds: string[];
+  }): Promise<Map<string, number>> {
+    const out = new Map<string, number>();
+    for (const candidateId of candidateIds) {
+      if (candidateId === subjectId) continue;
+      const m = await this.computeMatch({ subjectId, candidateId });
+      if (m) out.set(candidateId, m.score);
+    }
+    return out;
+  }
+
   async search(query: string) {
     const q = lower(query.trim());
     if (!q) {

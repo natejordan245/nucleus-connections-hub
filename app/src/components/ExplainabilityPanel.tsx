@@ -13,27 +13,38 @@ export function ExplainabilityPanel({ match }: { match: MatchDTO }) {
         <p className="text-sm leading-relaxed text-warmgray-700">{match.reason}</p>
 
         <ul className="mt-4 space-y-2.5">
-          {match.factors.map((f) => (
-            <li key={f.label}>
-              <div className="flex items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink">
-                  {f.label}
-                  <InfoButton label={`Why this factor: ${f.label}`}>
-                    {f.detail}
-                  </InfoButton>
-                </span>
-                <span className="font-mono text-[11px] font-bold text-warmgray-700">
-                  {Math.round(f.weight * 100)}%
-                </span>
-              </div>
-              <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-warmgray-100">
+          {match.factors.map((f) => {
+            const level = Math.max(1, Math.min(5, Math.round(f.weight * 5)));
+            return (
+              <li key={f.label}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink">
+                    {f.label}
+                    <InfoButton label={`Why this factor: ${f.label}`}>
+                      {f.detail}
+                    </InfoButton>
+                  </span>
+                  <span className="font-mono text-[11px] font-bold text-warmgray-700">
+                    {level} / 5
+                  </span>
+                </div>
                 <div
-                  className="h-full rounded-full bg-orange-500"
-                  style={{ width: `${Math.round(f.weight * 100)}%` }}
-                />
-              </div>
-            </li>
-          ))}
+                  className="mt-1 grid grid-cols-5 gap-1"
+                  role="img"
+                  aria-label={`${level} out of 5`}
+                >
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={`h-1 rounded-full ${
+                        i < level ? "bg-orange-500" : "bg-warmgray-100"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </li>
+            );
+          })}
         </ul>
 
         {match.concerns.length > 0 && (

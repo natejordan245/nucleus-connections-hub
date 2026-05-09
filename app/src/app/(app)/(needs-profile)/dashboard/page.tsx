@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { AnimatedSearchInput } from "@/components/AnimatedSearchInput";
 import { Avatar } from "@/components/Avatar";
-import { MatchCard } from "@/components/MatchCard";
 import { MatchToolbar, type SortKey } from "@/components/MatchToolbar";
+import { Pill } from "@/components/Pill";
 import { getDataStore } from "@/lib/data";
 import type {
   BusinessDTO,
@@ -136,7 +136,7 @@ export default async function DashboardPage({
             </section>
           ) : (
             <>
-              {/* Top matches as full cards — same component slide 3 renders. */}
+              {/* Top 3 — compact cards, single row on md+. */}
               <section>
                 <div className="mb-3 flex items-center justify-between">
                   <h2 className="text-sm font-semibold text-ink">
@@ -149,34 +149,17 @@ export default async function DashboardPage({
                   </h2>
                   <span className="font-mono text-xs text-warmgray-500">↻ refresh</span>
                 </div>
-                <div className="space-y-4">
-                  {sortedRows.slice(0, 3).map(({ match, cand }) => (
-                    <MatchCard key={match.id} match={match} candidate={cand} />
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                  {sortedRows.slice(0, 3).map(({ match, cand }, i) => (
+                    <TopMatchCard key={match.id} rank={i + 1} match={match} cand={cand} />
                   ))}
                 </div>
               </section>
 
               {/* Dense leaderboard for everything past the top 3. */}
               {sortedRows.length > 3 && (
-                <section className="flex flex-col rounded-lg border border-warmgray-200 bg-white">
-                  <div className="flex items-center justify-between border-b border-warmgray-200 px-4 py-2.5">
-                    <h2 className="text-sm font-semibold text-ink">
-                      More matches
-                      <span className="ml-2 font-mono text-xs text-warmgray-500">
-                        {sortedRows.length - 3}
-                      </span>
-                    </h2>
-                  </div>
+                <section className="flex flex-col overflow-hidden rounded-lg border border-warmgray-200 bg-white">
                   <table className="w-full text-sm">
-                    <thead className="border-b border-warmgray-200 bg-warmgray-50 text-left font-mono text-[11px] uppercase tracking-wider text-warmgray-500">
-                      <tr>
-                        <th className="px-4 py-2 font-semibold">#</th>
-                        <th className="py-2 font-semibold">Name</th>
-                        <th className="py-2 font-semibold">Score</th>
-                        <th className="hidden py-2 font-semibold md:table-cell">Location</th>
-                        <th className="px-4 py-2 text-right font-semibold">Action</th>
-                      </tr>
-                    </thead>
                     <tbody className="divide-y divide-warmgray-100">
                       {sortedRows.slice(3).map(({ match, cand }, i) => (
                         <DenseRow key={match.id} idx={i + 3} match={match} cand={cand} />
@@ -245,6 +228,50 @@ function parseMinScore(raw: string | undefined): number | null {
 
 function rowName(cand: ResolvedCand): string {
   return cand.kind === "candidate" ? cand.candidate.name : cand.business.name;
+}
+
+function TopMatchCard({
+  rank,
+  match,
+  cand,
+}: {
+  rank: number;
+  match: MatchDTO;
+  cand: ResolvedCand;
+}) {
+  const name = cand.kind === "candidate" ? cand.candidate.name : cand.business.name;
+  const photo = cand.kind === "candidate" ? cand.candidate.photoUrl : cand.business.logoUrl;
+  const location =
+    cand.kind === "candidate" ? cand.candidate.location : cand.business.location;
+  const detailHref =
+    cand.kind === "candidate"
+      ? `/profile/candidate/${cand.candidate.id}`
+      : `/profile/business/${cand.business.id}`;
+  const pct = match.score * 100;
+  const tone = pct >= 85 ? "orange" : pct >= 75 ? "emerald" : "warmgray";
+
+  return (
+    <Link
+      href={detailHref}
+      className="group flex flex-col rounded-lg border border-warmgray-200 bg-white p-3 transition hover:border-warmgray-300"
+    >
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-warmgray-400">
+          #{String(rank).padStart(2, "0")}
+        </span>
+        <Pill tone={tone}>{pct.toFixed(1)}%</Pill>
+      </div>
+      <div className="mt-2 flex items-center gap-2.5">
+        <Avatar name={name} src={photo} size="sm" />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold text-ink group-hover:text-orange-700">
+            {name}
+          </div>
+          <div className="truncate text-[11px] text-warmgray-500">{location}</div>
+        </div>
+      </div>
+    </Link>
+  );
 }
 
 function NoMatchingFilters() {

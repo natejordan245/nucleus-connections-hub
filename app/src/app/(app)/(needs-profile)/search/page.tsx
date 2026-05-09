@@ -54,7 +54,26 @@ export default async function SearchPage({
         : ["people", "companies", "mentors", "investors", "resources"];
 
   const store = getDataStore();
-  const results = await store.search(q);
+  const [results, viewerMatches] = await Promise.all([
+    store.search(q),
+    store.matchesFor(viewerId),
+  ]);
+
+  // Backfill cosine-only scores for everyone in the result set, then let the
+  // viewer's curated `matchesFor` queue override (it's the LLM-validated score
+  // shown elsewhere in the app).
+  const allResultIds = [
+    ...results.candidates.map((c) => c.id),
+    ...results.businesses.map((b) => b.id),
+    ...results.mentors.map((m) => m.id),
+    ...results.investors.map((i) => i.id),
+  ];
+  const bulkScores = await store.bulkScoresFor({
+    subjectId: viewerId,
+    candidateIds: allResultIds,
+  });
+  const scoreById = new Map<string, number>(bulkScores);
+  for (const m of viewerMatches) scoreById.set(m.candidateId, m.score);
 
   const counts: Record<Tab, number> = {
     people: results.candidates.length,
@@ -153,10 +172,18 @@ export default async function SearchPage({
       )}
 
       <section className="mt-6">
-        {tab === "people" && <PeopleResults items={results.candidates} q={q} />}
-        {tab === "companies" && <CompanyResults items={results.businesses} q={q} />}
-        {tab === "mentors" && <MentorResults items={results.mentors} q={q} />}
-        {tab === "investors" && <InvestorResults items={results.investors} q={q} />}
+        {tab === "people" && (
+          <PeopleResults items={results.candidates} q={q} scoreById={scoreById} />
+        )}
+        {tab === "companies" && (
+          <CompanyResults items={results.businesses} q={q} scoreById={scoreById} />
+        )}
+        {tab === "mentors" && (
+          <MentorResults items={results.mentors} q={q} scoreById={scoreById} />
+        )}
+        {tab === "investors" && (
+          <InvestorResults items={results.investors} q={q} scoreById={scoreById} />
+        )}
         {tab === "resources" && <ResourceResults items={results.resources} q={q} />}
       </section>
     </main>
@@ -176,7 +203,26 @@ function EmptyState({ kind, q }: { kind: string; q: string }) {
   );
 }
 
-function PeopleResults({ items, q }: { items: CandidateDTO[]; q: string }) {
+function MatchPill({ score }: { score: number | undefined }) {
+  if (score === undefined) return null;
+  const pct = score * 100;
+  const tone = pct >= 85 ? "orange" : pct >= 75 ? "emerald" : "warmgray";
+  return (
+    <Pill tone={tone}>
+      <span className="font-mono">{pct.toFixed(1)}% match</span>
+    </Pill>
+  );
+}
+
+function PeopleResults({
+  items,
+  q,
+  scoreById,
+}: {
+  items: CandidateDTO[];
+  q: string;
+  scoreById: Map<string, number>;
+}) {
   if (items.length === 0) return <EmptyState kind="people" q={q} />;
   return (
     <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -188,9 +234,12 @@ function PeopleResults({ items, q }: { items: CandidateDTO[]; q: string }) {
           >
             <Avatar name={c.name} src={c.photoUrl} size="md" />
             <div className="min-w-0 flex-1">
-              <h3 className="truncate text-sm font-semibold text-ink">
-                {c.name}
-              </h3>
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="truncate text-sm font-semibold text-ink">
+                  {c.name}
+                </h3>
+                <MatchPill score={scoreById.get(c.id)} />
+              </div>
               <p className="truncate text-[11px] text-warmgray-500">{c.headline}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Pill tone="warmgray">{c.location}</Pill>
@@ -208,7 +257,15 @@ function PeopleResults({ items, q }: { items: CandidateDTO[]; q: string }) {
   );
 }
 
-function CompanyResults({ items, q }: { items: BusinessDTO[]; q: string }) {
+function CompanyResults({
+  items,
+  q,
+  scoreById,
+}: {
+  items: BusinessDTO[];
+  q: string;
+  scoreById: Map<string, number>;
+}) {
   if (items.length === 0) return <EmptyState kind="companies" q={q} />;
   return (
     <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -220,9 +277,12 @@ function CompanyResults({ items, q }: { items: BusinessDTO[]; q: string }) {
           >
             <Avatar name={s.name} src={s.logoUrl} size="md" />
             <div className="min-w-0 flex-1">
-              <h3 className="truncate text-sm font-semibold text-ink">
-                {s.name}
-              </h3>
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="truncate text-sm font-semibold text-ink">
+                  {s.name}
+                </h3>
+                <MatchPill score={scoreById.get(s.id)} />
+              </div>
               <p className="truncate text-[11px] text-warmgray-500">{s.oneLiner}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Pill tone="warmgray">{s.location}</Pill>
@@ -236,7 +296,15 @@ function CompanyResults({ items, q }: { items: BusinessDTO[]; q: string }) {
   );
 }
 
-function MentorResults({ items, q }: { items: MentorDTO[]; q: string }) {
+function MentorResults({
+  items,
+  q,
+  scoreById,
+}: {
+  items: MentorDTO[];
+  q: string;
+  scoreById: Map<string, number>;
+}) {
   if (items.length === 0) return <EmptyState kind="mentors" q={q} />;
   return (
     <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -248,9 +316,12 @@ function MentorResults({ items, q }: { items: MentorDTO[]; q: string }) {
           >
             <Avatar name={m.name} src={m.photoUrl} size="md" />
             <div className="min-w-0 flex-1">
-              <h3 className="truncate text-sm font-semibold text-ink">
-                {m.name}
-              </h3>
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="truncate text-sm font-semibold text-ink">
+                  {m.name}
+                </h3>
+                <MatchPill score={scoreById.get(m.id)} />
+              </div>
               <p className="truncate text-[11px] text-warmgray-500">{m.headline}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Pill tone="warmgray">{m.location}</Pill>
@@ -265,7 +336,15 @@ function MentorResults({ items, q }: { items: MentorDTO[]; q: string }) {
   );
 }
 
-function InvestorResults({ items, q }: { items: InvestorDTO[]; q: string }) {
+function InvestorResults({
+  items,
+  q,
+  scoreById,
+}: {
+  items: InvestorDTO[];
+  q: string;
+  scoreById: Map<string, number>;
+}) {
   if (items.length === 0) return <EmptyState kind="VCs" q={q} />;
   return (
     <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -277,9 +356,12 @@ function InvestorResults({ items, q }: { items: InvestorDTO[]; q: string }) {
           >
             <Avatar name={i.fundName ?? i.name} src={i.photoUrl} size="md" />
             <div className="min-w-0 flex-1">
-              <h3 className="truncate text-sm font-semibold text-ink">
-                {i.fundName ?? i.name}
-              </h3>
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="truncate text-sm font-semibold text-ink">
+                  {i.fundName ?? i.name}
+                </h3>
+                <MatchPill score={scoreById.get(i.id)} />
+              </div>
               <p className="truncate text-[11px] text-warmgray-500">{i.headline}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Pill tone="warmgray">{i.location}</Pill>
