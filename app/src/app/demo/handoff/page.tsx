@@ -21,7 +21,7 @@ export default function HandoffPage() {
       </h1>
 
       <form
-        action="/api/demo/start"
+        action="/api/demo/exit?to=login"
         method="POST"
         className="show-fade-up mt-10"
         style={{ animationDelay: "500ms" }}
