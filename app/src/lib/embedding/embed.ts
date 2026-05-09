@@ -162,9 +162,25 @@ export function textForTalentWants(t: TalentDTO): string {
     t.stagePrefs?.length ? `Stage preferences: ${t.stagePrefs.join(", ")}` : "",
     t.availability ? `Availability: ${t.availability}` : "",
     t.compensation?.length ? `Comp: ${t.compensation.join(", ")}` : "",
+    t.riskTolerance
+      ? `Risk tolerance: ${t.riskTolerance}/5 — ${riskToleranceDescriptor(t.riskTolerance)}`
+      : "",
   ]
     .filter(Boolean)
     .join("\n\n");
+}
+
+// 1 = wants only proven, late-stage companies; 5 = comfortable joining
+// pre-product, pre-revenue startups. Surfaced to the LLM gate so it can flag
+// pairs where appetite and stage are mismatched.
+function riskToleranceDescriptor(r: 1 | 2 | 3 | 4 | 5): string {
+  switch (r) {
+    case 1: return "wants only established, post-traction companies";
+    case 2: return "prefers companies with revenue and clear product-market fit";
+    case 3: return "comfortable with seed-stage companies that have early traction";
+    case 4: return "comfortable joining pre-seed companies before traction";
+    case 5: return "wants the earliest stage — pre-product, founding-team risk";
+  }
 }
 
 export function textForStartupProfile(s: StartupDTO): string {

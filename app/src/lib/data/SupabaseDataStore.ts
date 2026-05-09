@@ -1395,6 +1395,7 @@ function passesHardFilters(viewer: ProfileRow, cand: ProfileRow): boolean {
     stagePrefs?: string[];
     availability?: string;
     networks?: string[];
+    riskTolerance?: number;
   };
   const b = (business.data ?? {}) as {
     fundingStage?: string;
@@ -1405,6 +1406,18 @@ function passesHardFilters(viewer: ProfileRow, cand: ProfileRow): boolean {
   // Stage overlap — candidate's preferred stages must include the business's stage.
   if (c.stagePrefs?.length && b.fundingStage) {
     if (!c.stagePrefs.includes(b.fundingStage)) return false;
+  }
+
+  // Risk-tolerance ↔ stage extremes. Conservative: only drop the obvious
+  // mismatches and let the LLM gate evaluate the middle. Risk 1 candidates
+  // want post-traction companies; risk 5 candidates want the earliest stage.
+  if (c.riskTolerance != null && b.fundingStage) {
+    if (c.riskTolerance === 1 && (b.fundingStage === "pre-seed" || b.fundingStage === "seed")) {
+      return false;
+    }
+    if (c.riskTolerance === 5 && (b.fundingStage === "series-b" || b.fundingStage === "growth")) {
+      return false;
+    }
   }
 
   // Networks overlap — candidate's network must intersect the business's wanted set.
