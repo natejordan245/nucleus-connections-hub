@@ -22,20 +22,13 @@ export default function DistributionSlidePage() {
     <main className="mx-auto w-full max-w-5xl px-6 pt-12 pb-24">
       <span className="eyebrow text-orange-500">Distribution</span>
       <h1 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.01em] text-ink">
-        Replace the Typeform. Same paste-in surface.
+        Replace the Typeform. Same easy integration.
       </h1>
-      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-warmgray-600">
-        Today Nucleus collects intake through a Squarespace embed →
-        Typeform → spreadsheet. We replace the embed, not the page —
-        one snippet drops the same widget straight into{" "}
-        <span className="font-mono text-[12px] text-ink">nucleusutah.org/contact</span>,
-        and structured profiles come out the back instead of free-text rows.
-      </p>
 
-      <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-warmgray-200 bg-white px-3 py-1.5 font-mono text-[11px] text-warmgray-700">
+      <div className="mt-4 inline-flex items-center gap-2 rounded-md border border-warmgray-200 bg-white px-3 py-1.5 font-mono text-[11px] text-warmgray-700">
         <Code2 className="h-3.5 w-3.5 text-orange-600" strokeWidth={2} aria-hidden />
         <span className="text-warmgray-500">&lt;script src=</span>
-        <span className="text-ink">"connections.utah/embed.js"</span>
+        <span className="text-ink">"https://app-two-swart-3c3ey9rx1h.vercel.app/embed.js"</span>
         <span className="text-warmgray-500">&gt;&lt;/script&gt;</span>
       </div>
 

@@ -1084,9 +1084,13 @@ function buildTierC(idx: number): TalentDTO {
   };
 }
 
+// Halved from the original 200 + 100. We now ship Tier A only for `buildOne`
+// (idx 0..99 → suffix 100..199) and the lower half of Tier C (idx 200..249 →
+// suffix 300..349). Suffixes 200..299 (dropped Tier B) and 350..399 (dropped
+// upper Tier C) are deleted from the cloud DB by `/api/admin/halve-seed`.
 export const EXTRA_LIVE_TALENT: TalentDTO[] = [
-  ...Array.from({ length: 200 }, (_, i) => buildOne(i)),
-  ...Array.from({ length: 100 }, (_, i) => buildTierC(200 + i)),
+  ...Array.from({ length: 100 }, (_, i) => buildOne(i)),
+  ...Array.from({ length: 50 }, (_, i) => buildTierC(200 + i)),
 ];
 
 // ── Procedural businesses ──────────────────────────────────────────────────
@@ -1457,7 +1461,9 @@ function buildBusiness(idx: number): StartupDTO {
   };
 }
 
+// Halved from 80 → 40. Dropped suffixes 140..179 are deleted from the cloud
+// DB by `/api/admin/halve-seed`.
 export const EXTRA_LIVE_STARTUPS: StartupDTO[] = Array.from(
-  { length: 80 },
+  { length: 40 },
   (_, i) => buildBusiness(i),
 );
