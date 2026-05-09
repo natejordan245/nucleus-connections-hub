@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Link from "next/link";
 import { Loader2, Sparkles } from "lucide-react";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { ChipGroup } from "@/components/ChipGroup";
 import { DemoFiller } from "@/components/DemoFiller";
 import { Field, Input, Select, Textarea } from "@/components/FormField";
@@ -275,9 +275,12 @@ export function TalentOnboardForm({
   return (
     <main className="mx-auto w-full max-w-2xl px-6 py-8">
       <DemoFiller />
-      <Link href="/onboard" className="text-sm font-medium text-warmgray-600 hover:text-ink">
-        ← Back
-      </Link>
+      <Breadcrumb
+        items={[
+          { label: "Profile types", href: "/onboard" },
+          { label: "Candidate" },
+        ]}
+      />
 
       <span className="eyebrow mt-6 block text-orange-500">
         {isEdit ? "Edit candidate profile" : "Talent profile"}
