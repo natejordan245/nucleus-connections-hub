@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { ChipGroup } from "@/components/ChipGroup";
 import { DemoFiller } from "@/components/DemoFiller";
 import { Field, Input, Textarea } from "@/components/FormField";
@@ -96,9 +96,12 @@ export function MentorOnboardForm({
   return (
     <main className="mx-auto w-full max-w-2xl px-6 py-8">
       <DemoFiller />
-      <Link href="/onboard" className="text-sm font-medium text-warmgray-600 hover:text-ink">
-        ← Back
-      </Link>
+      <Breadcrumb
+        items={[
+          { label: "Profile types", href: "/onboard" },
+          { label: "Mentor" },
+        ]}
+      />
 
       <span className="eyebrow mt-6 block text-orange-500">
         {isEdit ? "Edit mentor profile" : "Mentor profile"}

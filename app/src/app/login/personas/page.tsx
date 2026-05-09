@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AuthShell } from "@/components/AuthCard";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { DEMO_PERSONAS, getAppMode } from "@/lib/mode";
 import { getViewer } from "@/lib/session";
 import { signInAsDemoPersona } from "@/app/login/actions";
@@ -17,7 +17,13 @@ export default async function PersonasPage({
   return (
     <AuthShell>
       <section className="w-full rounded-2xl border border-warmgray-100 bg-white p-8 shadow-sm">
-        <span className="eyebrow text-orange-500">Sample users</span>
+        <Breadcrumb
+          items={[
+            { label: "Sign in", href: "/login" },
+            { label: "Sample users" },
+          ]}
+        />
+        <span className="eyebrow mt-4 block text-orange-500">Sample users</span>
         <h1 className="mt-3 font-serif text-3xl font-semibold leading-tight text-ink">
           Pick a profile.
         </h1>
@@ -56,11 +62,6 @@ export default async function PersonasPage({
           ))}
         </ul>
 
-        <p className="mt-6 text-center text-sm text-warmgray-600">
-          <Link href="/login" className="font-semibold text-orange-600 hover:text-orange-700">
-            ← Back to sign in
-          </Link>
-        </p>
       </section>
     </AuthShell>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import {
   AlertCircle,
   ArrowRight,
@@ -175,12 +175,12 @@ export function BusinessOnboardForm({
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <Link
-            href="/onboard"
-            className="text-sm font-medium text-warmgray-500 transition hover:text-ink"
-          >
-            ← All profile types
-          </Link>
+          <Breadcrumb
+            items={[
+              { label: "Profile types", href: "/onboard" },
+              { label: "Business" },
+            ]}
+          />
           <span className="eyebrow mt-3 block text-orange-500">
             {isEdit ? "Edit business profile" : "Business profile"}
           </span>
