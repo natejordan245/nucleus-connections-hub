@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { LIVE_SEED_PASSWORD, LIVE_STARTUPS, LIVE_TALENT } from "@/lib/data/live-seed";
+import { EXTRA_LIVE_STARTUPS, EXTRA_LIVE_TALENT } from "@/lib/data/live-seed-extra";
 import { baselineResources } from "@/lib/data/seed";
 import { SupabaseDataStore } from "@/lib/data/SupabaseDataStore";
 import type { ResourceDTO } from "@/lib/data/types";
@@ -48,7 +49,7 @@ export async function POST(req: Request) {
   };
   const results: Result[] = [];
 
-  for (const t of LIVE_TALENT) {
+  for (const t of [...LIVE_TALENT, ...EXTRA_LIVE_TALENT]) {
     const r = await ensureUserAndProfile({
       admin,
       id: t.id,
@@ -59,7 +60,7 @@ export async function POST(req: Request) {
     });
     results.push(r);
   }
-  for (const s of LIVE_STARTUPS) {
+  for (const s of [...LIVE_STARTUPS, ...EXTRA_LIVE_STARTUPS]) {
     const email = `team+${s.id.replace(/-/g, "").slice(-12)}@nucleus.demo`;
     const r = await ensureUserAndProfile({
       admin,

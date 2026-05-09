@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Search, ChevronDown, Filter, TrendingUp } from "lucide-react";
+import { Search, ChevronDown, Filter } from "lucide-react";
+import { AnimatedSearchInput } from "@/components/AnimatedSearchInput";
 import { Avatar } from "@/components/Avatar";
 import { getDataStore } from "@/lib/data";
 import type {
@@ -45,52 +46,20 @@ export default async function DashboardPage() {
     allCandidates,
     allBusinesses,
   });
-  const avgScore = matches.length
-    ? Math.round((matches.reduce((s, m) => s + m.score, 0) / matches.length) * 100)
-    : 0;
-  const topScore = matches.length
-    ? Math.round(Math.max(...matches.map((m) => m.score)) * 100)
-    : 0;
-  const sharedTotal = matches.reduce((s, m) => s + m.sharedOrgIds.length, 0);
-
   return (
-    <main className="mx-auto w-full max-w-7xl px-6 py-8">
-      <div className="flex items-baseline justify-between">
-        <div>
-          <span className="eyebrow text-orange-500">{copy.eyebrow}</span>
-          <h1 className="mt-2 text-2xl font-bold text-ink">{copy.title}</h1>
-          <p className="mt-1 text-sm text-warmgray-500">{copy.sub}</p>
-        </div>
-        <div className="hidden text-right font-mono text-xs text-warmgray-500 sm:block">
-          <div>Last sync · just now</div>
-          <div className="mt-1 flex items-center justify-end gap-1 text-emerald-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            live
-          </div>
-        </div>
-      </div>
-
-      {/* Stat strip */}
-      <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-warmgray-200 bg-warmgray-200 sm:grid-cols-4">
-        <Stat label="Ranked queue" value={String(matches.length).padStart(2, "0")} />
-        <Stat label="Top score" value={`${topScore}%`} accent />
-        <Stat label="Avg score" value={`${avgScore}%`} delta={avgScore >= 75 ? "↑" : "·"} />
-        <Stat label="Inbound interest" value={String(interested.length).padStart(2, "0")} />
-      </div>
-
+    <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-7xl flex-col px-6 py-8">
       {/* Search + filter row */}
-      <div className="mt-4 flex items-center gap-2 rounded-lg border border-warmgray-200 bg-white p-2">
+      <div className="flex items-center gap-2 rounded-lg border border-warmgray-200 bg-white p-2">
         <form action="/search" method="GET" role="search" className="flex flex-1 items-center gap-2">
           <Search aria-hidden strokeWidth={1.75} className="ml-2 h-4 w-4 text-warmgray-400" />
           <label htmlFor="dashboard-search" className="sr-only">
             Search
           </label>
-          <input
+          <AnimatedSearchInput
             id="dashboard-search"
             name="q"
-            type="search"
-            placeholder={copy.placeholder}
-            autoComplete="off"
+            fallback={copy.placeholder}
+            examples={copy.placeholderExamples}
             className="flex-1 bg-transparent py-1.5 text-sm text-ink outline-none placeholder:text-warmgray-400"
           />
           <button
@@ -116,8 +85,8 @@ export default async function DashboardPage() {
       </div>
 
       {/* Two-col split */}
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
-        <section className="rounded-lg border border-warmgray-200 bg-white">
+      <div className="mt-6 grid flex-1 grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
+        <section className="flex flex-col rounded-lg border border-warmgray-200 bg-white">
           <div className="flex items-center justify-between border-b border-warmgray-200 px-4 py-2.5">
             <h2 className="text-sm font-semibold text-ink">
               {copy.matchesHeading}
@@ -136,7 +105,6 @@ export default async function DashboardPage() {
                   <th className="py-2 font-semibold">Name</th>
                   <th className="py-2 font-semibold">Score</th>
                   <th className="hidden py-2 font-semibold md:table-cell">Location</th>
-                  <th className="hidden py-2 font-semibold md:table-cell">Signals</th>
                   <th className="px-4 py-2 text-right font-semibold">Action</th>
                 </tr>
               </thead>
@@ -151,8 +119,8 @@ export default async function DashboardPage() {
           )}
         </section>
 
-        <aside className="space-y-4">
-          <section className="rounded-lg border border-warmgray-200 bg-white">
+        <aside className="flex flex-col gap-4">
+          <section className="flex flex-1 flex-col rounded-lg border border-warmgray-200 bg-white">
             <div className="border-b border-warmgray-200 px-4 py-2.5">
               <h2 className="text-sm font-semibold text-ink">
                 Interested in you
@@ -183,67 +151,9 @@ export default async function DashboardPage() {
               </ul>
             )}
           </section>
-
-          <section className="rounded-lg border border-warmgray-200 bg-white p-4">
-            <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-ink">
-              <TrendingUp className="h-3.5 w-3.5 text-orange-500" strokeWidth={2} aria-hidden />
-              Diagnostics
-            </div>
-            <dl className="space-y-1.5 font-mono text-[11px]">
-              <Diag label="shared.org.count" value={String(sharedTotal)} />
-              <Diag label="queue.depth" value={String(matches.length)} />
-              <Diag label="signal.inbound" value={String(interested.length)} />
-              <Diag label="score.spread" value={`${topScore - avgScore}pt`} />
-            </dl>
-          </section>
         </aside>
       </div>
     </main>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  accent,
-  delta,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-  delta?: string;
-}) {
-  return (
-    <div className={`px-4 py-3 ${accent ? "bg-ink text-paper" : "bg-white"}`}>
-      <div
-        className={`font-mono text-[10px] uppercase tracking-wider ${
-          accent ? "text-orange-300" : "text-warmgray-500"
-        }`}
-      >
-        {label}
-      </div>
-      <div className="mt-1 flex items-baseline gap-1.5">
-        <span
-          className={`font-mono text-2xl font-bold ${accent ? "text-paper" : "text-ink"}`}
-        >
-          {value}
-        </span>
-        {delta && (
-          <span className={`text-xs ${accent ? "text-orange-300" : "text-warmgray-400"}`}>
-            {delta}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Diag({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-2">
-      <span className="text-warmgray-500">{label}</span>
-      <span className="font-semibold text-ink">{value}</span>
-    </div>
   );
 }
 
@@ -274,7 +184,6 @@ function DenseRow({
     cand.kind === "candidate" ? cand.candidate.id : cand.business.id
   }`;
   const pct = Math.round(match.score * 100);
-  const sharedCount = match.sharedOrgIds.length;
   const tone =
     pct >= 90 ? "text-orange-700" : pct >= 75 ? "text-emerald-700" : "text-warmgray-700";
 
@@ -311,13 +220,6 @@ function DenseRow({
       <td className="hidden py-2 align-middle text-xs text-warmgray-700 md:table-cell">
         {location}
       </td>
-      <td className="hidden py-2 align-middle text-xs md:table-cell">
-        {sharedCount > 0 ? (
-          <span className="font-medium text-orange-700">{sharedCount} shared</span>
-        ) : (
-          <span className="text-warmgray-400">—</span>
-        )}
-      </td>
       <td className="px-4 py-2 text-right align-middle">
         <Link
           href={handshakeHref}
@@ -342,6 +244,7 @@ function dashboardCopy(viewerKind: ProfileKind | null): {
   title: string;
   sub: string;
   placeholder: string;
+  placeholderExamples: string[];
   matchesHeading: string;
 } {
   switch (viewerKind) {
@@ -351,6 +254,14 @@ function dashboardCopy(viewerKind: ProfileKind | null): {
         title: "Find your next hire.",
         sub: "Search Utah's operators, or jump to the candidates we ranked for you.",
         placeholder: "Search talent by skill, role, or location…",
+        placeholderExamples: [
+          "Software engineer",
+          "Sales reps in Provo",
+          "Founding designer",
+          "Bioengineering interns",
+          "Fractional CFO",
+          "ML engineer with biotech experience",
+        ],
         matchesHeading: "Ranked candidates",
       };
     case "mentor":
@@ -359,6 +270,12 @@ function dashboardCopy(viewerKind: ProfileKind | null): {
         title: "Find founders to advise.",
         sub: "Browse Utah businesses and candidates that may want your help.",
         placeholder: "Search businesses or candidates by sector or stage…",
+        placeholderExamples: [
+          "Pre-seed AI founders",
+          "Life-sciences spinouts",
+          "First-time CEOs in Lehi",
+          "Hardware seed-stage teams",
+        ],
         matchesHeading: "Recommended for you",
       };
     case "investor":
@@ -367,6 +284,13 @@ function dashboardCopy(viewerKind: ProfileKind | null): {
         title: "Find businesses to back.",
         sub: "Browse Utah companies that match your check size, stage, and sector.",
         placeholder: "Search businesses by sector, stage, or origin…",
+        placeholderExamples: [
+          "Seed-stage AI",
+          "U-of-U spinouts",
+          "Bootstrapped SaaS",
+          "Defense & aerospace pre-seed",
+          "Series-A fintech",
+        ],
         matchesHeading: "Ranked businesses",
       };
     case "candidate":
@@ -376,6 +300,13 @@ function dashboardCopy(viewerKind: ProfileKind | null): {
         title: "Find businesses that fit you.",
         sub: "Search Utah's businesses, or jump to the matches we ranked for you.",
         placeholder: "Search businesses by sector, role, or stage…",
+        placeholderExamples: [
+          "AI startups in Lehi",
+          "Seed-stage fintech",
+          "Hardware companies hiring engineers",
+          "Life-sciences spinouts",
+          "Bootstrapped SaaS in Provo",
+        ],
         matchesHeading: "Ranked businesses",
       };
   }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Check, Heart, X } from "lucide-react";
+import { Check } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { ExplainabilityPanel } from "@/components/ExplainabilityPanel";
 import { Pill } from "@/components/Pill";
@@ -72,9 +72,9 @@ export default async function HandshakePage({
     <main className="mx-auto w-full max-w-4xl px-6 py-8">
       <Link
         href="/dashboard"
-        className="font-mono text-xs text-warmgray-500 hover:text-ink"
+        className="text-sm font-medium text-warmgray-500 transition hover:text-ink"
       >
-        ← back to dashboard
+        ← Back to dashboard
       </Link>
 
       <header className="mt-4">
@@ -87,7 +87,7 @@ export default async function HandshakePage({
         <p className="mt-1 max-w-2xl text-sm text-warmgray-500">
           {isMutual
             ? "We've sent the introduction to your CRM. Expect an outreach from the Nucleus team shortly."
-            : "Mark interested if you'd like an introduction. Mark pass to remove this from your matches."}
+            : "Request an intro if this looks like a fit. Skip to remove it from your matches."}
         </p>
       </header>
 
@@ -124,19 +124,7 @@ export default async function HandshakePage({
                 over email shortly.
               </p>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
-                <form action={vote}>
-                  <input type="hidden" name="candidateId" value={candidate.id} />
-                  <input type="hidden" name="businessId" value={business.id} />
-                  <input type="hidden" name="side" value={viewerKind} />
-                  <input type="hidden" name="state" value="pass" />
-                  <button
-                    type="submit"
-                    className="inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-md border border-warmgray-200 px-3 text-xs font-medium text-warmgray-700 transition hover:border-warmgray-300 hover:text-ink"
-                  >
-                    <X className="h-3.5 w-3.5" strokeWidth={2} aria-hidden /> Pass
-                  </button>
-                </form>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
                 <form action={vote}>
                   <input type="hidden" name="candidateId" value={candidate.id} />
                   <input type="hidden" name="businessId" value={business.id} />
@@ -144,14 +132,33 @@ export default async function HandshakePage({
                   <input type="hidden" name="state" value="interested" />
                   <button
                     type="submit"
-                    className="inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-md bg-orange-500 px-3 text-xs font-semibold text-white transition hover:bg-orange-600"
+                    className="group inline-flex h-9 items-center gap-2 rounded-md bg-orange-500 px-4 text-sm font-semibold text-white transition hover:bg-orange-600"
                   >
                     {myState === "interested" ? (
-                      <Check className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                      <>
+                        <Check className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                        Intro requested
+                      </>
                     ) : (
-                      <Heart className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                      <>
+                        Request intro
+                        <span aria-hidden className="transition group-hover:translate-x-0.5">
+                          →
+                        </span>
+                      </>
                     )}
-                    {myState === "interested" ? "Interested" : "Interested"}
+                  </button>
+                </form>
+                <form action={vote}>
+                  <input type="hidden" name="candidateId" value={candidate.id} />
+                  <input type="hidden" name="businessId" value={business.id} />
+                  <input type="hidden" name="side" value={viewerKind} />
+                  <input type="hidden" name="state" value="pass" />
+                  <button
+                    type="submit"
+                    className="text-xs font-medium text-warmgray-500 transition hover:text-ink"
+                  >
+                    Not a fit
                   </button>
                 </form>
               </div>
