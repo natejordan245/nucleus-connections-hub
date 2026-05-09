@@ -133,7 +133,7 @@ export async function embedMany(texts: string[]): Promise<(number[] | null)[]> {
 // matchmaking can ask "does A want what B is?" and "does B want what A is?"
 // independently:
 //
-//   *Profile* — "who I am". Identity-side signal: headline, bio, skills,
+//   *Profile* — "who I am". Identity-side signal: headline, bio,
 //               sector, what the company does. No lookingFor / needs.
 //   *Wants*   — "who I want to match with". Demand-side signal: lookingFor,
 //               stage preferences, needs, networksWanted, comp expectations.
@@ -148,7 +148,6 @@ export function textForTalentProfile(t: TalentDTO): string {
     t.lookingFor,
     (t.categories ?? []).length ? `Profile categories: ${(t.categories ?? []).join(", ")}` : "",
     (t.lookingForNeeds ?? []).length ? `Looking for roles: ${(t.lookingForNeeds ?? []).join(", ")}` : "",
-    t.skills.length ? `Skills: ${t.skills.join(", ")}` : "",
     t.domains.length ? `Domains: ${t.domains.join(", ")}` : "",
     t.networks?.length ? `Networks: ${t.networks.join(", ")}` : "",
   ]

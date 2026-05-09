@@ -121,7 +121,6 @@ export async function submitEmbedSignup(
       lookingFor: "",
       categories: ["operator"],
       lookingForNeeds: [],
-      skills: [],
       domains: [],
       availability: "full-time",
       compensation: ["cash"],

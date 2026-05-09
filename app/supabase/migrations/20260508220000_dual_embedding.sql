@@ -1,6 +1,6 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Dual embedding for matchmaking. Splits a profile's signal into two vectors:
---   embedding         — "who I am"  (headline + bio + skills + domains + ...)
+--   embedding         — "who I am"  (headline + bio + domains + ...)
 --   embedding_wants   — "who I want" (lookingFor + stagePrefs + needs + ...)
 --
 -- Bidirectional matching ranks pairs by:

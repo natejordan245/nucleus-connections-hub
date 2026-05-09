@@ -7,10 +7,10 @@ import type {
 } from "@/lib/data/types";
 
 /**
- * Heuristic mapping from a business's stated need → the skills / topic
- * keywords a candidate would need to cover it. Used to compute the gap
- * between an applicant and a "perfect" match. The shape is the same one
- * an embedding-based recommender will replace later.
+ * Heuristic mapping from a business's stated need → topic keywords a
+ * candidate would need to cover it. Used to compute the gap between an
+ * applicant and a "perfect" match. The shape is the same one an
+ * embedding-based recommender will replace later.
  */
 const NEED_TO_KEYWORDS: Record<StartupNeed, string[]> = {
   "executive":    ["executive", "leadership", "founder", "operating", "scaling", "ceo"],
@@ -35,23 +35,24 @@ const NEED_TO_KEYWORDS: Record<StartupNeed, string[]> = {
 };
 
 export type GapAnalysis = {
-  /** Needs the candidate's existing skills already cover. */
+  /** Needs the candidate's stated profile already covers. */
   covered: StartupNeed[];
-  /** Needs the candidate's skills don't yet hit. */
+  /** Needs the candidate's profile doesn't yet hit. */
   gaps: StartupNeed[];
   /** Templated description of what's missing. Will be replaced by an LLM. */
   description: string;
 };
 
 /**
- * Compares a candidate's skills against a business's needs. Returns which needs
- * are already covered and which are open (the "gap"), plus a short
- * description suitable for showing the user.
+ * Compares a candidate's profile signal (categories + lookingForNeeds + domains)
+ * against a business's needs. Returns which needs are already covered and which
+ * are open (the "gap"), plus a short description suitable for showing the user.
  */
 export function analyzeGap(candidate: CandidateDTO, business: BusinessDTO): GapAnalysis {
-  const skillsLower = candidate.skills.map((s) => s.toLowerCase());
+  const categoriesLower = (candidate.categories ?? []).map((s) => String(s).toLowerCase());
+  const needsLower = (candidate.lookingForNeeds ?? []).map((s) => String(s).toLowerCase());
   const domainsLower = candidate.domains.map((s) => s.toLowerCase());
-  const haystack = [...skillsLower, ...domainsLower];
+  const haystack = [...categoriesLower, ...needsLower, ...domainsLower];
 
   const covered: StartupNeed[] = [];
   const gaps: StartupNeed[] = [];

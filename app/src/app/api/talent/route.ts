@@ -34,7 +34,6 @@ function fillCandidate(p: Partial<CandidateDTO>): CandidateDTO {
     lookingFor: p.lookingFor ?? "",
     categories: p.categories ?? ["operator"],
     lookingForNeeds: p.lookingForNeeds ?? [],
-    skills: p.skills ?? [],
     domains: p.domains ?? [],
     availability: p.availability ?? "full-time",
     compensation: p.compensation ?? ["cash"],

@@ -1,6 +1,4 @@
-import { Suspense } from "react";
 import { AppShell } from "@/components/AppShell";
-import { DemoDeckHeader } from "@/components/DemoDeckHeader";
 import { isDemoActive } from "@/lib/demo/cookie";
 import { getHeaderViewer } from "@/lib/viewer";
 
@@ -12,13 +10,8 @@ import { getHeaderViewer } from "@/lib/viewer";
 export default async function AppGroupLayout({ children }: { children: React.ReactNode }) {
   const viewer = await getHeaderViewer();
   const demoActive = isDemoActive();
-  const deckBar = (
-    <Suspense fallback={null}>
-      <DemoDeckHeader active={demoActive} />
-    </Suspense>
-  );
   return (
-    <AppShell viewer={viewer} deckBar={deckBar}>
+    <AppShell viewer={viewer} demoActive={demoActive}>
       {children}
     </AppShell>
   );
