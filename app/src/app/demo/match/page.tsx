@@ -33,6 +33,7 @@ export default function MatchSlidePage() {
         <MatchCard
           match={SARAH_LUMEN_MATCH}
           candidate={{ kind: "business", business: LUMEN }}
+          hideExplainabilityLink
           gapCloser={
             <GapCloserView
               gapText={SARAH_LUMEN_GAP_TEXT}

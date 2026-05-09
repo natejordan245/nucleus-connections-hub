@@ -74,6 +74,12 @@ body {
   0%, 80%, 100% { opacity: 0.3; transform: scale(0.85); }
   40%           { opacity: 1;   transform: scale(1.05); }
 }
+@keyframes show-wire-fly {
+  0%   { left: 0%;   opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  10%  { opacity: 1;              transform: translate(-50%, -50%) scale(1);   }
+  90%  { opacity: 1;              transform: translate(-50%, -50%) scale(1);   }
+  100% { left: 100%; opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+}
 
 .show-fade-up   { opacity: 0; animation: show-fade-up 0.6s ease-out forwards; }
 .show-fade-in   { opacity: 0; animation: show-fade-in 0.6s ease-out forwards; }
@@ -83,4 +89,5 @@ body {
 .show-stamp     { opacity: 0; animation: show-stamp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 .show-blink     { animation: show-blink 1s steps(2, start) infinite; }
 .show-dot       { animation: show-dot-pulse 1.4s ease-in-out infinite; }
+.show-wire-fly  { animation: show-wire-fly 360ms cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 

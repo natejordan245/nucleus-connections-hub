@@ -19,6 +19,7 @@ export function MatchCard({
   match,
   candidate,
   gapCloser,
+  hideExplainabilityLink = false,
 }: {
   match: MatchDTO;
   candidate: Candidate;
@@ -29,6 +30,9 @@ export function MatchCard({
    * fixtures so the component never touches the data layer.
    */
   gapCloser?: ReactNode;
+  /** Hide the footer "Why was I matched? →" link. Used on slides where the
+   *  reason is already the focus and the link is just visual noise. */
+  hideExplainabilityLink?: boolean;
 }) {
   const name =
     candidate.kind === "candidate" ? candidate.candidate.name : candidate.business.name;
@@ -86,17 +90,32 @@ export function MatchCard({
         </div>
       )}
 
-      <footer className="mt-5 flex items-center justify-between border-t border-warmgray-100 pt-4">
-        <Link href={detailHref} className="text-xs font-medium text-warmgray-600 hover:text-ink">
-          Why was I matched? →
-        </Link>
-        <Link
-          href={detailHref}
-          className="inline-flex h-9 items-center gap-2 rounded-full bg-ink px-4 text-xs font-semibold text-white transition hover:bg-warmgray-800"
-        >
-          Open
-          <span aria-hidden>→</span>
-        </Link>
+      <footer
+        className={
+          "mt-5 flex flex-wrap items-center gap-3 border-t border-warmgray-100 pt-4 " +
+          (hideExplainabilityLink ? "justify-end" : "justify-between")
+        }
+      >
+        {!hideExplainabilityLink && (
+          <Link href={detailHref} className="text-xs font-medium text-warmgray-600 hover:text-ink">
+            Why was I matched? →
+          </Link>
+        )}
+        <div className="flex items-center gap-2">
+          <Link
+            href={detailHref}
+            className="inline-flex h-9 items-center rounded-full border border-warmgray-200 px-3.5 text-xs font-semibold text-warmgray-700 transition hover:border-warmgray-300 hover:text-ink"
+          >
+            Not a fit
+          </Link>
+          <Link
+            href={detailHref}
+            className="inline-flex h-9 items-center gap-2 rounded-full bg-ink px-4 text-xs font-semibold text-white transition hover:bg-warmgray-800"
+          >
+            Request intro
+            <span aria-hidden>→</span>
+          </Link>
+        </div>
       </footer>
     </article>
   );

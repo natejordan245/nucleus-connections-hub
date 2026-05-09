@@ -3,13 +3,16 @@ import {
   AffinityPushCard,
 } from "@/components/AffinityPushCard";
 import { LUMEN, SARAH, SARAH_LUMEN_PUSH } from "@/lib/demo/show-fixtures";
+import { AffinityWire } from "./AffinityWire";
 
 /**
  * Slide 4 — the integration.
  *
- * Real `/affinity-push` row against a hardcoded fixture. Same connection
- * panel, same payload card, same API timeline — every visual matches what
- * judges will see in the live app, but driven by static data.
+ * Hero is the live wire animation showing the four Affinity calls fire in
+ * sequence — judges see the actual endpoints we hit and the round-trip
+ * times. Below it, the real `<AffinityPushCard>` renders the persistent
+ * record (org/person/list-entry IDs + custom field values) so the slide
+ * proves the payload AND the persistence on one surface.
  */
 export default function IntegrationSlidePage() {
   return (
@@ -23,6 +26,8 @@ export default function IntegrationSlidePage() {
         reason paragraph the user saw — Nucleus operators see exactly{" "}
         <em className="not-italic text-orange-700">why</em> we matched these two.
       </p>
+
+      <AffinityWire />
 
       <AffinityConnectionPanel
         synced={1}
@@ -40,12 +45,6 @@ export default function IntegrationSlidePage() {
           businessId={LUMEN.id}
         />
       </ul>
-
-      <div className="mt-6 inline-flex items-center gap-2 rounded-md border border-warmgray-200 bg-white px-3 py-2 font-mono text-[11px] text-warmgray-600">
-        transport: <span className="text-orange-700">mock</span> · flip{" "}
-        <span className="text-ink">AFFINITY_LIVE=true</span> for{" "}
-        <span className="text-ink">api.affinity.co</span>
-      </div>
     </main>
   );
 }

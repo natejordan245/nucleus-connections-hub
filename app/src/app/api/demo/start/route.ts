@@ -5,8 +5,8 @@ import { DEMO_ACTIVE_COOKIE } from "@/lib/demo/cookie";
 const ONE_DAY = 60 * 60 * 24;
 
 /**
- * Drops the demo cookies and lands the viewer on the live dashboard as Sarah
- * Chen. Called from the slideshow handoff page after the pitch deck.
+ * Drops the demo cookies and lands the viewer on the live dashboard as Zac
+ * Hales. Called from the slideshow handoff page after the pitch deck.
  */
 export function GET(request: NextRequest) {
   return start(request);
@@ -27,7 +27,7 @@ function start(request: NextRequest) {
     path: "/",
   };
   res.cookies.set(MODE_COOKIE, "demo", cookieOpts);
-  res.cookies.set(DEMO_COOKIE, "tal-sarah", { ...cookieOpts, httpOnly: true });
+  res.cookies.set(DEMO_COOKIE, "tal-zac", { ...cookieOpts, httpOnly: true });
   res.cookies.set(DEMO_ACTIVE_COOKIE, "1", cookieOpts);
   return res;
 }
