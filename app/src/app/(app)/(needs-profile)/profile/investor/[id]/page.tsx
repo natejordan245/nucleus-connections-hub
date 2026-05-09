@@ -5,6 +5,7 @@ import { Pill } from "@/components/Pill";
 import { SocialLinks } from "@/components/SocialLinks";
 import { getDataStore } from "@/lib/data";
 import { SECTOR_LABELS, STAGE_LABELS } from "@/lib/data/enum-labels";
+import { maybeViewer } from "@/lib/viewer";
 
 const fmtUsd = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -16,6 +17,8 @@ export default async function InvestorProfilePage({ params }: { params: { id: st
   const store = getDataStore();
   const investor = await store.getInvestor(params.id);
   if (!investor) notFound();
+  const { viewerId } = await maybeViewer();
+  const isOwner = viewerId === investor.id;
 
   const checkSize =
     investor.checkSizeMin && investor.checkSizeMax
@@ -53,6 +56,15 @@ export default async function InvestorProfilePage({ params }: { params: { id: st
             <SocialLinks profile={investor} />
           </div>
         </div>
+
+        {isOwner && (
+          <Link
+            href="/onboard/investor"
+            className="inline-flex h-10 items-center justify-center rounded-full border border-warmgray-200 bg-white px-5 text-sm font-semibold text-ink transition hover:border-warmgray-300"
+          >
+            Edit profile
+          </Link>
+        )}
       </header>
 
       <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">

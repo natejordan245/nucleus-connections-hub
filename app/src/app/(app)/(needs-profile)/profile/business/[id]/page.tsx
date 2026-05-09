@@ -24,6 +24,7 @@ export default async function BusinessProfilePage({ params }: { params: { id: st
     (m) => m.candidateId === business.id && m.candidateKind === "business",
   );
   const showGapCloser = Boolean(viewerCandidate && (match ? match.score < 1 : true));
+  const isOwner = viewerId === business.id;
 
   return (
       <main className="mx-auto w-full max-w-5xl px-8 py-10">
@@ -49,13 +50,22 @@ export default async function BusinessProfilePage({ params }: { params: { id: st
             </div>
           </div>
 
-          {viewerId && match && (
+          {isOwner ? (
             <Link
-              href={`/handshake?with=${business.id}`}
-              className="inline-flex h-10 items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(255,114,39,0.55)] transition hover:bg-orange-600"
+              href="/onboard/business"
+              className="inline-flex h-10 items-center justify-center rounded-full border border-warmgray-200 bg-white px-5 text-sm font-semibold text-ink transition hover:border-warmgray-300"
             >
-              Open handshake →
+              Edit profile
             </Link>
+          ) : (
+            viewerId && match && (
+              <Link
+                href={`/handshake?with=${business.id}`}
+                className="inline-flex h-10 items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(255,114,39,0.55)] transition hover:bg-orange-600"
+              >
+                Open handshake →
+              </Link>
+            )
           )}
         </header>
 

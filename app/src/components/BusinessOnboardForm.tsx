@@ -23,6 +23,7 @@ import {
   STAGES,
 } from "@/lib/data/enum-labels";
 import type {
+  BusinessDTO,
   FundingStatus,
   Network,
   Origin,
@@ -42,6 +43,7 @@ type Props = {
   error?: string;
   createBusinessAction: (formData: FormData) => void | Promise<void>;
   signedIn?: boolean;
+  initial?: BusinessDTO;
 };
 
 type BusinessFormState = {
@@ -78,8 +80,27 @@ export function BusinessOnboardForm({
   error,
   createBusinessAction,
   signedIn = true,
+  initial,
 }: Props) {
-  const [form, setForm] = useState<BusinessFormState>(INITIAL);
+  const isEdit = Boolean(initial);
+  const [form, setForm] = useState<BusinessFormState>(() =>
+    initial
+      ? {
+          name: initial.name,
+          oneLiner: initial.oneLiner,
+          description: initial.description,
+          sector: initial.sector,
+          origin: initial.origin,
+          fundingStage: initial.fundingStage,
+          fundingStatus: initial.fundingStatus,
+          needs: initial.needs,
+          networksWanted: initial.networksWanted,
+          location: initial.location,
+          websiteUrl: initial.websiteUrl ?? "",
+          linkedinUrl: initial.linkedinUrl ?? "",
+        }
+      : INITIAL,
+  );
   const [scrape, setScrape] = useState<ScrapeState>({ status: "idle" });
 
   async function handleScrape() {
@@ -128,9 +149,11 @@ export function BusinessOnboardForm({
         ← Back
       </Link>
 
-      <span className="eyebrow mt-6 block text-orange-500">Business profile</span>
+      <span className="eyebrow mt-6 block text-orange-500">
+        {isEdit ? "Edit business profile" : "Business profile"}
+      </span>
       <h1 className="mt-3 font-serif text-3xl font-semibold leading-tight text-ink">
-        Tell us about your company.
+        {isEdit ? "Edit your company profile." : "Tell us about your company."}
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
         Free-text where it matters; quick chips for the rest.{" "}
@@ -209,7 +232,12 @@ export function BusinessOnboardForm({
         </Field>
 
         <Field id="logoUrl" name="logoUrl" label="Company logo" hint="Optional. Helps your card stand out.">
-          <PhotoUpload name="logoUrl" label="Upload logo" fallbackName="Co" />
+          <PhotoUpload
+            name="logoUrl"
+            label="Upload logo"
+            fallbackName="Co"
+            defaultUrl={initial?.logoUrl}
+          />
         </Field>
 
         <Field id="name" name="name" label="Company name" required>
@@ -351,14 +379,20 @@ export function BusinessOnboardForm({
           />
         </Field>
 
-        <OnboardAccountFields signedIn={signedIn} errorMessage={decodeOnboardError(error)} />
+        {!isEdit && (
+          <OnboardAccountFields signedIn={signedIn} errorMessage={decodeOnboardError(error)} />
+        )}
 
         <div className="pt-2">
           <button
             type="submit"
             className="inline-flex h-10 w-full items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(255,114,39,0.55)] transition hover:bg-orange-600"
           >
-            {signedIn ? "Save and see matches →" : "Create account & see matches →"}
+            {isEdit
+              ? "Save changes →"
+              : signedIn
+                ? "Save and see matches →"
+                : "Create account & see matches →"}
           </button>
         </div>
       </form>

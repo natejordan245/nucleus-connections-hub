@@ -24,6 +24,7 @@ import {
 } from "@/lib/data/enum-labels";
 import type {
   Availability,
+  CandidateDTO,
   Compensation,
   Network,
   Sector,
@@ -49,6 +50,10 @@ type Props = {
   /** When false, the form renders email + password fields and the action
    *  signs the user up before writing the profile. */
   signedIn?: boolean;
+  /** When provided, the form is in edit mode: seeds all fields from this
+   *  candidate, hides resume + account sections, and renders hidden inputs
+   *  for fields not surfaced in the UI so the upsert preserves them. */
+  initial?: CandidateDTO;
 };
 
 type TalentFormState = {
@@ -118,12 +123,36 @@ export function TalentOnboardForm({
   prefilledName,
   prefilledEmail,
   signedIn = true,
+  initial,
 }: Props) {
-  const [form, setForm] = useState<TalentFormState>(() => ({
-    ...INITIAL_FORM,
-    name: prefilledName ?? "",
-    email: prefilledEmail ?? "",
-  }));
+  const isEdit = Boolean(initial);
+  const [form, setForm] = useState<TalentFormState>(() =>
+    initial
+      ? {
+          name: initial.name,
+          email: initial.email,
+          headline: initial.headline,
+          bio: initial.bio,
+          lookingFor: initial.lookingFor,
+          categories: initial.categories ?? ["operator"],
+          lookingForNeeds: initial.lookingForNeeds ?? [],
+          skills: initial.skills.join(", "),
+          networks: initial.networks,
+          domains: initial.domains,
+          availability: initial.availability,
+          compensation: initial.compensation,
+          stagePrefs: initial.stagePrefs,
+          riskTolerance: String(initial.riskTolerance),
+          location: initial.location,
+          linkedinUrl: initial.linkedinUrl ?? "",
+          xUrl: initial.xUrl ?? "",
+        }
+      : {
+          ...INITIAL_FORM,
+          name: prefilledName ?? "",
+          email: prefilledEmail ?? "",
+        },
+  );
   const [suggestions, setSuggestions] = useState<ResumeSuggestion[]>([]);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -387,9 +416,11 @@ export function TalentOnboardForm({
         ← Back
       </Link>
 
-      <span className="eyebrow mt-6 block text-orange-500">Talent profile</span>
+      <span className="eyebrow mt-6 block text-orange-500">
+        {isEdit ? "Edit candidate profile" : "Talent profile"}
+      </span>
       <h1 className="mt-3 font-serif text-3xl font-semibold leading-tight text-ink">
-        Tell us about yourself.
+        {isEdit ? "Edit your profile." : "Tell us about yourself."}
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
         Free-text where it matters; quick chips for the rest.{" "}
@@ -406,41 +437,43 @@ export function TalentOnboardForm({
         action={createTalentAction}
         className="mt-8 space-y-6 rounded-2xl border border-warmgray-100 bg-white p-6 shadow-sm"
       >
-        <Field
-          id="resume"
-          name="resume"
-          label="Resume upload (PDF/DOCX)"
-          hint="Upload once and we'll auto-extract high-confidence profile suggestions."
-        >
-          <input
+        {!isEdit && (
+          <Field
             id="resume"
-            type="file"
-            accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            className="block w-full rounded-lg border border-warmgray-200 bg-white px-3 py-2 text-sm text-ink file:mr-3 file:rounded-md file:border-0 file:bg-orange-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-orange-700 hover:file:bg-orange-100"
-            onChange={(e) => onResumeChange(e.currentTarget.files?.[0] ?? null)}
-          />
-          {resumeFilename && (
-            <p className="mt-2 text-xs text-warmgray-600">
-              File: <span className="font-medium text-ink">{resumeFilename}</span>
-            </p>
-          )}
-          {isExtracting && (
-            <p className="mt-2 text-xs font-medium text-orange-700">
-              {statusMessage || "Analyzing resume…"}
-            </p>
-          )}
-          {extractError && (
-            <p className="mt-2 text-xs text-red-700">{extractError}</p>
-          )}
-          {warnings.length > 0 && (
-            <ul className="mt-2 space-y-1 text-xs text-warmgray-600">
-              {warnings.map((w) => (
-                <li key={w}>• {w}</li>
-              ))}
-            </ul>
-          )}
-          <input type="hidden" name="resumeExtractMeta" value={resumeMetaJson} />
-        </Field>
+            name="resume"
+            label="Resume upload (PDF/DOCX)"
+            hint="Upload once and we'll auto-extract high-confidence profile suggestions."
+          >
+            <input
+              id="resume"
+              type="file"
+              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              className="block w-full rounded-lg border border-warmgray-200 bg-white px-3 py-2 text-sm text-ink file:mr-3 file:rounded-md file:border-0 file:bg-orange-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-orange-700 hover:file:bg-orange-100"
+              onChange={(e) => onResumeChange(e.currentTarget.files?.[0] ?? null)}
+            />
+            {resumeFilename && (
+              <p className="mt-2 text-xs text-warmgray-600">
+                File: <span className="font-medium text-ink">{resumeFilename}</span>
+              </p>
+            )}
+            {isExtracting && (
+              <p className="mt-2 text-xs font-medium text-orange-700">
+                {statusMessage || "Analyzing resume…"}
+              </p>
+            )}
+            {extractError && (
+              <p className="mt-2 text-xs text-red-700">{extractError}</p>
+            )}
+            {warnings.length > 0 && (
+              <ul className="mt-2 space-y-1 text-xs text-warmgray-600">
+                {warnings.map((w) => (
+                  <li key={w}>• {w}</li>
+                ))}
+              </ul>
+            )}
+            <input type="hidden" name="resumeExtractMeta" value={resumeMetaJson} />
+          </Field>
+        )}
 
         {suggestions.length > 0 && (
           <section className="rounded-xl border border-orange-100 bg-orange-50/50 p-4">
@@ -695,14 +728,46 @@ export function TalentOnboardForm({
           />
         </Field>
 
-        <OnboardAccountFields signedIn={signedIn} errorMessage={decodeOnboardError(error)} />
+        {!isEdit && (
+          <OnboardAccountFields signedIn={signedIn} errorMessage={decodeOnboardError(error)} />
+        )}
+
+        {isEdit && initial && (
+          <>
+            {/* Preserve fields not surfaced in this form during the upsert. */}
+            <input type="hidden" name="headline" value={initial.headline} />
+            <input type="hidden" name="xUrl" value={initial.xUrl ?? ""} />
+            <input type="hidden" name="photoUrl" value={initial.photoUrl ?? ""} />
+            <input type="hidden" name="riskTolerance" value={String(initial.riskTolerance)} />
+            {initial.networks.map((n) => (
+              <input key={`net-${n}`} type="hidden" name="networks" value={n} />
+            ))}
+            {initial.compensation.map((c) => (
+              <input key={`comp-${c}`} type="hidden" name="compensation" value={c} />
+            ))}
+            {initial.stagePrefs.map((s) => (
+              <input key={`stage-${s}`} type="hidden" name="stagePrefs" value={s} />
+            ))}
+            {initial.resumeExtract && (
+              <input
+                type="hidden"
+                name="resumeExtractMeta"
+                value={JSON.stringify(initial.resumeExtract)}
+              />
+            )}
+          </>
+        )}
 
         <div className="pt-2">
           <button
             type="submit"
             className="inline-flex h-10 w-full items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(255,114,39,0.55)] transition hover:bg-orange-600"
           >
-            {signedIn ? "Save and see matches →" : "Create account & see matches →"}
+            {isEdit
+              ? "Save changes →"
+              : signedIn
+                ? "Save and see matches →"
+                : "Create account & see matches →"}
           </button>
         </div>
       </form>

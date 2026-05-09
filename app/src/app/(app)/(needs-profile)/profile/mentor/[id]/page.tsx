@@ -5,11 +5,14 @@ import { Pill } from "@/components/Pill";
 import { SocialLinks } from "@/components/SocialLinks";
 import { getDataStore } from "@/lib/data";
 import { COMPENSATION_LABELS, SECTOR_LABELS } from "@/lib/data/enum-labels";
+import { maybeViewer } from "@/lib/viewer";
 
 export default async function MentorProfilePage({ params }: { params: { id: string } }) {
   const store = getDataStore();
   const mentor = await store.getMentor(params.id);
   if (!mentor) notFound();
+  const { viewerId } = await maybeViewer();
+  const isOwner = viewerId === mentor.id;
 
   return (
     <main className="mx-auto w-full max-w-5xl px-8 py-10">
@@ -32,6 +35,15 @@ export default async function MentorProfilePage({ params }: { params: { id: stri
             <SocialLinks profile={mentor} />
           </div>
         </div>
+
+        {isOwner && (
+          <Link
+            href="/onboard/mentor"
+            className="inline-flex h-10 items-center justify-center rounded-full border border-warmgray-200 bg-white px-5 text-sm font-semibold text-ink transition hover:border-warmgray-300"
+          >
+            Edit profile
+          </Link>
+        )}
       </header>
 
       <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">

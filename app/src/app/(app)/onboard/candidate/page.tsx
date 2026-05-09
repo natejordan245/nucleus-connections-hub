@@ -1,4 +1,5 @@
 import { TalentOnboardForm } from "@/components/TalentOnboardForm";
+import { getDataStore } from "@/lib/data";
 import { getViewer } from "@/lib/session";
 import { createCandidate } from "../actions";
 
@@ -9,6 +10,9 @@ export default async function OnboardCandidatePage({
 }) {
   const viewer = await getViewer();
   const signedIn = viewer.kind !== "anon";
+  const viewerId =
+    viewer.kind === "live" ? viewer.userId : viewer.kind === "demo" ? viewer.persona.id : null;
+  const initial = viewerId ? (await getDataStore().getCandidate(viewerId)) ?? undefined : undefined;
   const prefilledName =
     viewer.kind === "demo"
       ? viewer.persona.name
@@ -28,6 +32,7 @@ export default async function OnboardCandidatePage({
       prefilledName={prefilledName ?? undefined}
       prefilledEmail={prefilledEmail ?? undefined}
       signedIn={signedIn}
+      initial={initial}
     />
   );
 }
