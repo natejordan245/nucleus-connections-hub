@@ -18,9 +18,9 @@ export default async function MentorProfilePage({ params }: { params: { id: stri
     <main className="mx-auto w-full max-w-5xl px-6 py-8">
       <Link
         href="/dashboard"
-        className="font-mono text-xs text-warmgray-500 hover:text-ink"
+        className="text-sm font-medium text-warmgray-500 transition hover:text-ink"
       >
-        ← back to dashboard
+        ← Back to dashboard
       </Link>
 
       <header className="mt-4 flex items-start gap-5 rounded-lg border border-warmgray-200 bg-white p-5">

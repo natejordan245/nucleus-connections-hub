@@ -19,7 +19,7 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen bg-warmgray-50">
       {deckBar}
       <header className="border-b border-warmgray-200 bg-white">
         <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between px-6">

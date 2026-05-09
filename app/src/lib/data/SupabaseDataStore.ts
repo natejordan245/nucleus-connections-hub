@@ -703,8 +703,8 @@ export class SupabaseDataStore implements IDataStore {
       .not("embedding_wants", "is", null);
     if (candErr || !candRows) return [];
 
-    const COSINE_FLOOR = 0.35; // each side must score ≥ 0.35 raw cosine.
-    const TOP_N_BEFORE_LLM = 20; // cap LLM fan-out per call.
+    const COSINE_FLOOR = 0.2; // each side must score ≥ 0.2 raw cosine. The LLM gate still filters noise.
+    const TOP_N_BEFORE_LLM = 25; // cap LLM fan-out per call. Final list slices to 15 after LLM rejection.
 
     const nearest = (candRows as ProfileRow[])
       .map((cand) => {
@@ -767,7 +767,7 @@ export class SupabaseDataStore implements IDataStore {
     // Keep cosine order; drop pairs the LLM rejects (or where the call failed).
     const matched = verdicts
       .filter((v) => v.verdict?.isMatch === true)
-      .slice(0, 10);
+      .slice(0, 15);
 
     // Strong-match auto-notify: for any matched pair where the composite cosine
     // score crosses the strong-match threshold AND we haven't already notified
