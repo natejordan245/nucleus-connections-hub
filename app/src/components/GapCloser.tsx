@@ -1,31 +1,21 @@
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { Pill } from "./Pill";
 import { getDataStore } from "@/lib/data";
+import type { ResourceDTO } from "@/lib/data/types";
 
 /**
- * Shown alongside the explainability panel on a candidate profile when the
- * viewer isn't a 100% match. Asks the live data store for nearest-neighbor
- * resources whose embeddable summaries match the cached gap signal between
- * this pair (weak/miss factors + concerns from the LLM verdict).
- *
- * Server component — fetches inside. Pass viewer + candidate ids and a
- * preferred limit; the data layer returns `{ gapText, resources }`.
+ * Presentational gap-closer card. Pure props in, JSX out — no data-store
+ * dependency. Use this directly when you already have the resource list
+ * (slideshow fixtures, server actions that pre-resolved). For the live
+ * dashboard / profile page, use the async {@link GapCloser} wrapper below.
  */
-export async function GapCloser({
-  subjectId,
-  candidateId,
-  limit = 3,
+export function GapCloserView({
+  gapText,
+  resources,
 }: {
-  subjectId: string;
-  candidateId: string;
-  limit?: number;
+  gapText?: string;
+  resources: ResourceDTO[];
 }) {
-  const store = getDataStore();
-  const { gapText, resources } = await store.recommendGapResources({
-    subjectId,
-    candidateId,
-    limit,
-  });
   if (resources.length === 0) return null;
 
   return (
@@ -75,4 +65,26 @@ export async function GapCloser({
       </div>
     </section>
   );
+}
+
+/**
+ * Async wrapper that fetches the gap-resource recommendation for a viewer ↔
+ * candidate pair and renders {@link GapCloserView}. Server component.
+ */
+export async function GapCloser({
+  subjectId,
+  candidateId,
+  limit = 3,
+}: {
+  subjectId: string;
+  candidateId: string;
+  limit?: number;
+}) {
+  const store = getDataStore();
+  const { gapText, resources } = await store.recommendGapResources({
+    subjectId,
+    candidateId,
+    limit,
+  });
+  return <GapCloserView gapText={gapText} resources={resources} />;
 }
