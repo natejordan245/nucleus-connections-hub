@@ -17,6 +17,7 @@ import {
 } from "@/lib/data/enum-labels";
 import type {
   Compensation,
+  MentorDTO,
   Network,
   Sector,
 } from "@/lib/data/types";
@@ -27,6 +28,7 @@ type Props = {
   prefilledName?: string;
   prefilledEmail?: string;
   signedIn?: boolean;
+  initial?: MentorDTO;
 };
 
 type MentorFormState = {
@@ -65,11 +67,27 @@ export function MentorOnboardForm({
   prefilledName,
   prefilledEmail: _prefilledEmail,
   signedIn = true,
+  initial,
 }: Props) {
-  const [form, setForm] = useState<MentorFormState>(() => ({
-    ...INITIAL,
-    name: prefilledName ?? "",
-  }));
+  const isEdit = Boolean(initial);
+  const [form, setForm] = useState<MentorFormState>(() =>
+    initial
+      ? {
+          name: initial.name,
+          headline: initial.headline,
+          bio: initial.bio,
+          areasAdvised: initial.areasAdvised,
+          hoursPerMonth: String(initial.hoursPerMonth),
+          boardSeatOpen: initial.boardSeatOpen ? "yes" : "no",
+          compPreference: initial.compPreference,
+          sectorsOfInterest: initial.sectorsOfInterest,
+          networks: initial.networks,
+          location: initial.location,
+          linkedinUrl: initial.linkedinUrl ?? "",
+          websiteUrl: initial.websiteUrl ?? "",
+        }
+      : { ...INITIAL, name: prefilledName ?? "" },
+  );
 
   const sectorOpts = SECTORS.map((s) => ({ value: s, label: SECTOR_LABELS[s] }));
   const compOpts = COMPENSATIONS.map((c) => ({ value: c, label: COMPENSATION_LABELS[c] }));
@@ -82,9 +100,11 @@ export function MentorOnboardForm({
         ← Back
       </Link>
 
-      <span className="eyebrow mt-6 block text-orange-500">Mentor profile</span>
+      <span className="eyebrow mt-6 block text-orange-500">
+        {isEdit ? "Edit mentor profile" : "Mentor profile"}
+      </span>
       <h1 className="mt-3 font-serif text-3xl font-semibold leading-tight text-ink">
-        Tell us how you advise.
+        {isEdit ? "Edit your profile." : "Tell us how you advise."}
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
         A few quick fields and you're set up.{" "}
@@ -102,7 +122,12 @@ export function MentorOnboardForm({
         className="mt-6 space-y-6 rounded-2xl border border-warmgray-100 bg-white p-6 shadow-sm"
       >
         <Field id="photoUrl" name="photoUrl" label="Profile photo" hint="Optional.">
-          <PhotoUpload name="photoUrl" label="Upload photo" fallbackName={form.name || prefilledName || "You"} />
+          <PhotoUpload
+            name="photoUrl"
+            label="Upload photo"
+            fallbackName={form.name || prefilledName || "You"}
+            defaultUrl={initial?.photoUrl}
+          />
         </Field>
 
         <Field id="name" name="name" label="Your name" required>
@@ -246,14 +271,20 @@ export function MentorOnboardForm({
           />
         </Field>
 
-        <OnboardAccountFields signedIn={signedIn} errorMessage={decodeOnboardError(error)} />
+        {!isEdit && (
+          <OnboardAccountFields signedIn={signedIn} errorMessage={decodeOnboardError(error)} />
+        )}
 
         <div className="pt-2">
           <button
             type="submit"
             className="inline-flex h-10 w-full items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(255,114,39,0.55)] transition hover:bg-orange-600"
           >
-            {signedIn ? "Save profile →" : "Create account & save →"}
+            {isEdit
+              ? "Save changes →"
+              : signedIn
+                ? "Save profile →"
+                : "Create account & save →"}
           </button>
         </div>
       </form>
