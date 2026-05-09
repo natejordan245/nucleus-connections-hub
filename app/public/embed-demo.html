@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Connections Hub — embed demo</title>
+    <style>
+      :root {
+        --ink: #0f172a;
+        --muted: #475569;
+        --line: #e2e8f0;
+        --accent: #2563eb;
+      }
+      html, body { background: #fff; color: var(--ink); }
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        margin: 0; padding: 64px 24px;
+      }
+      main { max-width: 720px; margin: 0 auto; }
+      h1 { font-size: 32px; margin: 0 0 8px; letter-spacing: -0.02em; }
+      p  { color: var(--muted); line-height: 1.6; }
+      pre {
+        background: #f8fafc; border: 1px solid var(--line);
+        border-radius: 12px; padding: 16px; overflow-x: auto;
+        font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .cta {
+        display: inline-flex; align-items: center; height: 44px;
+        padding: 0 22px; border-radius: 9999px;
+        background: var(--accent); color: #fff; border: 0;
+        font-weight: 600; font-size: 14px; cursor: pointer;
+        box-shadow: 0 8px 24px -8px rgba(37, 99, 235, 0.6);
+      }
+      .cta:hover { background: #1d4ed8; }
+      hr { border: 0; border-top: 1px solid var(--line); margin: 40px 0; }
+      .hint { font-size: 13px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Embed demo</h1>
+      <p>
+        This page shows what a Squarespace / Webflow / plain-HTML site sees
+        when they embed the Connections Hub signup widget. Paste the snippet
+        below into a code block and you're done — the button opens a modal
+        that walks the visitor through role → profile → account, then drops
+        them into Connections Hub already signed in.
+      </p>
+
+      <button class="cta" data-nucleus-embed>Join Connections Hub →</button>
+
+      <hr />
+
+      <h2 style="font-size:18px;margin:0 0 8px;">Paste this snippet</h2>
+      <pre>&lt;script async src="https://app-two-swart-3c3ey9rx1h.vercel.app/embed.js"&gt;&lt;/script&gt;
+&lt;button data-nucleus-embed&gt;Join Connections Hub&lt;/button&gt;</pre>
+      <p class="hint">
+        Drop this into a Squarespace code block, a Webflow embed element, or
+        a plain HTML page. The script tag finds every
+        <code>data-nucleus-embed</code> button on the page and wires it up.
+      </p>
+    </main>
+
+    <script async src="/embed.js"></script>
+  </body>
+</html>
