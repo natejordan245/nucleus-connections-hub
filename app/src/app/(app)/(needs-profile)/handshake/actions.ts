@@ -38,7 +38,6 @@ export async function vote(formData: FormData) {
       talentId: candidate.id,
       startupId: business.id,
       reason: `Mutual interest between ${candidate.name} and ${business.name}.`,
-      status: "pushed",
     });
   } else if (state === "interested" && candidate && business) {
     if (side === "candidate") {

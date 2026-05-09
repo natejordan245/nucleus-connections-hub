@@ -35,6 +35,16 @@ import { gatePair, type LLMGateVerdict } from "@/lib/match/llm-gate";
  * candidate↔business pair only; mentor and investor profiles store and
  * display but do not yet enter the matching flow.
  */
+
+/**
+ * Process-scoped cache of Affinity pushes that have run this server lifetime.
+ * Keyed by `${talentId}:${startupId}`. Hydrating live-mode pushes from a
+ * Supabase table would require a migration; for the hackathon build we keep
+ * the cache in memory and fall back to "queued" placeholders for mutual
+ * matches that haven't been pushed yet in this process. Resets on restart.
+ */
+const pushCache = new Map<string, AffinityPushDTO>();
+
 export class SupabaseDataStore implements IDataStore {
   private clientPromise: Promise<SupabaseClient> | null = null;
 
@@ -974,9 +984,13 @@ export class SupabaseDataStore implements IDataStore {
   }
 
   // ── affinity push log (admin queue → CRM) ─────────────────────────────────
+  //
+  // Live mode derives the row list from mutual `interests`, then enriches
+  // each row with the rich Affinity-side payload from `pushCache` if a push
+  // has already been recorded this process. On a cold start the rows render
+  // with `syncState: "queued"` and no Affinity ids — the UI surfaces a retry
+  // button that re-runs the pipeline.
   async listAffinityPushes(): Promise<AffinityPushDTO[]> {
-    // Live mode treats the mutual-match log itself as the push log; we surface
-    // every mutual interest as a push entry. (No CRM destination yet.)
     const sb = await this.getClient();
     const { data, error } = await sb
       .from("interests")
@@ -987,24 +1001,110 @@ export class SupabaseDataStore implements IDataStore {
     if (error) throw error;
     return (data ?? []).map((r) => {
       const row = r as InterestRow;
+      const cacheKey = `${row.talent_id}:${row.startup_id}`;
+      const cached = pushCache.get(cacheKey);
+      if (cached) return cached;
       return {
         id: `push-${row.id}`,
         talentId: row.talent_id,
         startupId: row.startup_id,
         pushedAt: row.mutual_at ?? row.updated_at,
         reason: "Mutual interest — both sides confirmed.",
-        status: "pushed" as const,
+        status: "queued" as const,
+        affinityOrganizationId: null,
+        affinityPersonId: null,
+        affinityListEntryId: null,
+        affinityListId: null,
+        affinityUrl: null,
+        pipelineStage: null,
+        syncState: "queued" as const,
+        syncError: null,
+        apiCalls: [],
+        fieldValues: [],
       };
     });
   }
 
-  async recordAffinityPush(p: Omit<AffinityPushDTO, "id" | "pushedAt">): Promise<AffinityPushDTO> {
-    // No-op in live mode — listAffinityPushes derives from mutual interests.
-    return {
-      ...p,
-      id: `push-noop-${Date.now()}`,
+  async recordAffinityPush(p: {
+    talentId: string;
+    startupId: string;
+    reason: string;
+    matchScore?: number;
+  }): Promise<AffinityPushDTO> {
+    const [candidate, business] = await Promise.all([
+      this.getCandidate(p.talentId),
+      this.getBusiness(p.startupId),
+    ]);
+
+    const base = {
+      id: `push-${p.talentId}-${p.startupId}-${Date.now()}`,
+      talentId: p.talentId,
+      startupId: p.startupId,
       pushedAt: new Date().toISOString(),
+      reason: p.reason,
     };
+
+    if (!candidate || !business) {
+      const failed: AffinityPushDTO = {
+        ...base,
+        status: "queued",
+        affinityOrganizationId: null,
+        affinityPersonId: null,
+        affinityListEntryId: null,
+        affinityListId: null,
+        affinityUrl: null,
+        pipelineStage: null,
+        syncState: "failed",
+        syncError: "Candidate or business not found.",
+        apiCalls: [],
+        fieldValues: [],
+      };
+      pushCache.set(`${p.talentId}:${p.startupId}`, failed);
+      return failed;
+    }
+
+    const { pushMutualMatch } = await import("@/lib/affinity");
+    const result = await pushMutualMatch({
+      talent: candidate,
+      startup: business,
+      matchScore: p.matchScore,
+      reason: p.reason,
+    });
+
+    let dto: AffinityPushDTO;
+    if (result.ok) {
+      dto = {
+        ...base,
+        status: "pushed",
+        affinityOrganizationId: result.payload.organizationId,
+        affinityPersonId: result.payload.personId,
+        affinityListEntryId: result.payload.listEntryId,
+        affinityListId: result.payload.listId,
+        affinityUrl: result.payload.affinityUrl,
+        pipelineStage: result.payload.pipelineStage,
+        syncState: "synced",
+        syncError: null,
+        apiCalls: result.payload.apiCalls,
+        fieldValues: result.payload.fieldValues,
+      };
+    } else {
+      dto = {
+        ...base,
+        status: "queued",
+        affinityOrganizationId: null,
+        affinityPersonId: null,
+        affinityListEntryId: null,
+        affinityListId: null,
+        affinityUrl: null,
+        pipelineStage: null,
+        syncState: "failed",
+        syncError: result.error,
+        apiCalls: result.apiCalls,
+        fieldValues: [],
+      };
+    }
+    pushCache.set(`${p.talentId}:${p.startupId}`, dto);
+    return dto;
   }
 
   // ── messaging ─────────────────────────────────────────────────────────────
