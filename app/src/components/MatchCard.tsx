@@ -104,12 +104,13 @@ export function MatchCard({
 }
 
 function ScorePill({ score }: { score: number }) {
-  const pct = Math.round(score * 100);
+  const pct = score * 100;
   // Distribution note: composite = min(both directions), cosine floor 0.35,
   // so live scores cluster 75-85% with rare elites above. Thresholds chosen
   // so the typical strong match reads emerald, top-tier reads brand orange.
   const tone = pct >= 85 ? "orange" : pct >= 75 ? "emerald" : "warmgray";
-  return <Pill tone={tone}>{pct}% match</Pill>;
+  // One decimal so close-score matches don't all read as the same integer.
+  return <Pill tone={tone}>{pct.toFixed(1)}% match</Pill>;
 }
 
 const FACTOR_TONE_CLASS: Record<"strong" | "ok" | "weak" | "miss", string> = {
