@@ -583,7 +583,397 @@ function buildOne(idx: number): TalentDTO {
   };
 }
 
-export const EXTRA_LIVE_TALENT: TalentDTO[] = Array.from({ length: 200 }, (_, i) => buildOne(i));
+// ── Tier C — 100 supercharged candidates, idx 200-299 ─────────────────────
+//
+// Each candidate explicitly mirrors a single curated business archetype so
+// the bidirectional embedding cosine (the `min` of viewerWantsCand and
+// candWantsViewer) clears 0.4 raw → > 70% normalized. Three skill bundles
+// stacked (15-30 skills/persona). ~50% ship without a profile photo to
+// reflect real onboarding gaps.
+
+type TierCRoleVariant = {
+  /** Headline prefix, e.g. "Founding ML engineer". Combined with target tag. */
+  rolePrefix: string;
+  /** Candidate-side category list. */
+  categories: TalentCategory[];
+  /** Roles this candidate is looking to fill. */
+  needs: StartupNeed[];
+  /** Availability + comp + risk tilt by role variant. */
+  availability: Availability;
+  compensation: Compensation[];
+  riskTolerance: 1 | 2 | 3 | 4 | 5;
+  /** Networks this candidate sits in (must overlap with target.networks). */
+  networks: Network[];
+  /** A short context sentence for the bio. */
+  bioContext: string;
+  /** Three skill bundles (stacked → 15-30 unique tokens). */
+  skillBundles: string[][];
+};
+
+type TierCTarget = {
+  /** Verbatim one-liner from the curated business this persona is shaped to. */
+  oneLiner: string;
+  /** Sector tag — must align with the business `sector`. */
+  sector: Sector;
+  /** Stage the candidate is targeting — must align with business funding stage. */
+  stagePrefs: Stage[];
+  /** Domain-of-interest hints used in `domains` and bio prose. */
+  domains: Sector[];
+  /** Networks the target business pulls from — candidate sits in at least one. */
+  networks: Network[];
+  /** Sector keywords used to spice the bio + lookingFor copy. */
+  keywords: string[];
+};
+
+const TIER_C_TARGETS: TierCTarget[] = [
+  {
+    oneLiner: "Cardiology decision support that lives inside Epic",
+    sector: "life-sciences",
+    stagePrefs: ["seed", "series-a"],
+    domains: ["life-sciences", "ai", "software"],
+    networks: ["operator", "sme-advisory", "venture"],
+    keywords: ["cardiology", "Epic SMART-on-FHIR", "AHA guidelines", "FDA 510(k)", "clinical decision support"],
+  },
+  {
+    oneLiner: "Microfluidic point-of-care diagnostics for sepsis",
+    sector: "life-sciences",
+    stagePrefs: ["seed"],
+    domains: ["life-sciences"],
+    networks: ["operator", "sme-advisory", "service-provider"],
+    keywords: ["microfluidics", "sepsis", "bloodstream infection", "point-of-care", "U of U bioengineering"],
+  },
+  {
+    oneLiner: "Customer-conversation analytics for vertical SaaS",
+    sector: "software",
+    stagePrefs: ["seed", "series-a"],
+    domains: ["software", "ai"],
+    networks: ["operator", "venture"],
+    keywords: ["call recording analytics", "conversation intelligence", "vertical SaaS", "retention", "Gong alternative"],
+  },
+  {
+    oneLiner: "Autonomous haul trucks for open-pit mining",
+    sector: "advanced-manufacturing",
+    stagePrefs: ["series-a"],
+    domains: ["advanced-manufacturing", "ai"],
+    networks: ["operator", "venture"],
+    keywords: ["autonomy stack", "mining haul trucks", "Tooele County", "lithium", "rare-earths", "off-road autonomy"],
+  },
+  {
+    oneLiner: "Continuous SOC 2 / ISO automation for mid-market",
+    sector: "cyber",
+    stagePrefs: ["seed"],
+    domains: ["cyber", "software"],
+    networks: ["operator", "mentor"],
+    keywords: ["SOC 2", "ISO 27001", "compliance automation", "Drata alternative", "mid-market security"],
+  },
+  {
+    oneLiner: "Low-temperature solar-cell deposition",
+    sector: "energy",
+    stagePrefs: ["pre-seed", "seed"],
+    domains: ["energy", "advanced-manufacturing"],
+    networks: ["operator", "venture", "sme-advisory"],
+    keywords: ["perovskite photovoltaics", "vapor-phase deposition", "flexible substrates", "USU spinout"],
+  },
+  {
+    oneLiner: "Virtual power plant for residential batteries",
+    sector: "energy",
+    stagePrefs: ["seed", "series-a"],
+    domains: ["energy", "software"],
+    networks: ["operator", "venture", "sme-advisory"],
+    keywords: ["virtual power plant", "residential batteries", "wholesale dispatch", "Rocky Mountain Power", "VPP"],
+  },
+  {
+    oneLiner: "Mineralization-based carbon removal in basalt deposits",
+    sector: "energy",
+    stagePrefs: ["pre-seed", "seed"],
+    domains: ["energy"],
+    networks: ["operator", "venture", "sme-advisory"],
+    keywords: ["carbon removal", "basalt mineralization", "Frontier", "Stripe carbon credits", "CO2 injection"],
+  },
+  {
+    oneLiner: "Solid-rocket motor manufacturing for small launch + defense",
+    sector: "advanced-manufacturing",
+    stagePrefs: ["series-a"],
+    domains: ["advanced-manufacturing", "defense-aerospace"],
+    networks: ["operator", "sme-advisory", "venture"],
+    keywords: ["solid-propellant", "tactical missiles", "small-launch upper stage", "AFRL", "ITAR"],
+  },
+  {
+    oneLiner: "AI tutor for high-school math, embedded in Chromebooks",
+    sector: "software",
+    stagePrefs: ["seed"],
+    domains: ["software", "ai"],
+    networks: ["operator", "mentor", "sme-advisory"],
+    keywords: ["AI tutor", "high-school math", "Chromebook fleet", "school districts", "K-12"],
+  },
+  {
+    oneLiner: "Workforce-AI upskilling for the trades",
+    sector: "software",
+    stagePrefs: ["seed"],
+    domains: ["software", "ai"],
+    networks: ["operator"],
+    keywords: ["AI coaching", "HVAC", "welding", "electrical apprenticeships", "workforce upskilling"],
+  },
+  {
+    oneLiner: "AI dock-scheduling for mid-market 3PLs",
+    sector: "software",
+    stagePrefs: ["seed"],
+    domains: ["software", "advanced-manufacturing"],
+    networks: ["operator"],
+    keywords: ["dock scheduling", "3PL", "WMS", "TMS", "carrier mix optimization"],
+  },
+  {
+    oneLiner: "Resident-experience software for multifamily managers",
+    sector: "software",
+    stagePrefs: ["pre-seed", "seed"],
+    domains: ["software"],
+    networks: ["operator", "venture"],
+    keywords: ["multifamily", "property management", "resident experience", "leasing", "renewals"],
+  },
+  {
+    oneLiner: "AI-native MGA for small-business cyber insurance",
+    sector: "fintech",
+    stagePrefs: ["series-a"],
+    domains: ["fintech", "cyber", "ai"],
+    networks: ["operator", "sme-advisory", "venture"],
+    keywords: ["MGA", "cyber liability", "small commercial", "Lloyd's syndicate", "real-time exposure"],
+  },
+  {
+    oneLiner: "Preview environments for full-stack monorepos",
+    sector: "software",
+    stagePrefs: ["seed"],
+    domains: ["software"],
+    networks: ["operator"],
+    keywords: ["preview environments", "monorepo", "ephemeral DBs", "PR previews", "platform engineering"],
+  },
+  {
+    oneLiner: "Open-core observability for ML pipelines",
+    sector: "software",
+    stagePrefs: ["seed"],
+    domains: ["software", "ai"],
+    networks: ["operator", "venture"],
+    keywords: ["observability", "ML training", "inference traces", "open-core", "OpenTelemetry"],
+  },
+  {
+    oneLiner: "Quantum-magnetometer-based navigation for GPS-denied operations",
+    sector: "advanced-manufacturing",
+    stagePrefs: ["pre-seed", "seed"],
+    domains: ["advanced-manufacturing", "defense-aerospace"],
+    networks: ["operator", "venture", "sme-advisory"],
+    keywords: ["quantum magnetometer", "GPS-denied navigation", "DoD primes", "trapped-ion sensing", "SBIR"],
+  },
+  {
+    oneLiner: "Inventory-counting robots for distribution centers",
+    sector: "advanced-manufacturing",
+    stagePrefs: ["seed"],
+    domains: ["advanced-manufacturing", "ai"],
+    networks: ["operator", "venture"],
+    keywords: ["DC robots", "inventory reconciliation", "WMS integration", "ROS2", "fleet autonomy"],
+  },
+  {
+    oneLiner: "Row-crop scouting robots for dryland agriculture",
+    sector: "advanced-manufacturing",
+    stagePrefs: ["seed"],
+    domains: ["advanced-manufacturing", "ai"],
+    networks: ["operator", "venture", "mentor"],
+    keywords: ["row-crop scouting", "dryland farming", "wheat barley alfalfa", "field robots", "agronomy"],
+  },
+  {
+    oneLiner: "Long-read sequencing for non-human-pathogen surveillance",
+    sector: "life-sciences",
+    stagePrefs: ["pre-seed", "seed"],
+    domains: ["life-sciences"],
+    networks: ["mentor", "venture", "sme-advisory"],
+    keywords: ["long-read sequencing", "nanopore", "pathogen surveillance", "USU spinout", "Cache Valley"],
+  },
+  {
+    oneLiner: "Telemedicine for rural Utah Medicaid populations",
+    sector: "life-sciences",
+    stagePrefs: ["seed", "series-a"],
+    domains: ["life-sciences", "software"],
+    networks: ["operator", "sme-advisory"],
+    keywords: ["telemedicine", "Utah Medicaid", "rural primary care", "FQHC", "virtual care"],
+  },
+  {
+    oneLiner: "High-altitude atmospheric data for wildfire risk",
+    sector: "energy",
+    stagePrefs: ["seed"],
+    domains: ["energy", "ai"],
+    networks: ["operator", "venture", "sme-advisory"],
+    keywords: ["high-altitude balloons", "wildfire forecasting", "atmospheric sensors", "insurance underwriting"],
+  },
+  {
+    oneLiner: "Live-service mobile games with a strong narrative thesis",
+    sector: "software",
+    stagePrefs: ["pre-seed", "seed"],
+    domains: ["software"],
+    networks: ["operator", "venture"],
+    keywords: ["live-service games", "narrative-led mobile", "soft launch", "Disney Interactive", "Plarium"],
+  },
+  {
+    oneLiner: "Procurement software for state and local government",
+    sector: "software",
+    stagePrefs: ["seed"],
+    domains: ["software"],
+    networks: ["operator", "mentor"],
+    keywords: ["RFP-to-contract", "state and local procurement", "GovTech", "Utah counties", "Idaho cities"],
+  },
+  {
+    oneLiner: "AI-assisted radiology workflow for community hospitals",
+    sector: "life-sciences",
+    stagePrefs: ["seed", "series-a"],
+    domains: ["life-sciences", "ai"],
+    networks: ["operator", "sme-advisory"],
+    keywords: ["radiology AI", "community hospitals", "PACS integration", "FDA 510(k)", "imaging workflow"],
+  },
+];
+
+const TIER_C_ROLE_VARIANTS: TierCRoleVariant[] = [
+  {
+    rolePrefix: "Founding engineer",
+    categories: ["engineer", "operator", "cofounder"],
+    needs: ["engineer", "cofounder"],
+    availability: "full-time",
+    compensation: ["cash", "equity"],
+    riskTolerance: 5,
+    networks: ["operator"],
+    bioContext:
+      "Eight years shipping production code at fast-growth companies. Want to be employee #1 or #2 on something where my decisions show up in the architecture forever, not buried under three layers of process.",
+    skillBundles: [
+      ["typescript", "react", "next.js", "tailwind", "tRPC", "postgres", "redis", "graphql", "websockets"],
+      ["go", "kubernetes", "kafka", "grpc", "service-mesh", "distributed-tracing", "site-reliability"],
+      ["full-stack-generalist", "scrappy-mvp", "supabase", "vercel", "feature-flags", "ab-testing", "growth-experiments"],
+    ],
+  },
+  {
+    rolePrefix: "Domain expert",
+    categories: ["engineer", "advisor-paid", "executive"],
+    needs: ["engineer", "advisor-paid", "cofounder"],
+    availability: "full-time",
+    compensation: ["cash", "equity", "mentor"],
+    riskTolerance: 4,
+    networks: ["operator", "sme-advisory"],
+    bioContext:
+      "Twelve years deep in this exact problem space. I've seen every wrong way to solve it and I have very strong opinions about the right one. Looking for a founding team where the science / domain is the moat.",
+    skillBundles: [
+      ["regulatory-strategy", "fda-pre-submission", "510k-pathway", "de-novo-classification", "qsr-readiness"],
+      ["healthcare-engineering", "hl7", "fhir", "epic-integration", "hipaa", "phi-handling", "audit-logging"],
+      ["clinical-evidence-strategy", "kol-network", "label-expansion-strategy", "hospital-procurement"],
+    ],
+  },
+  {
+    rolePrefix: "Founding GTM lead",
+    categories: ["sales", "executive", "operator"],
+    needs: ["sales", "executive", "operator"],
+    availability: "full-time",
+    compensation: ["cash", "equity"],
+    riskTolerance: 4,
+    networks: ["operator", "venture"],
+    bioContext:
+      "Closed $5M+ ARR at two early-stage companies as the first commercial hire. Build my own playbook, my own pipeline, and my own ramp. Want a real wedge with a defensible product, not vapor.",
+    skillBundles: [
+      ["enterprise-sales", "outbound", "discovery", "champion-building", "multithreading", "mutual-action-plans"],
+      ["pipeline-build", "ramp-design", "deal-strategy", "competitive-displacement", "renewal-protection"],
+      ["sales-engineering", "discovery-demo", "poc-design", "security-questionnaires", "soc2-collateral"],
+    ],
+  },
+  {
+    rolePrefix: "Founding ops lead",
+    categories: ["operator", "coo", "executive"],
+    needs: ["operator", "coo", "executive"],
+    availability: "full-time",
+    compensation: ["cash", "equity"],
+    riskTolerance: 4,
+    networks: ["operator", "mentor"],
+    bioContext:
+      "Bridge product, finance, and people. The 5→25 chaos point is where I do my best work — billing, comp bands, hiring loops, vendor sprawl, the un-glamorous middle. Done it twice; want to do it again.",
+    skillBundles: [
+      ["bizops", "fp&a", "cap-table-modeling", "vendor-management", "saas-stack-rationalization", "rev-leakage-audit"],
+      ["chief-of-staff", "exec-comms", "board-decks", "all-hands-design", "meeting-hygiene", "okr-rollout"],
+      ["revops", "salesforce-admin", "lead-routing", "territory-design", "quota-modeling", "data-ops"],
+    ],
+  },
+];
+
+function buildTierC(idx: number): TalentDTO {
+  // Tier C indices run 200..299 — but we slot 100 personas as targetIdx ×
+  // roleIdx. Each of the 25 targets gets all 4 role variants.
+  const i = idx - 200;
+  const target = TIER_C_TARGETS[i % TIER_C_TARGETS.length];
+  const role = TIER_C_ROLE_VARIANTS[Math.floor(i / TIER_C_TARGETS.length) % TIER_C_ROLE_VARIANTS.length];
+
+  // Stable name + slug per i so re-runs upsert into the same row.
+  const first = pick(FIRST_NAMES, i * 13 + 17);
+  const last = pick(LAST_NAMES, i * 19 + 23);
+  const name = `${first} ${last}`;
+  const slug = `${first}.${last}`.toLowerCase().replace(/[^a-z0-9.]/g, "");
+
+  const num = String(100 + idx).padStart(12, "0");
+  const id = `11111111-1111-4111-8111-${num}`;
+
+  const skills = Array.from(
+    new Set([...role.skillBundles[0], ...role.skillBundles[1], ...role.skillBundles[2]]),
+  );
+
+  // Headline mirrors the business one-liner so the candidate's profileText
+  // shares vocabulary with the business profile (helps both directions of
+  // the bidirectional cosine).
+  const headline = `${role.rolePrefix} · ${target.oneLiner}`;
+
+  // Bio packs the keywords, the role context, and the full skill stack.
+  const bio = [
+    role.bioContext,
+    `Want to ship ${target.oneLiner.toLowerCase()} with a small founding team in Utah.`,
+    `Domain context: ${target.keywords.join(", ")}.`,
+    `Skills: ${skills.join(", ")}.`,
+  ].join(" ");
+
+  // lookingFor is the highest-leverage field — it dominates `wantsText`,
+  // which gets cosined against the business `profileText`. Keep it dense
+  // with target keywords + the verbatim one-liner.
+  const lookingFor = [
+    `${role.rolePrefix} role at a ${target.stagePrefs[target.stagePrefs.length - 1]} ${target.sector} startup building ${target.oneLiner.toLowerCase()}.`,
+    `Especially interested in: ${target.keywords.join(", ")}.`,
+  ].join(" ");
+
+  // ~50% of Tier C ships without a profile photo to reflect realistic
+  // onboarding gaps. Hash on i to keep the choice stable across runs.
+  const omitPhoto = (i * 23 + 7) % 10 < 5;
+  const photoIdx = ((i * 19) % 70) + 1;
+  const photoUrl = omitPhoto ? undefined : `https://i.pravatar.cc/240?img=${photoIdx}`;
+
+  const location = pick(LOCATIONS, i * 3);
+  const utahOrgIds = pick(ORG_BUNDLES, i);
+
+  return {
+    id,
+    name,
+    email: `${slug}+seed${idx}@nucleus.demo`,
+    headline,
+    bio,
+    lookingFor,
+    categories: role.categories,
+    lookingForNeeds: role.needs,
+    domains: target.domains,
+    availability: role.availability,
+    compensation: role.compensation,
+    stagePrefs: target.stagePrefs,
+    riskTolerance: role.riskTolerance,
+    location,
+    utahOrgIds,
+    networks: role.networks.filter((n) => target.networks.includes(n)).length
+      ? role.networks.filter((n) => target.networks.includes(n))
+      : role.networks,
+    photoUrl,
+    linkedinUrl: `https://linkedin.com/in/${slug}-demo`,
+    createdAt: seedTime,
+  };
+}
+
+export const EXTRA_LIVE_TALENT: TalentDTO[] = [
+  ...Array.from({ length: 200 }, (_, i) => buildOne(i)),
+  ...Array.from({ length: 100 }, (_, i) => buildTierC(200 + i)),
+];
 
 // ── Procedural businesses ──────────────────────────────────────────────────
 //
