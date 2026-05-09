@@ -255,7 +255,7 @@ function QueueRow({ row }: { row: Row }) {
                           {cand.name}
                         </span>
                         <span className="rounded-md bg-orange-50 px-1.5 py-0.5 font-mono text-[10px] font-bold text-orange-700">
-                          {Math.round(m.score * 100)}%
+                          {(m.score * 100).toFixed(1)}%
                         </span>
                       </div>
                       <span className="block truncate text-[11px] text-warmgray-500">

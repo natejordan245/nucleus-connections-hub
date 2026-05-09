@@ -45,7 +45,7 @@ export async function vote(formData: FormData) {
         recipientId: business.id,
         kind: "interest_received",
         title: `${candidate.name} is interested`,
-        body: "Take a look — they're a fit on stage and skills.",
+        body: "Take a look — they're a fit on stage and focus.",
         href: `/handshake?with=${candidate.id}`,
       });
     } else {
