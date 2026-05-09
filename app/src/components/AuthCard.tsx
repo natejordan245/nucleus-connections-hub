@@ -48,7 +48,7 @@ export function PrimaryButton({ children, ...props }: React.ButtonHTMLAttributes
     <button
       {...props}
       className={
-        "inline-flex h-10 w-full items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(255,114,39,0.55)] transition hover:bg-orange-600 disabled:opacity-60 " +
+        "inline-flex h-10 w-full items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:opacity-60 " +
         (props.className ?? "")
       }
     >
