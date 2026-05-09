@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { ChipGroup } from "@/components/ChipGroup";
+import { DemoFiller } from "@/components/DemoFiller";
 import { Field, Input, Select, Textarea } from "@/components/FormField";
 import { OnboardAccountFields, decodeOnboardError } from "@/components/OnboardAccountFields";
 import {
@@ -381,6 +382,7 @@ export function TalentOnboardForm({
 
   return (
     <main className="mx-auto w-full max-w-2xl px-8 py-10">
+      <DemoFiller />
       <Link href="/onboard" className="text-sm font-medium text-warmgray-600 hover:text-ink">
         ← Back
       </Link>
@@ -390,7 +392,8 @@ export function TalentOnboardForm({
         Tell us about yourself.
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
-        Free-text where it matters; quick chips for the rest.
+        Free-text where it matters; quick chips for the rest.{" "}
+        <span className="text-warmgray-500">Tip: double-click any text field to auto-fill a sample.</span>
       </p>
 
       {error === "missing_required" && (
@@ -545,10 +548,12 @@ export function TalentOnboardForm({
             required
             autoComplete="name"
             placeholder="Sarah Chen"
+            data-sample="Sarah Chen"
             value={form.name}
             onChange={(e) => {
+              const value = e.currentTarget.value;
               setTouched((prev) => ({ ...prev, name: true }));
-              setForm((prev) => ({ ...prev, name: e.currentTarget.value }));
+              setForm((prev) => ({ ...prev, name: value }));
             }}
           />
         </Field>
@@ -558,6 +563,7 @@ export function TalentOnboardForm({
             name="bio"
             required
             placeholder="What you've worked on, what you're proud of, what kind of company you'd want to join."
+            data-sample="Eight years scaling B2B revenue at seed and growth stages. Built and ran the GTM org at two YC companies (one acquired, one shipping). Comfortable owning quota, hiring AEs, and talking pricing with founders. Looking for a Utah-based seed or Series A team where the founders are technical and the wedge is real."
             value={form.bio}
             onChange={(e) => {
               const value = e.currentTarget.value;
@@ -572,6 +578,7 @@ export function TalentOnboardForm({
             name="lookingFor"
             rows={3}
             placeholder="Sales-leader role at a seed-to-Series-A B2B software company, ideally Utah-based."
+            data-sample="Head-of-sales or first-GTM-hire role at a seed → Series A B2B software company. Utah-based or remote-friendly. Open to taking equity-heavy comp if the wedge and the team are right."
             value={form.lookingFor}
             onChange={(e) => {
               const value = e.currentTarget.value;
@@ -617,6 +624,7 @@ export function TalentOnboardForm({
             id="skills"
             name="skills"
             placeholder="sales-leadership, gtm-strategy, pricing"
+            data-sample="sales-leadership, gtm-strategy, pricing, channel-partnerships, ae-hiring, outbound-motion"
             value={form.skills}
             onChange={(e) => {
               const value = e.currentTarget.value;
@@ -661,6 +669,7 @@ export function TalentOnboardForm({
           <Input
             id="location"
             name="location"
+            data-sample="Salt Lake City, UT"
             value={form.location}
             onChange={(e) => {
               const value = e.currentTarget.value;
@@ -676,6 +685,7 @@ export function TalentOnboardForm({
             name="linkedinUrl"
             type="url"
             placeholder="https://linkedin.com/in/…"
+            data-sample="https://linkedin.com/in/sample-candidate"
             value={form.linkedinUrl}
             onChange={(e) => {
               const value = e.currentTarget.value;

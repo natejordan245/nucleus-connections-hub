@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChipGroup } from "@/components/ChipGroup";
+import { DemoFiller } from "@/components/DemoFiller";
 import { Field, Input, Textarea } from "@/components/FormField";
 import { OnboardAccountFields, decodeOnboardError } from "@/components/OnboardAccountFields";
 import { PhotoUpload } from "@/components/PhotoUpload";
@@ -76,6 +77,7 @@ export function MentorOnboardForm({
 
   return (
     <main className="mx-auto w-full max-w-2xl px-8 py-10">
+      <DemoFiller />
       <Link href="/onboard" className="text-sm font-medium text-warmgray-600 hover:text-ink">
         ← Back
       </Link>
@@ -85,7 +87,8 @@ export function MentorOnboardForm({
         Tell us how you advise.
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
-        A few quick fields and you're set up.
+        A few quick fields and you're set up.{" "}
+        <span className="text-warmgray-500">Tip: double-click any text field to auto-fill a sample.</span>
       </p>
 
       {error === "missing_required" && (
@@ -109,8 +112,9 @@ export function MentorOnboardForm({
             required
             autoComplete="name"
             placeholder="David Holm"
+            data-sample="David Holm"
             value={form.name}
-            onChange={(e) => setForm((p) => ({ ...p, name: e.currentTarget.value }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, name: v })); }}
           />
         </Field>
 
@@ -119,6 +123,7 @@ export function MentorOnboardForm({
             id="headline"
             name="headline"
             placeholder="Two-time founder · post-exit advisor for SaaS GTM"
+            data-sample="Two-time founder · post-exit advisor for SaaS GTM and seed-stage hiring"
             value={form.headline}
             onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, headline: v })); }}
           />
@@ -131,6 +136,7 @@ export function MentorOnboardForm({
             required
             rows={5}
             placeholder="Background, the kinds of founders you advise, and what's worked."
+            data-sample="Founded and exited two B2B SaaS companies (one PE buyout, one acqui-hire). Now advising 6–8 seed-stage Utah teams a quarter on GTM, hiring AEs, and post-pilot enterprise motion. Best when paired with technical founders who haven't run sales orgs before. Lassonde Founder Track mentor."
             value={form.bio}
             onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, bio: v })); }}
           />
@@ -157,6 +163,7 @@ export function MentorOnboardForm({
             type="number"
             min={0}
             max={40}
+            data-sample="6"
             value={form.hoursPerMonth}
             onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, hoursPerMonth: v })); }}
           />
@@ -209,6 +216,7 @@ export function MentorOnboardForm({
           <Input
             id="location"
             name="location"
+            data-sample="Park City, UT"
             value={form.location}
             onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, location: v })); }}
           />
@@ -220,6 +228,7 @@ export function MentorOnboardForm({
             name="linkedinUrl"
             type="url"
             placeholder="https://linkedin.com/in/…"
+            data-sample="https://linkedin.com/in/sample-mentor"
             value={form.linkedinUrl}
             onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, linkedinUrl: v })); }}
           />
@@ -231,6 +240,7 @@ export function MentorOnboardForm({
             name="websiteUrl"
             type="url"
             placeholder="https://…"
+            data-sample="https://sample-mentor.example.com"
             value={form.websiteUrl}
             onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, websiteUrl: v })); }}
           />
