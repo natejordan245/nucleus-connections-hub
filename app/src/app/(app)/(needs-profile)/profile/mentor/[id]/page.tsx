@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { Pill } from "@/components/Pill";
 import { SocialLinks } from "@/components/SocialLinks";
 import { getDataStore } from "@/lib/data";
@@ -16,12 +17,13 @@ export default async function MentorProfilePage({ params }: { params: { id: stri
 
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-8">
-      <Link
-        href="/dashboard"
-        className="text-sm font-medium text-warmgray-500 transition hover:text-ink"
-      >
-        ← Back to dashboard
-      </Link>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Mentor" },
+          { label: mentor.name },
+        ]}
+      />
 
       <header className="mt-4 flex items-start gap-5 rounded-lg border border-warmgray-200 bg-white p-5">
         <Avatar name={mentor.name} src={mentor.photoUrl} size="lg" />

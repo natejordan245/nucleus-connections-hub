@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { CandidateProfileCard } from "@/components/CandidateProfileCard";
 import { ExplainabilityPanel } from "@/components/ExplainabilityPanel";
 import { getDataStore } from "@/lib/data";
@@ -50,12 +51,13 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
 
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-8">
-      <Link
-        href="/dashboard"
-        className="text-sm font-medium text-warmgray-500 transition hover:text-ink"
-      >
-        ← Back to dashboard
-      </Link>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Candidate" },
+          { label: candidate.name },
+        ]}
+      />
       <CandidateProfileCard candidate={candidate} headerAction={headerAction} aside={aside} />
     </main>
   );
