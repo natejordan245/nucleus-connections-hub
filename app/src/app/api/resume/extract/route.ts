@@ -1,7 +1,4 @@
 import { NextResponse } from "next/server";
-import { pathToFileURL } from "node:url";
-import { join } from "node:path";
-import mammoth from "mammoth";
 import {
   AVAILABILITIES,
   COMPENSATIONS,
@@ -29,19 +26,13 @@ import type {
 
 export const runtime = "nodejs";
 
+// Vision-capable model with native PDF input support. See:
+// https://developers.openai.com/api/docs/guides/file-inputs
 const MODEL = "gpt-5.4-mini";
 const OPENAI_ENDPOINT = "https://api.openai.com/v1/responses";
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
-const MAX_MODEL_INPUT_CHARS = 50000;
-const MAX_STORED_TEXT_CHARS = 50000;
-const MAX_PDF_PAGES = 8;
-const MAX_DOCX_IMAGES = 12;
 const HIGH_CONFIDENCE = 0.8;
 const MEDIUM_CONFIDENCE = 0.6;
-
-type ParserKind = "pdf" | "docx";
-type PassKind = "text" | "image";
-type TruncatedFlag = "model_input" | "stored_text" | "pdf_pages" | "docx_images";
 
 type EmitFn = (event: ResumeExtractStreamEvent) => void;
 
@@ -150,8 +141,8 @@ const SUGGESTION_SCHEMA = {
 } as const;
 
 const EXTRACTION_PROMPT = [
-  "You extract profile suggestions from resume content for a talent onboarding form.",
-  "Return only fields with meaningful evidence from the resume content.",
+  "You read a resume PDF directly (text + page images via the model's vision) and extract profile suggestions for a talent onboarding form.",
+  "Return only fields with meaningful evidence visible in the resume.",
   "Never return email.",
   "No guessing: omit fields without enough evidence.",
   "Use confidence in 0..1 with conservative scoring.",
@@ -248,9 +239,11 @@ async function runExtraction(
     throw new HttpError(400, "Missing resume file.");
   }
 
-  const parser = detectParser(fileValue);
-  if (!parser) {
-    throw new HttpError(400, "Unsupported file type. Upload a .pdf or .docx resume.");
+  const isPdf =
+    fileValue.name.toLowerCase().endsWith(".pdf") ||
+    fileValue.type.toLowerCase() === "application/pdf";
+  if (!isPdf) {
+    throw new HttpError(400, "Unsupported file type. Upload a .pdf resume.");
   }
   if (fileValue.size <= 0) {
     throw new HttpError(400, "Uploaded file is empty.");
@@ -259,68 +252,13 @@ async function runExtraction(
     throw new HttpError(400, "File too large. Max size is 5 MB.");
   }
 
-  const warnings: string[] = [];
-  const truncatedFlags: TruncatedFlag[] = [];
-  const passesUsed = new Set<PassKind>();
+  emitStatus(emit, "building_suggestions", "Reading your resume with AI.");
+  const buffer = Buffer.from(await fileValue.arrayBuffer());
+  const dataUri = `data:application/pdf;base64,${buffer.toString("base64")}`;
 
-  let textPass = "";
-  let imagePass = "";
-
-  emitStatus(emit, "extracting_text", "Extracting embedded text.");
-  try {
-    textPass = parser === "pdf" ? await extractPdfText(fileValue) : await extractDocxText(fileValue);
-    textPass = normalizeText(textPass);
-    if (textPass) passesUsed.add("text");
-  } catch (err) {
-    const detail = messageFromError(err, "unknown parser error");
-    const message = `Text extraction failed (${detail.slice(0, 120)}); continuing with image-based extraction.`;
-    warnings.push(message);
-    emitWarning(emit, message);
-  }
-
-  emitStatus(emit, "extracting_images", "Preparing images for OCR.");
-  let imageInputs: string[] = [];
-  try {
-    imageInputs =
-      parser === "pdf"
-        ? await extractPdfImageDataUrls(fileValue, warnings, truncatedFlags)
-        : await extractDocxImageDataUrls(fileValue, warnings, truncatedFlags);
-  } catch {
-    warnings.push("Image extraction failed; continuing with text-only extraction.");
-    emitWarning(emit, "Image extraction failed; continuing with text-only extraction.");
-  }
-
-  if (imageInputs.length > 0) {
-    emitStatus(emit, "ocr", "Running OCR over extracted images.");
-    try {
-      imagePass = await ocrImages(apiKey, imageInputs);
-      imagePass = normalizeText(imagePass);
-      if (imagePass) passesUsed.add("image");
-    } catch {
-      warnings.push("OCR pass failed; using text pass only.");
-      emitWarning(emit, "OCR pass failed; using text pass only.");
-    }
-  }
-
-  emitStatus(emit, "merging", "Merging extracted text.");
-  const mergedText = mergeExtractedText(textPass, imagePass);
-  if (!mergedText) {
-    throw new HttpError(400, "No readable resume text found in this file.");
-  }
-
-  let modelInput = mergedText;
-  if (modelInput.length > MAX_MODEL_INPUT_CHARS) {
-    modelInput = modelInput.slice(0, MAX_MODEL_INPUT_CHARS);
-    warnings.push("Resume text was truncated before suggestion extraction.");
-    truncatedFlags.push("model_input");
-    emitWarning(emit, "Resume text was truncated before suggestion extraction.");
-  }
-
-  emitStatus(emit, "building_suggestions", "Building profile suggestions.");
   let raw: RawExtraction;
   try {
-    await pingModel(apiKey, MODEL);
-    raw = await extractSuggestions(apiKey, modelInput);
+    raw = await extractFromPdf(apiKey, fileValue.name, dataUri);
   } catch (err) {
     throw new HttpError(
       502,
@@ -329,41 +267,25 @@ async function runExtraction(
   }
 
   const suggestions = normalizeSuggestions(raw.suggestions ?? []);
-  const storedText =
-    mergedText.length > MAX_STORED_TEXT_CHARS
-      ? mergedText.slice(0, MAX_STORED_TEXT_CHARS)
-      : mergedText;
-  if (storedText.length !== mergedText.length) {
-    warnings.push("Stored resume text was truncated to 50,000 characters.");
-    truncatedFlags.push("stored_text");
-    emitWarning(emit, "Stored resume text was truncated to 50,000 characters.");
-  }
 
   const extractedTextMeta: ResumeExtractMeta = {
     sourceFilename: fileValue.name,
     extractedAt: new Date().toISOString(),
-    parser,
-    charCount: storedText.length,
+    parser: "pdf",
+    charCount: 0,
     model: MODEL,
-    extractedText: storedText,
-    passesUsed: passesUsed.size > 0 ? Array.from(passesUsed) : undefined,
-    warnings: warnings.length > 0 ? warnings : undefined,
-    truncatedFlags: truncatedFlags.length > 0 ? dedupe(truncatedFlags) : undefined,
+    extractedText: "",
+    passesUsed: ["image"],
   };
 
   return {
     suggestions,
     extractedTextMeta,
-    warnings: warnings.length > 0 ? warnings : undefined,
   };
 }
 
 function emitStatus(emit: EmitFn, stage: ResumeExtractStage, message: string): void {
   emit({ type: "status", stage, message });
-}
-
-function emitWarning(emit: EmitFn, message: string): void {
-  emit({ type: "warning", message });
 }
 
 async function parseFormData(req: Request): Promise<FormData> {
@@ -374,183 +296,11 @@ async function parseFormData(req: Request): Promise<FormData> {
   }
 }
 
-function detectParser(file: File): ParserKind | null {
-  const name = file.name.toLowerCase();
-  const type = file.type.toLowerCase();
-  if (name.endsWith(".pdf") || type === "application/pdf") return "pdf";
-  if (
-    name.endsWith(".docx") ||
-    type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-  ) {
-    return "docx";
-  }
-  return null;
-}
-
-async function extractPdfText(file: File): Promise<string> {
-  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(
-    join(process.cwd(), "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"),
-  ).href;
-  const loadingTask = pdfjs.getDocument({
-    data: new Uint8Array(await file.arrayBuffer()),
-    useWorkerFetch: false,
-  });
-
-  const doc = await loadingTask.promise;
-  const pageTexts: string[] = [];
-  try {
-    for (let pageNum = 1; pageNum <= doc.numPages; pageNum += 1) {
-      const page = await doc.getPage(pageNum);
-      const textContent = await page.getTextContent();
-      const text = (textContent.items as Array<{ str?: string }>)
-        .map((item) => (typeof item.str === "string" ? item.str : ""))
-        .join(" ")
-        .trim();
-      if (text) pageTexts.push(text);
-    }
-  } finally {
-    await loadingTask.destroy();
-  }
-
-  return pageTexts.join("\n\n");
-}
-
-async function extractDocxText(file: File): Promise<string> {
-  const docx = await mammoth.extractRawText({ buffer: Buffer.from(await file.arrayBuffer()) });
-  return docx.value ?? "";
-}
-
-async function extractPdfImageDataUrls(
-  file: File,
-  warnings: string[],
-  truncatedFlags: TruncatedFlag[],
-): Promise<string[]> {
-  const pdfToPng = await loadPdfConverter();
-  const pages = await pdfToPng(Buffer.from(await file.arrayBuffer()), {
-    viewportScale: 2,
-    disableFontFace: false,
-    useSystemFonts: true,
-    returnPageContent: true,
-    outputFolder: undefined,
-  });
-
-  if (!Array.isArray(pages) || pages.length === 0) return [];
-  let selectedPages = pages.filter((p) => p.kind === "content" && p.content);
-  if (selectedPages.length === 0) return [];
-
-  if (selectedPages.length > MAX_PDF_PAGES) {
-    selectedPages = selectedPages.slice(0, MAX_PDF_PAGES);
-    warnings.push(`Only the first ${MAX_PDF_PAGES} PDF pages were analyzed for OCR.`);
-    truncatedFlags.push("pdf_pages");
-  }
-
-  return selectedPages.map((page) => `data:image/png;base64,${page.content!.toString("base64")}`);
-}
-
-async function extractDocxImageDataUrls(
-  file: File,
-  warnings: string[],
-  truncatedFlags: TruncatedFlag[],
-): Promise<string[]> {
-  const mammothAny = mammoth as unknown as {
-    images?: {
-      inline: (
-        handler: (image: { contentType: string; read: (encoding: string) => Promise<string> }) => Promise<{ src: string }>,
-      ) => unknown;
-    };
-  };
-  if (!mammothAny.images?.inline) return [];
-
-  const convertImage = mammothAny.images.inline(async (image) => ({
-    src: `data:${image.contentType};base64,${(await image.read("base64")) as string}`,
-  }));
-  const conversion = await mammoth.convertToHtml(
-    { buffer: Buffer.from(await file.arrayBuffer()) },
-    { convertImage } as never,
-  );
-  const html = conversion.value ?? "";
-  if (!html) return [];
-
-  const urls = extractDataUriImages(html);
-  if (urls.length <= MAX_DOCX_IMAGES) return urls;
-
-  warnings.push(`Only the first ${MAX_DOCX_IMAGES} embedded DOCX images were analyzed for OCR.`);
-  truncatedFlags.push("docx_images");
-  return urls.slice(0, MAX_DOCX_IMAGES);
-}
-
-function extractDataUriImages(html: string): string[] {
-  const out: string[] = [];
-  const pattern = /<img[^>]+src=(["'])(data:image\/[^"']+)\1/gi;
-  let match: RegExpExecArray | null = pattern.exec(html);
-  while (match) {
-    out.push(match[2]);
-    match = pattern.exec(html);
-  }
-  return dedupe(out);
-}
-
-async function ocrImages(apiKey: string, imageDataUrls: string[]): Promise<string> {
-  if (imageDataUrls.length === 0) return "";
-
-  const content = [
-    {
-      type: "input_text" as const,
-      text: [
-        "Extract plain text from these resume images.",
-        "Return only extracted text in reading order.",
-        "Do not summarize and do not add commentary.",
-        "If text is unreadable, omit it instead of guessing.",
-      ].join(" "),
-    },
-    ...imageDataUrls.map((image_url) => ({
-      type: "input_image" as const,
-      image_url,
-      detail: "high" as const,
-    })),
-  ];
-
-  const res = await fetch(OPENAI_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      input: [{ role: "user", content }],
-      max_output_tokens: 6000,
-    }),
-  });
-  const rawBody = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(`Vision OCR failed (${res.status}): ${JSON.stringify(rawBody).slice(0, 300)}`);
-  }
-
-  return extractOutputText(rawBody);
-}
-
-async function pingModel(apiKey: string, model: string): Promise<void> {
-  const res = await fetch(OPENAI_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      input: "Reply with the single word pong.",
-      max_output_tokens: 16,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Ping failed (${res.status}): ${body.slice(0, 300)}`);
-  }
-}
-
-async function extractSuggestions(apiKey: string, resumeText: string): Promise<RawExtraction> {
+async function extractFromPdf(
+  apiKey: string,
+  filename: string,
+  dataUri: string,
+): Promise<RawExtraction> {
   const res = await fetch(OPENAI_ENDPOINT, {
     method: "POST",
     headers: {
@@ -568,13 +318,13 @@ async function extractSuggestions(apiKey: string, resumeText: string): Promise<R
           role: "user",
           content: [
             {
+              type: "input_file",
+              filename,
+              file_data: dataUri,
+            },
+            {
               type: "input_text",
-              text: [
-                "Extract onboarding suggestions from this resume content.",
-                "Only include fields with enough evidence.",
-                "Resume content:",
-                resumeText,
-              ].join("\n\n"),
+              text: "Extract onboarding suggestions from this resume. Only include fields with enough evidence.",
             },
           ],
         },
@@ -582,7 +332,7 @@ async function extractSuggestions(apiKey: string, resumeText: string): Promise<R
       text: {
         format: {
           type: "json_schema",
-          name: "resume_onboarding_extract_v2",
+          name: "resume_onboarding_extract_v3",
           strict: false,
           schema: SUGGESTION_SCHEMA,
         },
@@ -879,65 +629,6 @@ function splitCsv(value: unknown): string[] {
     .map((part) => part.trim())
     .filter(Boolean)
     .slice(0, 40);
-}
-
-function normalizeText(text: string): string {
-  return text
-    .replace(/\u0000/g, " ")
-    .replace(/\r/g, "\n")
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/[ \t]{2,}/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-function mergeExtractedText(textPass: string, imagePass: string): string {
-  const chunks: string[] = [];
-  if (textPass) chunks.push(textPass);
-  if (imagePass) chunks.push(imagePass);
-  if (chunks.length === 0) return "";
-
-  const merged = chunks
-    .join("\n\n")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  const seen = new Set<string>();
-  const seenCompact = new Set<string>();
-  const deduped: string[] = [];
-  for (const line of merged) {
-    const key = normalizeToken(line);
-    const compact = key.replace(/\s+/g, "");
-    const isCompactDup = compact.length >= 8 && seenCompact.has(compact);
-    if (!key || seen.has(key) || isCompactDup) continue;
-    seen.add(key);
-    if (compact.length >= 8) seenCompact.add(compact);
-    deduped.push(line);
-  }
-  return deduped.join("\n");
-}
-
-async function loadPdfConverter(): Promise<
-  (
-    input: Buffer,
-    options: Record<string, unknown>,
-  ) => Promise<Array<{ kind?: string; content?: Buffer }>>
-> {
-  try {
-    const mod = await import("pdf-to-png-converter");
-    return mod.pdfToPng as (
-      input: Buffer,
-      options: Record<string, unknown>,
-    ) => Promise<Array<{ kind?: string; content?: Buffer }>>;
-  } catch (err) {
-    throw new Error(
-      messageFromError(
-        err,
-        "PDF image conversion dependencies are unavailable. Run npm install and restart the server.",
-      ),
-    );
-  }
 }
 
 function normalizeToken(value: string): string {
