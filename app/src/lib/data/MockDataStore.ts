@@ -78,6 +78,42 @@ export class MockDataStore implements IDataStore {
       .sort((a, b) => b.score - a.score);
   }
 
+  async computeMatch({
+    subjectId,
+    candidateId,
+  }: {
+    subjectId: string;
+    candidateId: string;
+  }): Promise<MatchDTO | null> {
+    if (subjectId === candidateId) return null;
+
+    // Hand-curated baseline takes precedence — keeps the canonical demo
+    // narratives intact when judges click into Sarah → Bramble etc.
+    const baseline = baselineMatches.find(
+      (m) => m.subjectId === subjectId && m.candidateId === candidateId,
+    );
+    if (baseline) return baseline;
+
+    // Synthesize a match for any other (subject, candidate) pair so search
+    // click-throughs always land on a populated analysis page rather than
+    // "this profile isn't currently in your matches."
+    const subjTalent = talentMap.get(subjectId);
+    const subjStartup = startupMap.get(subjectId);
+    const candTalent = talentMap.get(candidateId);
+    const candStartup = startupMap.get(candidateId);
+
+    if (subjTalent && candStartup) {
+      return synthesizeTalentToStartup(subjTalent, candStartup);
+    }
+    if (subjStartup && candTalent) {
+      return synthesizeStartupToTalent(subjStartup, candTalent);
+    }
+    if (subjTalent && candTalent) {
+      return synthesizePeer(subjTalent, candTalent);
+    }
+    return null;
+  }
+
   async search(query: string) {
     const q = lower(query.trim());
     if (!q) {
@@ -271,4 +307,179 @@ export class MockDataStore implements IDataStore {
     );
     return { gapText: analysis.description, resources };
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Match synthesizers — used by computeMatch when there's no baseline entry for
+// the (subject, candidate) pair. Cheap heuristics, structurally identical to
+// what the live LLM gate produces, so MatchCard / ExplainabilityPanel render
+// the same shape regardless of mode.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function clamp01(n: number): number {
+  if (Number.isNaN(n)) return 0;
+  return n < 0 ? 0 : n > 1 ? 1 : n;
+}
+
+function overlap<T>(a: T[], b: T[]): T[] {
+  const set = new Set(b);
+  return a.filter((x) => set.has(x));
+}
+
+function synthesizeTalentToStartup(t: TalentDTO, s: StartupDTO): MatchDTO {
+  // Skill / role coverage — reuse the gap engine for consistency with the
+  // gap-closer's signal.
+  const { analyzeGap } = requireGapModule();
+  const analysis = analyzeGap(t, s);
+  const totalNeeds = analysis.covered.length + analysis.gaps.length;
+  const skillWeight =
+    totalNeeds === 0
+      ? 0.6
+      : clamp01(0.45 + (analysis.covered.length / totalNeeds) * 0.5);
+
+  // Domain overlap — startup sector ∈ talent.domains?
+  const domainHit = t.domains.includes(s.sector);
+  const domainWeight = domainHit ? 0.9 : 0.45;
+
+  // Stage fit — startup stage ∈ talent.stagePrefs?
+  const stageHit = t.stagePrefs.includes(s.fundingStage);
+  const stageWeight = stageHit ? 0.95 : 0.4;
+
+  const sharedOrgIds = overlap(t.utahOrgIds, s.utahOrgIds);
+  const proximityBoost = sharedOrgIds.length > 0 ? 0.05 : 0;
+
+  // Composite score blends the three factors, lightly boosted for shared
+  // Utah affiliations. Stays in [0, 1].
+  const composite = clamp01(
+    skillWeight * 0.5 + domainWeight * 0.3 + stageWeight * 0.2 + proximityBoost,
+  );
+
+  const concerns: string[] = [];
+  if (analysis.gaps.length > 0) {
+    concerns.push(analysis.description);
+  }
+  if (!stageHit) {
+    concerns.push(
+      `${s.name} is at ${s.fundingStage}; that's outside ${t.name.split(" ")[0]}'s stated stage range.`,
+    );
+  }
+  if (!domainHit) {
+    concerns.push(
+      `${s.name}'s sector (${s.sector}) isn't a domain ${t.name.split(" ")[0]} has named.`,
+    );
+  }
+
+  const reason = analysis.description;
+
+  return {
+    id: `synth-${t.id}-${s.id}`,
+    subjectId: t.id,
+    candidateId: s.id,
+    candidateKind: "startup",
+    score: composite,
+    reason,
+    concerns,
+    factors: [
+      {
+        label: "Role fit",
+        weight: skillWeight,
+        detail:
+          analysis.covered.length > 0
+            ? `Covers: ${analysis.covered.join(", ")}.`
+            : "No direct role coverage from current skills.",
+      },
+      {
+        label: "Domain overlap",
+        weight: domainWeight,
+        detail: domainHit
+          ? `${s.sector} is in ${t.name.split(" ")[0]}'s stated domains.`
+          : `${s.sector} is outside the talent's named domains.`,
+      },
+      {
+        label: "Stage fit",
+        weight: stageWeight,
+        detail: stageHit
+          ? `${s.fundingStage} matches the talent's stage range.`
+          : `${s.fundingStage} is outside the talent's stage range.`,
+      },
+    ],
+    proximityBoost,
+    sharedOrgIds,
+  };
+}
+
+function synthesizeStartupToTalent(s: StartupDTO, t: TalentDTO): MatchDTO {
+  // Mirror of the talent→startup case — reuses the same factors, switches
+  // subject/candidate ids and kind so the consumer always knows who's who.
+  const synth = synthesizeTalentToStartup(t, s);
+  return {
+    ...synth,
+    id: `synth-${s.id}-${t.id}`,
+    subjectId: s.id,
+    candidateId: t.id,
+    candidateKind: "talent",
+  };
+}
+
+function synthesizePeer(a: TalentDTO, b: TalentDTO): MatchDTO {
+  // Talent ↔ talent peer match — used for "who else in Utah is doing this?"
+  // No skill-fit analysis; lean on domain overlap and shared Utah affiliations.
+  const sharedDomains = overlap(a.domains, b.domains);
+  const domainWeight = clamp01(
+    sharedDomains.length === 0 ? 0.4 : 0.5 + sharedDomains.length * 0.15,
+  );
+  const sharedOrgIds = overlap(a.utahOrgIds, b.utahOrgIds);
+  const proximityBoost = sharedOrgIds.length > 0 ? 0.1 : 0;
+  const stageOverlap = overlap(a.stagePrefs, b.stagePrefs);
+  const stageWeight = stageOverlap.length > 0 ? 0.8 : 0.4;
+  const composite = clamp01(domainWeight * 0.6 + stageWeight * 0.4 + proximityBoost);
+
+  return {
+    id: `synth-${a.id}-${b.id}`,
+    subjectId: a.id,
+    candidateId: b.id,
+    candidateKind: "talent",
+    score: composite,
+    reason:
+      sharedDomains.length > 0
+        ? `${a.name.split(" ")[0]} and ${b.name.split(" ")[0]} both work in ${sharedDomains.join(", ")}.`
+        : `Different domains, but both operating inside the Utah ecosystem.`,
+    concerns:
+      sharedDomains.length === 0
+        ? ["Shared domain context is thin — peer intro is more about network than direct collab."]
+        : [],
+    factors: [
+      {
+        label: "Domain overlap",
+        weight: domainWeight,
+        detail:
+          sharedDomains.length > 0
+            ? `Shared domains: ${sharedDomains.join(", ")}.`
+            : "No domain overlap.",
+      },
+      {
+        label: "Stage range",
+        weight: stageWeight,
+        detail:
+          stageOverlap.length > 0
+            ? `Both targeting ${stageOverlap.join(", ")}.`
+            : "Different stage preferences.",
+      },
+    ],
+    proximityBoost,
+    sharedOrgIds,
+  };
+}
+
+// Tiny memoized wrapper around the gap module — synthesizers are sync, but the
+// gap module is dynamically imported in `recommendGapResources`. Keep the
+// dynamic-import contract there; here we use require so synthesizers stay
+// synchronous-looking. Falls back to a no-op analyzer if the require fails so
+// build steps that statically analyze imports don't break.
+let gapMod: typeof import("@/lib/match/gap") | null = null;
+function requireGapModule(): typeof import("@/lib/match/gap") {
+  if (gapMod) return gapMod;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  gapMod = require("@/lib/match/gap") as typeof import("@/lib/match/gap");
+  return gapMod;
 }

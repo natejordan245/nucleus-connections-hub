@@ -1,3 +1,4 @@
+import { AlertCircle } from "lucide-react";
 import type { MatchDTO } from "@/lib/data/types";
 
 export function ExplainabilityPanel({ match }: { match: MatchDTO }) {
@@ -30,14 +31,18 @@ export function ExplainabilityPanel({ match }: { match: MatchDTO }) {
       </ul>
 
       {match.concerns.length > 0 && (
-        <div className="mt-6 rounded-xl border border-warmgray-100 bg-paper p-4">
-          <span className="eyebrow text-warmgray-500">Concerns</span>
-          <ul className="mt-2 space-y-1 text-xs text-warmgray-700">
+        <div className="mt-6 rounded-xl border border-orange-200 bg-sand-50 p-4">
+          <div className="flex items-center gap-2">
+            <AlertCircle
+              className="h-4 w-4 text-orange-600"
+              strokeWidth={1.75}
+              aria-hidden
+            />
+            <span className="eyebrow text-orange-700">Worth verifying</span>
+          </div>
+          <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-warmgray-700">
             {match.concerns.map((c, i) => (
-              <li key={i} className="flex gap-2">
-                <span aria-hidden className="text-warmgray-300">!</span>
-                <span>{c}</span>
-              </li>
+              <li key={i}>{c}</li>
             ))}
           </ul>
         </div>

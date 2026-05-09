@@ -421,6 +421,73 @@ export class SupabaseDataStore implements IDataStore {
     );
   }
 
+  // On-demand single-pair match. Reads both profile rows, runs the LLM gate
+  // (which caches per-pair in `match_summaries`, so repeat calls are free),
+  // and returns a MatchDTO regardless of the gate's `isMatch` verdict — the
+  // user explicitly asked for "show me this even if I'm not a great fit, then
+  // show me what would close the gap."
+  //
+  // Hard filters are intentionally skipped here. matchesFor() uses them to
+  // prune the top-K rank, but a user who navigated to a profile via search
+  // wants the analysis even when the structural fit is poor.
+  async computeMatch({
+    subjectId,
+    candidateId,
+  }: {
+    subjectId: string;
+    candidateId: string;
+  }): Promise<MatchDTO | null> {
+    if (subjectId === candidateId) return null;
+    const sb = await this.getClient();
+    const { data, error } = await sb
+      .from("profiles")
+      .select("*")
+      .in("id", [subjectId, candidateId]);
+    if (error || !data || data.length < 2) return null;
+    const rows = data as ProfileRow[];
+    const viewer = rows.find((r) => r.id === subjectId);
+    const cand = rows.find((r) => r.id === candidateId);
+    if (!viewer || !cand) return null;
+
+    // Best-effort cosines — the LLM gate doesn't need them, but toMatchDTO
+    // uses the composite to compute the displayed score. If either side is
+    // missing vectors we still return a verdict-driven MatchDTO with score 0;
+    // the gap-closer + factor strip carry the information.
+    const viewerProfile = parseVector(viewer.embedding);
+    const viewerWants = parseVector(viewer.embedding_wants);
+    const candProfile = parseVector(cand.embedding);
+    const candWants = parseVector(cand.embedding_wants);
+    let viewerWantsCand = 0;
+    let candWantsViewer = 0;
+    if (viewerWants && candProfile) {
+      viewerWantsCand = cosineSimilarity(viewerWants, candProfile);
+    }
+    if (candWants && viewerProfile) {
+      candWantsViewer = cosineSimilarity(candWants, viewerProfile);
+    }
+
+    const verdict = await gatePair({
+      sb,
+      subject: {
+        id: viewer.id,
+        kind: viewer.kind,
+        name: viewer.name,
+        embeddingText: viewer.embedding_text ?? "",
+        wantsText: viewer.embedding_wants_text ?? "",
+      },
+      candidate: {
+        id: cand.id,
+        kind: cand.kind,
+        name: cand.name,
+        embeddingText: cand.embedding_text ?? "",
+        wantsText: cand.embedding_wants_text ?? "",
+      },
+    });
+    if (!verdict) return null;
+
+    return this.toMatchDTO(viewer, cand, viewerWantsCand, candWantsViewer, verdict);
+  }
+
   async matchesFor(viewerId: string): Promise<MatchDTO[]> {
     const sb = await this.getClient();
     const { data: viewerRow, error: viewerErr } = await sb
