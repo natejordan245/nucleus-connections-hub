@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 // Theme tuned to nucleusutah.org: clean white surfaces, cool slate neutrals,
-// confident royal-blue accent, all-Inter typography. Token names are kept
+// confident royal-blue accent, all-Bricolage typography. Token names are kept
 // (`orange-*`, `warmgray-*`, `paper`, `sand-*`) so existing markup picks up
 // the new palette without per-file edits — the names are functional, not literal.
 const config: Config = {
@@ -45,8 +45,8 @@ const config: Config = {
         ink: "#0f172a",
       },
       fontFamily: {
-        sans: ['"Inter"', "system-ui", "sans-serif"],
-        serif: ['"Inter"', "system-ui", "sans-serif"],
+        sans: ['"Bricolage Grotesque"', "system-ui", "sans-serif"],
+        serif: ['"Bricolage Grotesque"', "system-ui", "sans-serif"],
         mono: ['"JetBrains Mono"', "ui-monospace", "monospace"],
       },
       letterSpacing: {

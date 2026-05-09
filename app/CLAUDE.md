@@ -50,14 +50,13 @@ Token names are kept from the prior canyon-warm theme (`orange-*`, `warmgray-*`,
 
 ## Typography
 
-Loaded once in `globals.css`. All-Inter, no serif contrast — hierarchy comes
-from weight + size.
+Loaded once in `globals.css`. Main UI font is **Bricolage Grotesque** from
+Google Fonts. Hierarchy comes from weight + size.
 
-- **Inter** — `font-sans` (body default). Weights 400/500/600/700/800.
-- **Inter** — `font-serif` token also resolves to Inter. The `font-serif`
-  utility is retained for backward-compat on existing headlines; new headlines
-  can use `font-sans` directly. Tracking `-0.02em` on H1, default elsewhere.
-  Weights 600/700.
+- **Bricolage Grotesque** — `font-sans` (body default). Primary UI weight is
+  **600** (`font-semibold`).
+- **Bricolage Grotesque** — `font-serif` token also resolves to Bricolage
+  Grotesque for backward-compat on existing headline classes.
 - **JetBrains Mono** — `font-mono`. Reserved for numeric weights, IDs in
   diagnostic surfaces, factor percentages.
 
@@ -75,7 +74,7 @@ Color the eyebrow `text-orange-500` (royal blue) for primary sections,
 - H1 page title: `font-serif text-4xl font-semibold leading-tight text-ink` (or `text-3xl` on auth/utility pages).
 - H2 section: `font-serif text-2xl font-semibold text-ink`.
 - Hero (landing only): `font-serif text-[56px]–[72px] font-semibold leading-[1.04] tracking-[-0.02em]`.
-- Body: `text-sm leading-relaxed text-warmgray-600/700`.
+- Body: `text-sm font-semibold leading-relaxed text-warmgray-600/700`.
 - Eyebrow: `.eyebrow` + a tone color.
 
 ## Layout
