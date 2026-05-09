@@ -183,7 +183,8 @@ function DenseRow({
   const handshakeHref = `/handshake?with=${
     cand.kind === "candidate" ? cand.candidate.id : cand.business.id
   }`;
-  const pct = Math.round(match.score * 100);
+  const pct = match.score * 100;
+  const pctLabel = pct.toFixed(1);
   const tone =
     pct >= 90 ? "text-orange-700" : pct >= 75 ? "text-emerald-700" : "text-warmgray-700";
 
@@ -208,7 +209,7 @@ function DenseRow({
       </td>
       <td className="py-2 align-middle">
         <div className="flex items-center gap-2">
-          <span className={`font-mono text-sm font-bold ${tone}`}>{pct}%</span>
+          <span className={`font-mono text-sm font-bold ${tone}`}>{pctLabel}%</span>
           <div className="hidden h-1 w-12 rounded-full bg-warmgray-100 sm:block">
             <div
               className="h-full rounded-full bg-orange-500"
