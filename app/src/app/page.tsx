@@ -5,7 +5,7 @@ export default function LandingPage() {
     <main className="flex min-h-screen items-center justify-center px-8">
       <div className="grid w-full max-w-3xl grid-cols-1 gap-6 sm:grid-cols-2">
         <LandingCard href="/login">login</LandingCard>
-        <LandingCard href="/demo/cold-open">demo</LandingCard>
+        <LandingCard href="/demo/open">demo</LandingCard>
       </div>
     </main>
   );
