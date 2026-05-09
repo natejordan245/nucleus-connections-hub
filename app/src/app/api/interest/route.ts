@@ -88,7 +88,6 @@ export async function POST(req: Request) {
       talentId: candidate.id,
       startupId: business.id,
       reason: `Mutual interest between ${candidate.name} and ${business.name}.`,
-      status: "pushed",
     });
   } else if (body.state === "interested" && candidate && business) {
     if (side === "candidate") {

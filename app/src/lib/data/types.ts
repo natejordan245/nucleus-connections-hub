@@ -327,11 +327,53 @@ export type ResourceDTO = {
   createdAt: string;
 };
 
+/**
+ * Captured details of a single API call made during an Affinity push.
+ * Mirrors `AffinityApiCall` in `lib/affinity/types.ts` but redeclared here
+ * so the data layer doesn't depend on the integration module's internals.
+ */
+export type AffinityApiCallLog = {
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  path: string;
+  status: number;
+  durationMs: number;
+  at: string;
+};
+
+export type AffinityPipelineStage =
+  | "intro_queued"
+  | "in_review"
+  | "intro_made"
+  | "closed_won"
+  | "closed_lost";
+
+export type AffinitySyncState = "queued" | "syncing" | "synced" | "failed";
+
 export type AffinityPushDTO = {
   id: string;
   talentId: string;
   startupId: string;
   pushedAt: string;
   reason: string;
+  /** Internal lifecycle: queued → pushed (sent to Affinity), or skipped. */
   status: "queued" | "pushed" | "skipped";
+
+  // ── Affinity-side identifiers (null when the push hasn't synced yet). ──
+  affinityOrganizationId: number | null;
+  affinityPersonId: number | null;
+  affinityListEntryId: number | null;
+  affinityListId: number | null;
+  /** Deep link an operator can click to open the record in Affinity. */
+  affinityUrl: string | null;
+  /** Pipeline-stage dropdown value mirrored from the list entry. */
+  pipelineStage: AffinityPipelineStage | null;
+
+  // ── Sync state for retries / UI affordances. ──
+  syncState: AffinitySyncState;
+  syncError: string | null;
+
+  /** Per-call timeline of the push pipeline, surfaced in the UI. */
+  apiCalls: AffinityApiCallLog[];
+  /** Structured field values written to the list entry, for display. */
+  fieldValues: Array<{ label: string; value: string }>;
 };

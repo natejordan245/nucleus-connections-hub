@@ -82,8 +82,16 @@ export interface IDataStore {
   markAllRead(recipientId: string): Promise<void>;
 
   // affinity push log (mutual matches → CRM)
+  // The store internally runs the Affinity integration pipeline and persists
+  // the resulting record (organization id, list entry id, sync state, etc.).
+  // Callers only provide the semantic identifiers.
   listAffinityPushes(): Promise<AffinityPushDTO[]>;
-  recordAffinityPush(p: Omit<AffinityPushDTO, "id" | "pushedAt">): Promise<AffinityPushDTO>;
+  recordAffinityPush(p: {
+    talentId: string;
+    startupId: string;
+    reason: string;
+    matchScore?: number;
+  }): Promise<AffinityPushDTO>;
 
   // direct messaging — only enabled between mutually-matched parties
   listMessages(args: { viewerId: string; otherId: string }): Promise<MessageDTO[]>;

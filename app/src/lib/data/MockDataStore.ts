@@ -298,12 +298,66 @@ export class MockDataStore implements IDataStore {
     return [...pushes].sort((a, b) => (a.pushedAt < b.pushedAt ? 1 : -1));
   }
 
-  async recordAffinityPush(p: Omit<AffinityPushDTO, "id" | "pushedAt">) {
-    const created: AffinityPushDTO = {
-      ...p,
+  async recordAffinityPush(p: {
+    talentId: string;
+    startupId: string;
+    reason: string;
+    matchScore?: number;
+  }) {
+    const candidate = candidateMap.get(p.talentId);
+    const business = businessMap.get(p.startupId);
+
+    let pushPayload: Awaited<ReturnType<typeof import("@/lib/affinity").pushMutualMatch>> | null = null;
+    if (candidate && business) {
+      const { pushMutualMatch } = await import("@/lib/affinity");
+      pushPayload = await pushMutualMatch({
+        talent: candidate,
+        startup: business,
+        matchScore: p.matchScore,
+        reason: p.reason,
+      });
+    }
+
+    const base = {
       id: `push-${nextPushId++}`,
+      talentId: p.talentId,
+      startupId: p.startupId,
       pushedAt: new Date().toISOString(),
+      reason: p.reason,
     };
+
+    let created: AffinityPushDTO;
+    if (pushPayload?.ok) {
+      created = {
+        ...base,
+        status: "pushed",
+        affinityOrganizationId: pushPayload.payload.organizationId,
+        affinityPersonId: pushPayload.payload.personId,
+        affinityListEntryId: pushPayload.payload.listEntryId,
+        affinityListId: pushPayload.payload.listId,
+        affinityUrl: pushPayload.payload.affinityUrl,
+        pipelineStage: pushPayload.payload.pipelineStage,
+        syncState: "synced",
+        syncError: null,
+        apiCalls: pushPayload.payload.apiCalls,
+        fieldValues: pushPayload.payload.fieldValues,
+      };
+    } else {
+      created = {
+        ...base,
+        status: "queued",
+        affinityOrganizationId: null,
+        affinityPersonId: null,
+        affinityListEntryId: null,
+        affinityListId: null,
+        affinityUrl: null,
+        pipelineStage: null,
+        syncState: "failed",
+        syncError: pushPayload?.ok === false ? pushPayload.error : "Talent or startup not found.",
+        apiCalls: pushPayload?.ok === false ? pushPayload.apiCalls : [],
+        fieldValues: [],
+      };
+    }
     pushes.unshift(created);
     return created;
   }
