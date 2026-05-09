@@ -1,16 +1,16 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Check } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { ExplainabilityPanel } from "@/components/ExplainabilityPanel";
 import { GapCloser } from "@/components/GapCloser";
+import { InterestActions } from "@/components/InterestActions";
+import { MatchScorePill } from "@/components/MatchScorePill";
 import { Pill } from "@/components/Pill";
 import { SocialLinks } from "@/components/SocialLinks";
 import { getDataStore } from "@/lib/data";
 import { FUNDING_STATUS_LABELS, NEED_LABELS, ORIGIN_LABELS, SECTOR_LABELS, STAGE_LABELS } from "@/lib/data/enum-labels";
 import { maybeViewer } from "@/lib/viewer";
-import { requestIntro } from "../../actions";
 
 export default async function BusinessProfilePage({ params }: { params: { id: string } }) {
   const { viewerId } = await maybeViewer();
@@ -31,6 +31,7 @@ export default async function BusinessProfilePage({ params }: { params: { id: st
     ? await store.getInterest({ candidateId: viewerCandidate.id, businessId: business.id })
     : null;
   const alreadyRequested = interest?.talentState === "interested";
+  const alreadyPassed = interest?.talentState === "pass";
 
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-8">
@@ -69,33 +70,18 @@ export default async function BusinessProfilePage({ params }: { params: { id: st
             Edit profile
           </Link>
         ) : (
-          viewerCandidate && (
-            <form action={requestIntro}>
-              <input type="hidden" name="candidateId" value={viewerCandidate.id} />
-              <input type="hidden" name="businessId" value={business.id} />
-              <input type="hidden" name="side" value="candidate" />
-              <input type="hidden" name="state" value="interested" />
-              <button
-                type="submit"
-                disabled={alreadyRequested}
-                className="group inline-flex h-7 items-center gap-1.5 rounded-md bg-ink px-2.5 text-[11px] font-semibold text-white transition hover:bg-warmgray-800 disabled:cursor-default disabled:opacity-80 disabled:hover:bg-ink"
-              >
-                {alreadyRequested ? (
-                  <>
-                    <Check className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-                    Requested
-                  </>
-                ) : (
-                  <>
-                    Request intro
-                    <span aria-hidden className="transition group-hover:translate-x-0.5">
-                      →
-                    </span>
-                  </>
-                )}
-              </button>
-            </form>
-          )
+          <div className="flex flex-col items-end gap-2">
+            {match && <MatchScorePill score={match.score} />}
+            {viewerCandidate && (
+              <InterestActions
+                candidateId={viewerCandidate.id}
+                businessId={business.id}
+                side="candidate"
+                alreadyInterested={alreadyRequested}
+                alreadyPassed={alreadyPassed}
+              />
+            )}
+          </div>
         )}
       </header>
 

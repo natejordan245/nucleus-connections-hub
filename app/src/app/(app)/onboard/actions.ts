@@ -270,13 +270,11 @@ export async function createCandidate(formData: FormData) {
 // ── Business ─────────────────────────────────────────────────────────────────
 
 export async function createBusiness(formData: FormData) {
-  console.log("[createBusiness] invoked");
   const { id, name } = await resolveIdentity({
     prefix: "sup",
     formData,
     errorRedirectPath: "/onboard/business",
   });
-  console.log("[createBusiness] identity resolved", { id, name });
   // Business `name` form field overrides the auth-derived name (e.g. "Bramble AI"
   // != founder name). Required.
   const formName = String(formData.get("name") ?? "").trim() || name;
@@ -300,15 +298,7 @@ export async function createBusiness(formData: FormData) {
   const websiteUrl = String(formData.get("websiteUrl") ?? "").trim() || undefined;
   const logoUrl = String(formData.get("logoUrl") ?? "").trim() || undefined;
 
-  console.log("[createBusiness] form fields", {
-    formName,
-    descriptionLen: description.length,
-    sector,
-    fundingStage,
-    needsCount: needs.length,
-  });
   if (!formName || !description) {
-    console.warn("[createBusiness] missing required, redirecting back");
     redirect("/onboard/business?error=missing_required");
   }
 
@@ -333,7 +323,6 @@ export async function createBusiness(formData: FormData) {
   const store = getDataStore();
   try {
     await store.putBusiness(created);
-    console.log("[createBusiness] putBusiness ok, redirecting to /dashboard");
   } catch (err) {
     console.error("[createBusiness] putBusiness failed:", err);
     throw err;

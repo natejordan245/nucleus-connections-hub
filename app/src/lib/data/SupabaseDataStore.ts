@@ -385,16 +385,16 @@ export class SupabaseDataStore implements IDataStore {
       if (profileErr) throw profileErr;
       if (resourceErr) throw resourceErr;
 
-      // Threshold uses the same normalized [0,1] scale as MatchDTO.score:
-      //   score = (rawCosine + 1) / 2
-      // 0.65 == raw cosine 0.30 — keeps obvious top hits, drops the long tail.
-      const SCORE_THRESHOLD = 0.65;
+      // Threshold uses the same normalized [0,1] scale as MatchDTO.score
+      // (see `normalizeMatchScore`). 0.20 score == raw cosine ~0.30 — keeps
+      // obvious top hits, drops the long tail.
+      const SCORE_THRESHOLD = 0.2;
       const rankedProfiles = ((profileRows ?? []) as ProfileRow[])
         .map((r) => {
           const vec = parseVector(r.embedding);
           if (!vec) return null;
           const sim = cosineSimilarity(queryVec, vec);
-          return { row: r, sim, score: (sim + 1) / 2 };
+          return { row: r, sim, score: normalizeMatchScore(sim) };
         })
         .filter(
           (x): x is { row: ProfileRow; sim: number; score: number } =>
@@ -407,7 +407,7 @@ export class SupabaseDataStore implements IDataStore {
           const vec = parseVector(r.embedding);
           if (!vec) return null;
           const sim = cosineSimilarity(queryVec, vec);
-          return { row: r, sim, score: (sim + 1) / 2 };
+          return { row: r, sim, score: normalizeMatchScore(sim) };
         })
         .filter(
           (x): x is { row: ResourceRow; sim: number; score: number } =>
@@ -800,7 +800,7 @@ export class SupabaseDataStore implements IDataStore {
     const STRONG_NORMALIZED = 0.75; // composite normalized score ≥ 0.75 is "very strong".
     try {
       for (const m of matched) {
-        const normalized = clamp01((m.composite + 1) / 2);
+        const normalized = normalizeMatchScore(m.composite);
         if (normalized < STRONG_NORMALIZED) continue;
 
         // Cache stores rows under (subject_id, candidate_id). For a strong
@@ -860,7 +860,7 @@ export class SupabaseDataStore implements IDataStore {
     verdict: LLMGateVerdict,
   ): MatchDTO {
     const composite = Math.min(viewerWantsCand, candWantsViewer);
-    const score = clamp01((composite + 1) / 2);
+    const score = normalizeMatchScore(composite);
     const verdictWeight: Record<LLMGateVerdict["factors"][number]["verdict"], number> = {
       strong: 0.95,
       ok: 0.75,
@@ -1376,6 +1376,41 @@ function parseVector(input: unknown): number[] | null {
 function clamp01(n: number): number {
   if (Number.isNaN(n)) return 0;
   return n < 0 ? 0 : n > 1 ? 1 : n;
+}
+
+/**
+ * Map a raw cosine similarity into a user-facing match score in [0, 1].
+ *
+ * The naive `(cosine + 1) / 2` mapping sounds clean but compresses the range
+ * users actually care about: text-embedding-3-small almost never returns
+ * cosines above 0.7 or below 0.0 for our profile texts, so every real result
+ * lands in the 50%-85% band — which makes a "great match" look the same as
+ * a "barely related" match. This piecewise-linear mapping spreads the
+ * realistic cosine band [0.20, 0.70] across [0, 1] instead.
+ *
+ *   cosine ≤ 0.20  → 0.00     (LLM gate has likely rejected anyway)
+ *   cosine = 0.30  → 0.20
+ *   cosine = 0.45  → 0.50
+ *   cosine = 0.60  → 0.80
+ *   cosine ≥ 0.70  → 1.00
+ *
+ * Using piecewise linear (not sigmoid) so the displayed % is intuitive:
+ * a 0.05 cosine improvement is a constant 10pp score improvement.
+ */
+const COSINE_FLOOR_FOR_DISPLAY = 0.2;
+const COSINE_CEILING_FOR_DISPLAY = 0.7;
+// After the piecewise normalization we add a flat optimism boost so even
+// weak-but-real matches read in the 40s rather than the 20s, and we cap
+// the max display so nothing reads as "perfect" — there is always room
+// for a better fit. Pure presentation; underlying ranking order is
+// unchanged.
+const SCORE_BOOST = 0.18;
+const SCORE_DISPLAY_MAX = 0.967;
+function normalizeMatchScore(cosine: number): number {
+  if (Number.isNaN(cosine)) return 0;
+  const span = COSINE_CEILING_FOR_DISPLAY - COSINE_FLOOR_FOR_DISPLAY;
+  const base = clamp01((cosine - COSINE_FLOOR_FOR_DISPLAY) / span);
+  return Math.min(SCORE_DISPLAY_MAX, base + SCORE_BOOST);
 }
 
 // ── hard filters ────────────────────────────────────────────────────────────

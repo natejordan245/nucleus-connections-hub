@@ -5,10 +5,8 @@ import { SocialLinks } from "./SocialLinks";
 import type { CandidateDTO } from "@/lib/data/types";
 import {
   AVAILABILITY_LABELS,
-  COMPENSATION_LABELS,
   NEED_LABELS,
   SECTOR_LABELS,
-  STAGE_LABELS,
   TALENT_CATEGORY_LABELS,
 } from "@/lib/data/enum-labels";
 
@@ -75,10 +73,6 @@ export function CandidateProfileCard({
               ))}
             </div>
           </Card>
-        </section>
-
-        <aside className="space-y-4">
-          {aside}
           <Card title="Domains">
             <div className="flex flex-wrap gap-2">
               {candidate.domains.map((d) => (
@@ -88,23 +82,9 @@ export function CandidateProfileCard({
               ))}
             </div>
           </Card>
-          <Card title="Compensation fit">
-            <dl className="space-y-1.5 font-mono text-[11px]">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-warmgray-500">comp.preference</span>
-                <span className="font-semibold text-ink">
-                  {candidate.compensation.map((c) => COMPENSATION_LABELS[c]).join(", ")}
-                </span>
-              </div>
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-warmgray-500">stage.preference</span>
-                <span className="font-semibold text-ink">
-                  {candidate.stagePrefs.map((s) => STAGE_LABELS[s]).join(", ")}
-                </span>
-              </div>
-            </dl>
-          </Card>
-        </aside>
+        </section>
+
+        <aside className="space-y-4">{aside}</aside>
       </div>
     </>
   );

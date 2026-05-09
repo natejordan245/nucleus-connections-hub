@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { Loader2, Sparkles } from "lucide-react";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { ChipGroup } from "@/components/ChipGroup";
@@ -535,19 +536,37 @@ export function TalentOnboardForm({
         )}
 
         <div className="pt-2">
-          <button
-            type="submit"
-            className="inline-flex h-10 w-full items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(255,114,39,0.55)] transition hover:bg-orange-600"
-          >
-            {isEdit
-              ? "Save changes →"
-              : signedIn
-                ? "Save and see matches →"
-                : "Create account & see matches →"}
-          </button>
+          <TalentSubmitButton isEdit={isEdit} signedIn={signedIn} />
         </div>
       </form>
     </main>
+  );
+}
+
+function TalentSubmitButton({ isEdit, signedIn }: { isEdit: boolean; signedIn: boolean }) {
+  const { pending } = useFormStatus();
+  const idleLabel = isEdit
+    ? "Save changes →"
+    : signedIn
+      ? "Save and see matches →"
+      : "Create account & see matches →";
+  const pendingLabel = isEdit ? "Saving…" : "Saving profile…";
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      aria-busy={pending}
+      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-orange-500 px-5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-80"
+    >
+      {pending ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} aria-hidden />
+          {pendingLabel}
+        </>
+      ) : (
+        idleLabel
+      )}
+    </button>
   );
 }
 

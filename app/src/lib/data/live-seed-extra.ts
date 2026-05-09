@@ -402,6 +402,98 @@ function pick<T>(arr: T[], i: number): T {
   return arr[i % arr.length];
 }
 
+// ── Per-candidate variation pools ─────────────────────────────────────────
+//
+// Without these, every candidate that lands on the same archetype + bioPool
+// + lookingForPool slot gets a byte-identical embedding_wants_text → the
+// `embedding_wants` vector is identical → cos(cand.wants, viewer.profile)
+// is the same number for every member of that group, which collapses the
+// match-score distribution to a single value (the original 77.6% bug).
+//
+// We append a per-candidate "specifics" sentence to lookingFor and a
+// "flavor" tail to bio. Each draws from a 7-15 entry pool with a different
+// idx multiplier, so the pools desynchronize and give every candidate a
+// distinct cosine fingerprint.
+
+const COMP_HOOKS = [
+  "cash-heavy with a real equity component",
+  "equity-heavy if the founders are credible",
+  "balanced cash and equity with a 4-year vest",
+  "low-cash, high-equity if the wedge is real",
+  "market-rate cash with a meaningful grant",
+  "below-market cash + double-digit founding equity",
+  "deferred cash + early-employee option grant",
+  "advisor-style equity-only with a 12-month cliff",
+];
+
+const TIMELINE_HOOKS = [
+  "Available immediately.",
+  "Looking to start in the next 60 days.",
+  "Open to a Q3 start once I wrap a current engagement.",
+  "Graduating in May; available full-time after.",
+  "Starting conversations now for a January start.",
+  "Could start in two weeks for the right team.",
+  "Have a 30-day notice period at my current shop.",
+  "Open to fractional now → full-time after diligence.",
+];
+
+const RISK_HOOKS = [
+  "Comfortable with pre-revenue chaos.",
+  "Want a working wedge before joining.",
+  "Need to see real customer signal — no pure science projects.",
+  "Open to deep-tech / regulated paths even when timelines are long.",
+  "Prefer companies past first-customer-paid milestone.",
+  "Fine being employee #1 if the founders have shipped before.",
+  "Avoiding bridge rounds and zombie companies.",
+];
+
+const TONE_HOOKS = [
+  "Done with kingmaker politics; want builders.",
+  "Bored of optimizing for OKRs nobody believes in.",
+  "Looking for a team that ships on Fridays.",
+  "Want product, not deck-driven storytelling.",
+  "Burned by founders who can't make a decision.",
+  "Tired of being the only one who reads the dashboards.",
+  "Want fewer meetings, more pull requests.",
+  "Done renting attention from a brand I don't own.",
+];
+
+const TEAM_SIZE_HOOKS = [
+  "Team of 3-8 ideal.",
+  "Comfortable being employee #1.",
+  "Open to teams up to ~15.",
+  "Prefer a 5-12 person team where I see every face.",
+  "Want to be the second hire in my function.",
+  "Happy to build the function from zero.",
+];
+
+function deterministic<T>(arr: readonly T[], seed: number): T {
+  // Spread small idx values across the pool by mixing with a prime.
+  const i = Math.abs(Math.floor(seed)) % arr.length;
+  return arr[i];
+}
+
+function buildLookingForSpecifics(
+  idx: number,
+  arch: Archetype,
+  location: string,
+): string {
+  const stage = deterministic<string>(arch.stagePrefs, idx * 3 + 1);
+  const domain = deterministic<string>(arch.domains, idx * 5 + 7);
+  const compHook = deterministic(COMP_HOOKS, idx * 7 + 11);
+  const timeline = deterministic(TIMELINE_HOOKS, idx * 11 + 13);
+  const risk = deterministic(RISK_HOOKS, idx * 13 + 17);
+  const teamSize = deterministic(TEAM_SIZE_HOOKS, idx * 19 + 23);
+  const city = location.split(",")[0]?.trim() ?? location;
+  return `Specifically a ${stage} ${domain} team based in ${city} or hiring there. ${teamSize} ${timeline} ${risk} Comp shape: ${compHook}.`;
+}
+
+function buildBioFlavor(idx: number, location: string): string {
+  const tone = deterministic(TONE_HOOKS, idx * 17 + 5);
+  const city = location.split(",")[0]?.trim() ?? location;
+  return ` Based in ${city}. ${tone}`;
+}
+
 // Expanded skill catalog used for idx >= 100. Mixes broad generalist stacks
 // with niche/specialist bundles so the second batch of personas reads as a
 // realistically diverse talent pool — some T-shaped, some hyper-specific.
@@ -533,7 +625,7 @@ function buildOne(idx: number): TalentDTO {
 
   const headline = pick(arch.headlinePool, idx);
   let bio = pick(arch.bioPool, idx);
-  const lookingFor = pick(arch.lookingForPool, idx);
+  let lookingFor = pick(arch.lookingForPool, idx);
   const location = pick(LOCATIONS, idx);
   const utahOrgIds = pick(ORG_BUNDLES, idx);
 
@@ -552,6 +644,14 @@ function buildOne(idx: number): TalentDTO {
       bio = `${bio} Skills: ${merged.join(", ")}.`;
     }
   }
+
+  // Per-candidate variation. Without this every candidate that maps onto the
+  // same arch + bioPool slot ends up with byte-identical lookingFor text →
+  // identical wants vectors → identical match scores. The deterministic
+  // helpers below yield a unique sentence per `idx` while still respecting
+  // the archetype's allowed stages / domains / comp.
+  bio = `${bio}${buildBioFlavor(idx, location)}`;
+  lookingFor = `${lookingFor} ${buildLookingForSpecifics(idx, arch, location)}`;
 
   // ~40% of the new batch (idx >= 100) ship with no profile photo to mimic
   // realistic onboarding gaps. Existing 100 keep their pravatar URL so the
@@ -920,12 +1020,28 @@ function buildTierC(idx: number): TalentDTO {
   // the bidirectional cosine).
   const headline = `${role.rolePrefix} · ${target.oneLiner}`;
 
-  // Bio packs the keywords, the role context, and the full skill stack.
+  const location = pick(LOCATIONS, i * 3);
+  const utahOrgIds = pick(ORG_BUNDLES, i);
+
+  // Per-Tier-C variation. Two candidates can land on the same (target, role)
+  // pair (100 candidates / 108 combinations leaves dupes), so we sprinkle
+  // the same `idx`-driven specifics here that Tier A/B uses. Different idx
+  // multipliers from buildOne so the pools don't lock-step with the lower
+  // tier.
+  const compHook = deterministic(COMP_HOOKS, idx * 23 + 5);
+  const timeline = deterministic(TIMELINE_HOOKS, idx * 29 + 7);
+  const risk = deterministic(RISK_HOOKS, idx * 31 + 11);
+  const tone = deterministic(TONE_HOOKS, idx * 37 + 13);
+  const teamSize = deterministic(TEAM_SIZE_HOOKS, idx * 41 + 17);
+  const city = location.split(",")[0]?.trim() ?? location;
+  const distinctiveSkill = skills[idx % skills.length];
+
   const bio = [
     role.bioContext,
     `Want to ship ${target.oneLiner.toLowerCase()} with a small founding team in Utah.`,
     `Domain context: ${target.keywords.join(", ")}.`,
     `Skills: ${skills.join(", ")}.`,
+    `Based in ${city}. Strongest in ${distinctiveSkill}. ${tone}`,
   ].join(" ");
 
   // lookingFor is the highest-leverage field — it dominates `wantsText`,
@@ -934,6 +1050,7 @@ function buildTierC(idx: number): TalentDTO {
   const lookingFor = [
     `${role.rolePrefix} role at a ${target.stagePrefs[target.stagePrefs.length - 1]} ${target.sector} startup building ${target.oneLiner.toLowerCase()}.`,
     `Especially interested in: ${target.keywords.join(", ")}.`,
+    `${teamSize} ${timeline} ${risk} Comp shape: ${compHook}.`,
   ].join(" ");
 
   // ~50% of Tier C ships without a profile photo to reflect realistic
@@ -941,9 +1058,6 @@ function buildTierC(idx: number): TalentDTO {
   const omitPhoto = (i * 23 + 7) % 10 < 5;
   const photoIdx = ((i * 19) % 70) + 1;
   const photoUrl = omitPhoto ? undefined : `https://i.pravatar.cc/240?img=${photoIdx}`;
-
-  const location = pick(LOCATIONS, i * 3);
-  const utahOrgIds = pick(ORG_BUNDLES, i);
 
   return {
     id,

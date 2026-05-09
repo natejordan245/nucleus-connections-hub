@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Search, ChevronDown, Filter } from "lucide-react";
+import { Search } from "lucide-react";
 import { AnimatedSearchInput } from "@/components/AnimatedSearchInput";
 import { Avatar } from "@/components/Avatar";
 import { MatchCard } from "@/components/MatchCard";
+import { MatchToolbar, type SortKey } from "@/components/MatchToolbar";
 import { getDataStore } from "@/lib/data";
 import type {
   BusinessDTO,
@@ -13,7 +14,17 @@ import type {
 } from "@/lib/data/types";
 import { requireViewer } from "@/lib/viewer";
 
-export default async function DashboardPage() {
+type DashboardSearchParams = {
+  sort?: string;
+  minScore?: string;
+  location?: string;
+};
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: DashboardSearchParams;
+}) {
   const { viewerId } = await requireViewer();
   const store = getDataStore();
 
@@ -41,6 +52,37 @@ export default async function DashboardPage() {
     allCandidates,
     allBusinesses,
   });
+
+  const sortKey = parseSortKey(searchParams?.sort);
+  const minScore = parseMinScore(searchParams?.minScore);
+  const locationFilter = (searchParams?.location ?? "").trim().toLowerCase();
+
+  const resolvedRows = matches
+    .map((m) => {
+      const cand = resolveCandidate(m, allCandidates, allBusinesses);
+      return cand ? { match: m, cand } : null;
+    })
+    .filter((row): row is { match: MatchDTO; cand: ResolvedCand } => row !== null);
+
+  const filteredRows = resolvedRows.filter((row) => {
+    if (minScore !== null && row.match.score * 100 < minScore) return false;
+    if (locationFilter) {
+      const loc =
+        row.cand.kind === "candidate"
+          ? row.cand.candidate.location
+          : row.cand.business.location;
+      if (!loc.toLowerCase().includes(locationFilter)) return false;
+    }
+    return true;
+  });
+
+  const sortedRows = [...filteredRows].sort((a, b) => {
+    if (sortKey === "name") {
+      return rowName(a.cand).localeCompare(rowName(b.cand));
+    }
+    if (sortKey === "score-asc") return a.match.score - b.match.score;
+    return b.match.score - a.match.score;
+  });
   return (
     <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-7xl flex-col px-6 py-8">
       {/* Search + filter row */}
@@ -65,18 +107,7 @@ export default async function DashboardPage() {
           </button>
         </form>
         <span className="h-5 w-px bg-warmgray-200" />
-        <button
-          type="button"
-          className="inline-flex items-center gap-1 rounded-md border border-warmgray-200 px-2.5 py-1.5 text-xs font-medium text-warmgray-700 hover:border-warmgray-300"
-        >
-          <Filter className="h-3.5 w-3.5" strokeWidth={2} aria-hidden /> Filters
-        </button>
-        <button
-          type="button"
-          className="inline-flex items-center gap-1 rounded-md border border-warmgray-200 px-2.5 py-1.5 text-xs font-medium text-warmgray-700 hover:border-warmgray-300"
-        >
-          Sort: Score <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-        </button>
+        <MatchToolbar />
       </div>
 
       {/* Two-col split */}
@@ -90,6 +121,19 @@ export default async function DashboardPage() {
               </div>
               <EmptyState viewerKind={viewerKind} />
             </section>
+          ) : sortedRows.length === 0 ? (
+            <section className="flex flex-col rounded-lg border border-warmgray-200 bg-white">
+              <div className="flex items-center justify-between border-b border-warmgray-200 px-4 py-2.5">
+                <h2 className="text-sm font-semibold text-ink">
+                  {copy.matchesHeading}
+                  <span className="ml-2 font-mono text-xs text-warmgray-500">
+                    0 / {resolvedRows.length}
+                  </span>
+                </h2>
+                <span className="font-mono text-xs text-warmgray-500">↻ refresh</span>
+              </div>
+              <NoMatchingFilters />
+            </section>
           ) : (
             <>
               {/* Top matches as full cards — same component slide 3 renders. */}
@@ -98,28 +142,28 @@ export default async function DashboardPage() {
                   <h2 className="text-sm font-semibold text-ink">
                     {copy.matchesHeading}
                     <span className="ml-2 font-mono text-xs text-warmgray-500">
-                      {matches.length}
+                      {sortedRows.length === resolvedRows.length
+                        ? sortedRows.length
+                        : `${sortedRows.length} / ${resolvedRows.length}`}
                     </span>
                   </h2>
                   <span className="font-mono text-xs text-warmgray-500">↻ refresh</span>
                 </div>
                 <div className="space-y-4">
-                  {matches.slice(0, 3).map((m) => {
-                    const cand = resolveCandidate(m, allCandidates, allBusinesses);
-                    if (!cand) return null;
-                    return <MatchCard key={m.id} match={m} candidate={cand} />;
-                  })}
+                  {sortedRows.slice(0, 3).map(({ match, cand }) => (
+                    <MatchCard key={match.id} match={match} candidate={cand} />
+                  ))}
                 </div>
               </section>
 
               {/* Dense leaderboard for everything past the top 3. */}
-              {matches.length > 3 && (
+              {sortedRows.length > 3 && (
                 <section className="flex flex-col rounded-lg border border-warmgray-200 bg-white">
                   <div className="flex items-center justify-between border-b border-warmgray-200 px-4 py-2.5">
                     <h2 className="text-sm font-semibold text-ink">
                       More matches
                       <span className="ml-2 font-mono text-xs text-warmgray-500">
-                        {matches.length - 3}
+                        {sortedRows.length - 3}
                       </span>
                     </h2>
                   </div>
@@ -134,11 +178,9 @@ export default async function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-warmgray-100">
-                      {matches.slice(3).map((m, i) => {
-                        const cand = resolveCandidate(m, allCandidates, allBusinesses);
-                        if (!cand) return null;
-                        return <DenseRow key={m.id} idx={i + 3} match={m} cand={cand} />;
-                      })}
+                      {sortedRows.slice(3).map(({ match, cand }, i) => (
+                        <DenseRow key={match.id} idx={i + 3} match={match} cand={cand} />
+                      ))}
                     </tbody>
                   </table>
                 </section>
@@ -188,6 +230,31 @@ export default async function DashboardPage() {
 type ResolvedCand =
   | { kind: "candidate"; candidate: CandidateDTO }
   | { kind: "business"; business: BusinessDTO };
+
+function parseSortKey(raw: string | undefined): SortKey {
+  if (raw === "name" || raw === "score-asc") return raw;
+  return "score-desc";
+}
+
+function parseMinScore(raw: string | undefined): number | null {
+  if (!raw) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return n;
+}
+
+function rowName(cand: ResolvedCand): string {
+  return cand.kind === "candidate" ? cand.candidate.name : cand.business.name;
+}
+
+function NoMatchingFilters() {
+  return (
+    <div className="px-6 py-12 text-center">
+      <p className="text-sm font-semibold text-ink">No matches under those filters.</p>
+      <p className="mt-1 text-xs text-warmgray-500">Loosen score or location to see more.</p>
+    </div>
+  );
+}
 
 function DenseRow({
   idx,

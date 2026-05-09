@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import {
   AlertCircle,
@@ -543,21 +544,7 @@ export function BusinessOnboardForm({
             <p className="text-sm text-warmgray-500">
               You can edit any of this later from your profile.
             </p>
-            <button
-              type="submit"
-              className="group inline-flex h-11 items-center justify-center gap-2 rounded-full bg-orange-500 px-6 text-sm font-semibold text-white shadow-[0_10px_30px_-12px_rgba(37,99,235,0.6)] transition hover:bg-orange-600 hover:shadow-[0_12px_36px_-10px_rgba(37,99,235,0.7)]"
-            >
-              {isEdit
-                ? "Save changes"
-                : signedIn
-                  ? "Save and see matches"
-                  : "Create account & see matches"}
-              <ArrowRight
-                className="h-4 w-4 transition group-hover:translate-x-0.5"
-                strokeWidth={1.75}
-                aria-hidden
-              />
-            </button>
+            <SubmitButton isEdit={isEdit} signedIn={signedIn} />
           </div>
         </form>
 
@@ -620,6 +607,40 @@ export function BusinessOnboardForm({
  * `recentlyScrolled` debounces so we only react to the first invalid event
  * per submit attempt (one submit can fire `invalid` on every empty field).
  */
+function SubmitButton({ isEdit, signedIn }: { isEdit: boolean; signedIn: boolean }) {
+  const { pending } = useFormStatus();
+  const idleLabel = isEdit
+    ? "Save changes"
+    : signedIn
+      ? "Save and see matches"
+      : "Create account & see matches";
+  const pendingLabel = isEdit ? "Saving…" : "Saving profile…";
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      aria-busy={pending}
+      className="group inline-flex h-11 items-center justify-center gap-2 rounded-full bg-orange-500 px-6 text-sm font-semibold text-white shadow-[0_10px_30px_-12px_rgba(37,99,235,0.6)] transition hover:bg-orange-600 hover:shadow-[0_12px_36px_-10px_rgba(37,99,235,0.7)] disabled:cursor-not-allowed disabled:opacity-80"
+    >
+      {pending ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} aria-hidden />
+          {pendingLabel}
+        </>
+      ) : (
+        <>
+          {idleLabel}
+          <ArrowRight
+            className="h-4 w-4 transition group-hover:translate-x-0.5"
+            strokeWidth={1.75}
+            aria-hidden
+          />
+        </>
+      )}
+    </button>
+  );
+}
+
 let recentlyScrolled = false;
 function scrollToInvalid(e: React.FormEvent<HTMLFormElement>) {
   const target = e.target as HTMLElement | null;
