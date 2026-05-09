@@ -28,7 +28,7 @@ export default function HandoffPage() {
       >
         <button
           type="submit"
-          className="group inline-flex h-12 items-center gap-2 rounded-full bg-orange-500 px-7 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(37,99,235,0.7)] transition hover:bg-orange-600 hover:shadow-[0_10px_30px_-8px_rgba(37,99,235,0.85)]"
+          className="group inline-flex h-12 items-center gap-2 rounded-full bg-orange-500 px-7 text-sm font-semibold text-white transition hover:bg-orange-600"
         >
           Open the product
           <ArrowRight
