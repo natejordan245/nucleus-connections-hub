@@ -8,6 +8,7 @@ export default async function OnboardCandidatePage({
   searchParams?: { error?: string };
 }) {
   const viewer = await getViewer();
+  const signedIn = viewer.kind !== "anon";
   const prefilledName =
     viewer.kind === "demo"
       ? viewer.persona.name
@@ -26,6 +27,7 @@ export default async function OnboardCandidatePage({
       createTalentAction={createCandidate}
       prefilledName={prefilledName ?? undefined}
       prefilledEmail={prefilledEmail ?? undefined}
+      signedIn={signedIn}
     />
   );
 }

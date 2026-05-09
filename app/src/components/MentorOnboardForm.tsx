@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { ChipGroup } from "@/components/ChipGroup";
 import { Field, Input, Textarea } from "@/components/FormField";
+import { OnboardAccountFields, decodeOnboardError } from "@/components/OnboardAccountFields";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import {
   COMPENSATION_LABELS,
@@ -25,9 +26,11 @@ type Props = {
   createMentorAction: (formData: FormData) => void | Promise<void>;
   prefilledName?: string;
   prefilledEmail?: string;
+  signedIn?: boolean;
 };
 
 type MentorFormState = {
+  name: string;
   headline: string;
   bio: string;
   areasAdvised: Sector[];
@@ -42,6 +45,7 @@ type MentorFormState = {
 };
 
 const INITIAL: MentorFormState = {
+  name: "",
   headline: "",
   bio: "",
   areasAdvised: [],
@@ -62,10 +66,14 @@ export function MentorOnboardForm({
   error,
   createMentorAction,
   prefilledName,
-  prefilledEmail,
+  prefilledEmail: _prefilledEmail,
+  signedIn = true,
 }: Props) {
   const [paste, setPaste] = useState("");
-  const [form, setForm] = useState<MentorFormState>(INITIAL);
+  const [form, setForm] = useState<MentorFormState>(() => ({
+    ...INITIAL,
+    name: prefilledName ?? "",
+  }));
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractError, setExtractError] = useState<string | null>(null);
   const [extractedFields, setExtractedFields] = useState<string[]>([]);
@@ -198,21 +206,6 @@ export function MentorOnboardForm({
         </p>
       )}
 
-      {(prefilledName || prefilledEmail) && (
-        <div className="mt-6 rounded-2xl border border-warmgray-100 bg-white p-4 text-sm text-warmgray-700 shadow-sm">
-          <span className="eyebrow text-warmgray-400">Onboarding as</span>
-          <p className="mt-1 font-semibold text-ink">
-            {prefilledName || "you"}
-            {prefilledEmail && (
-              <span className="ml-2 font-normal text-warmgray-500">· {prefilledEmail}</span>
-            )}
-          </p>
-          <p className="mt-1 text-xs text-warmgray-500">
-            We pulled these from your account. Change them in settings.
-          </p>
-        </div>
-      )}
-
       <section className="mt-6 rounded-2xl border border-warmgray-100 bg-orange-50/40 p-5 shadow-sm">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-orange-500" strokeWidth={1.75} aria-hidden />
@@ -254,7 +247,19 @@ export function MentorOnboardForm({
         className="mt-6 space-y-6 rounded-2xl border border-warmgray-100 bg-white p-6 shadow-sm"
       >
         <Field id="photoUrl" name="photoUrl" label="Profile photo" hint="Optional.">
-          <PhotoUpload name="photoUrl" label="Upload photo" fallbackName={prefilledName ?? "You"} />
+          <PhotoUpload name="photoUrl" label="Upload photo" fallbackName={form.name || prefilledName || "You"} />
+        </Field>
+
+        <Field id="name" name="name" label="Your name" required>
+          <Input
+            id="name"
+            name="name"
+            required
+            autoComplete="name"
+            placeholder="David Holm"
+            value={form.name}
+            onChange={(e) => setForm((p) => ({ ...p, name: e.currentTarget.value }))}
+          />
         </Field>
 
         <Field id="headline" name="headline" label="Headline" hint="One line — your advisor positioning.">
@@ -379,12 +384,14 @@ export function MentorOnboardForm({
           />
         </Field>
 
+        <OnboardAccountFields signedIn={signedIn} errorMessage={decodeOnboardError(error)} />
+
         <div className="pt-2">
           <button
             type="submit"
             className="inline-flex h-10 w-full items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(255,114,39,0.55)] transition hover:bg-orange-600"
           >
-            Save profile →
+            {signedIn ? "Save profile →" : "Create account & save →"}
           </button>
         </div>
       </form>

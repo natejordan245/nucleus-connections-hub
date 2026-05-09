@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { DEMO_COOKIE, getAppMode } from "@/lib/mode";
 import { getDataStore } from "@/lib/data";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 import {
   AVAILABILITIES,
   COMPENSATIONS,
@@ -125,45 +126,87 @@ function uid(prefix: "tal" | "sup" | "men" | "inv", name: string) {
 }
 
 /**
- * Resolves the viewer's identity for a fresh profile insert. In live mode, the
- * profile id MUST equal `auth.users.id` (the row pk + RLS). In demo mode we
- * synthesize a stable slug.
+ * Resolves the viewer's identity for a fresh profile insert.
+ *
+ * - Demo viewer: use the persona id.
+ * - Live viewer: use the auth user id; allow the form to override `name`.
+ * - Anon + live mode: read email/password/name from the form, sign up with
+ *   Supabase, and use the new auth user id. (The SSR client sets cookies so
+ *   the user is signed in by the time the profile insert runs.)
+ * - Anon + demo mode: synthesize a slug-based id and set the demo cookie.
+ *
+ * `formName` is the name typed into the onboarding form; takes precedence
+ * over auth metadata when present. `errorRedirectPath` is where to send the
+ * user back if signup fails (typically `/onboard/<kind>`).
  */
-async function resolveIdentity(prefix: "tal" | "sup" | "men" | "inv"): Promise<{
-  id: string;
-  name: string;
-  email: string;
-}> {
+async function resolveIdentity(args: {
+  prefix: "tal" | "sup" | "men" | "inv";
+  formData: FormData;
+  errorRedirectPath: string;
+}): Promise<{ id: string; name: string; email: string }> {
+  const { prefix, formData, errorRedirectPath } = args;
+  const formName = String(formData.get("name") ?? "").trim();
+
   const viewer = await getViewer();
+
   if (viewer.kind === "demo") {
     return {
       id: viewer.persona.id,
-      name: viewer.persona.name,
+      name: formName || viewer.persona.name,
       email: viewer.persona.email,
     };
   }
+
   if (viewer.kind === "live") {
     const fallbackName = viewer.email?.split("@")[0] ?? "You";
     return {
       id: viewer.userId,
-      name: viewer.name ?? fallbackName,
+      name: formName || viewer.name || fallbackName,
       email: viewer.email ?? "",
     };
   }
-  // anon — but if app is in demo mode and there's no persona cookie set, fall
-  // back to a synthesized id so the demo flow still completes for first-time
-  // visitors who skipped /login.
+
+  // viewer.kind === "anon" from here.
+
   if (getAppMode() === "demo") {
-    const id = uid(prefix, "demo-guest");
-    return { id, name: "Demo Guest", email: `${id}@demo.nucleus` };
+    // Demo mode: no real auth. Synthesize a slug-based id, set the demo
+    // cookie, and let MockDataStore hold the profile.
+    const name = formName || "Demo Guest";
+    const id = uid(prefix, name);
+    const email = String(formData.get("email") ?? "").trim() || `${id}@demo.nucleus`;
+    return { id, name, email };
   }
-  redirect(`/login?error=${encodeURIComponent("sign in before completing your profile")}`);
+
+  // Live mode + anon: do the deferred signup using credentials from the form.
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  if (!email || !password || !formName) {
+    redirect(`${errorRedirectPath}?error=missing_account`);
+  }
+
+  const sb = getSupabaseServerClient();
+  const { data, error } = await sb.auth.signUp({
+    email,
+    password,
+    options: { data: { name: formName } },
+  });
+  if (error || !data.user) {
+    redirect(
+      `${errorRedirectPath}?error=${encodeURIComponent(error?.message ?? "signup_failed")}`,
+    );
+  }
+
+  return { id: data.user.id, name: formName, email };
 }
 
 // ── Candidate ────────────────────────────────────────────────────────────────
 
 export async function createCandidate(formData: FormData) {
-  const { id, name, email } = await resolveIdentity("tal");
+  const { id, name, email } = await resolveIdentity({
+    prefix: "tal",
+    formData,
+    errorRedirectPath: "/onboard/candidate",
+  });
   const headline = String(formData.get("headline") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim();
   const lookingFor = String(formData.get("lookingFor") ?? "").trim();
@@ -224,7 +267,11 @@ export async function createCandidate(formData: FormData) {
 // ── Business ─────────────────────────────────────────────────────────────────
 
 export async function createBusiness(formData: FormData) {
-  const { id, name } = await resolveIdentity("sup");
+  const { id, name } = await resolveIdentity({
+    prefix: "sup",
+    formData,
+    errorRedirectPath: "/onboard/business",
+  });
   // Business `name` form field overrides the auth-derived name (e.g. "Bramble AI"
   // != founder name). Required.
   const formName = String(formData.get("name") ?? "").trim() || name;
@@ -281,7 +328,11 @@ export async function createBusiness(formData: FormData) {
 // ── Mentor ───────────────────────────────────────────────────────────────────
 
 export async function createMentor(formData: FormData) {
-  const { id, name, email } = await resolveIdentity("men");
+  const { id, name, email } = await resolveIdentity({
+    prefix: "men",
+    formData,
+    errorRedirectPath: "/onboard/mentor",
+  });
   const headline = String(formData.get("headline") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim();
   const areasAdvised = pick<Sector>(formData.getAll("areasAdvised"), SECTORS);
@@ -373,7 +424,11 @@ function parseUsd(v: FormDataEntryValue | null): number | undefined {
 }
 
 export async function createInvestor(formData: FormData) {
-  const identity = await resolveIdentity("inv");
+  const identity = await resolveIdentity({
+    prefix: "inv",
+    formData,
+    errorRedirectPath: "/onboard/investor",
+  });
   const created = buildInvestor(formData, identity);
   const store = getDataStore();
   await store.putInvestor(created);
@@ -382,7 +437,11 @@ export async function createInvestor(formData: FormData) {
 }
 
 export async function skipInvestor(formData: FormData) {
-  const identity = await resolveIdentity("inv");
+  const identity = await resolveIdentity({
+    prefix: "inv",
+    formData,
+    errorRedirectPath: "/onboard/investor",
+  });
   const created = buildInvestor(formData, identity);
   const store = getDataStore();
   await store.putInvestor(created);
