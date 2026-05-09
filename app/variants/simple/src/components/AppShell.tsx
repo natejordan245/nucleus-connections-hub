@@ -30,7 +30,7 @@ export function AppShell({
           >
             <DelicateArch className="h-7 w-7 text-orange-500" aria-hidden />
             <span className="font-serif text-base font-semibold text-ink">
-              Nucleus
+              Connections Hub
             </span>
           </Link>
 

@@ -24,7 +24,7 @@ export default async function LoginPage({
           Sign in
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-warmgray-600">
-          Welcome back to Nucleus Connections Hub.
+          Welcome back to Connections Hub.
         </p>
 
         <form action={signIn} className="mt-6 space-y-4">
