@@ -6,8 +6,8 @@ export const metadata: Metadata = {
   description:
     "AI-powered talent ↔ startup matching for the Utah innovation ecosystem.",
   icons: {
-    icon: [{ url: "/icon.webp", type: "image/webp" }],
-    shortcut: ["/icon.webp"],
+    icon: [{ url: "/favicon.webp", type: "image/webp" }],
+    shortcut: ["/favicon.webp"],
     apple: [{ url: "/icon.webp", type: "image/webp" }],
   },
 };
