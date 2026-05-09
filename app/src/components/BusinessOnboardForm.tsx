@@ -69,7 +69,6 @@ type BusinessFormState = {
   networksWanted: Network[];
   location: string;
   websiteUrl: string;
-  linkedinUrl: string;
   logoUrl: string;
 };
 
@@ -85,7 +84,6 @@ const INITIAL: BusinessFormState = {
   networksWanted: ["operator"],
   location: "Salt Lake City, UT",
   websiteUrl: "",
-  linkedinUrl: "",
   logoUrl: "",
 };
 
@@ -110,7 +108,6 @@ export function BusinessOnboardForm({
           networksWanted: initial.networksWanted,
           location: initial.location,
           websiteUrl: initial.websiteUrl ?? "",
-          linkedinUrl: initial.linkedinUrl ?? "",
           logoUrl: initial.logoUrl ?? "",
         }
       : INITIAL,
@@ -169,7 +166,7 @@ export function BusinessOnboardForm({
   const networkOpts = NETWORKS.map((n) => ({ value: n, label: NETWORK_LABELS[n] }));
 
   const filledCount = countFilled(form);
-  const totalFields = 12;
+  const totalFields = 11;
   const pct = Math.round((filledCount / totalFields) * 100);
 
   return (
@@ -519,44 +516,22 @@ export function BusinessOnboardForm({
           {/* Location & links */}
           <Section
             icon={<MapPin className="h-4 w-4" strokeWidth={1.75} aria-hidden />}
-            title="Location & links"
-            description="Where you're based and where to find you online."
+            title="Location"
+            description="Where you're based."
           >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <LabeledField id="location" label="Location" marked={autoFilled.has("location")}>
-                <Input
-                  id="location"
-                  name="location"
-                  data-sample="Salt Lake City, UT"
-                  value={form.location}
-                  onChange={(e) => {
-                    const v = e.currentTarget.value;
-                    setForm((p) => ({ ...p, location: v }));
-                    clearMark("location");
-                  }}
-                />
-              </LabeledField>
-              <LabeledField
-                id="linkedinUrl"
-                label="LinkedIn"
-                hint="Optional."
-                marked={autoFilled.has("linkedinUrl")}
-              >
-                <Input
-                  id="linkedinUrl"
-                  name="linkedinUrl"
-                  type="url"
-                  placeholder="https://linkedin.com/company/…"
-                  data-sample="https://linkedin.com/company/beacon-health-sample"
-                  value={form.linkedinUrl}
-                  onChange={(e) => {
-                    const v = e.currentTarget.value;
-                    setForm((p) => ({ ...p, linkedinUrl: v }));
-                    clearMark("linkedinUrl");
-                  }}
-                />
-              </LabeledField>
-            </div>
+            <LabeledField id="location" label="Location" marked={autoFilled.has("location")}>
+              <Input
+                id="location"
+                name="location"
+                data-sample="Salt Lake City, UT"
+                value={form.location}
+                onChange={(e) => {
+                  const v = e.currentTarget.value;
+                  setForm((p) => ({ ...p, location: v }));
+                  clearMark("location");
+                }}
+              />
+            </LabeledField>
           </Section>
 
           {!isEdit && (
@@ -725,7 +700,6 @@ function countFilled(f: BusinessFormState): number {
   if (f.description.trim()) c++;
   if (f.location.trim()) c++;
   if (f.websiteUrl.trim()) c++;
-  if (f.linkedinUrl.trim()) c++;
   if (f.needs.length) c++;
   if (f.networksWanted.length) c++;
   // sector / origin / fundingStage / fundingStatus always have a default value
@@ -750,7 +724,6 @@ function applySuggestions(
     "oneLiner",
     "description",
     "location",
-    "linkedinUrl",
     "logoUrl",
   ];
   const next = { ...prev };

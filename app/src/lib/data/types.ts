@@ -176,7 +176,6 @@ export type BusinessDTO = {
   location: string;
   utahOrgIds: string[];
   logoUrl?: string;
-  linkedinUrl?: string;
   xUrl?: string;
   websiteUrl?: string;
   bioExtract?: BioExtractMeta;

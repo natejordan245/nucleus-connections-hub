@@ -291,7 +291,6 @@ export async function createBusiness(formData: FormData) {
   const networksWanted = pick<Network>(formData.getAll("networksWanted"), NETWORKS);
   const location = String(formData.get("location") ?? "Salt Lake City, UT").trim();
   const websiteUrl = String(formData.get("websiteUrl") ?? "").trim() || undefined;
-  const linkedinUrl = String(formData.get("linkedinUrl") ?? "").trim() || undefined;
   const logoUrl = String(formData.get("logoUrl") ?? "").trim() || undefined;
 
   if (!formName || !description) {
@@ -313,7 +312,6 @@ export async function createBusiness(formData: FormData) {
     utahOrgIds: [],
     logoUrl,
     websiteUrl,
-    linkedinUrl,
     createdAt: new Date().toISOString(),
   };
 
