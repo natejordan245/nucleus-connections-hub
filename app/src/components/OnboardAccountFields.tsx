@@ -61,11 +61,4 @@ export function OnboardAccountFields({
   );
 }
 
-export function decodeOnboardError(raw: string | undefined): string | null {
-  if (!raw) return null;
-  if (raw === "missing_required") return null; // handled by per-form copy
-  if (raw === "missing_account") {
-    return "Name, email, and password are all required to create your account.";
-  }
-  return decodeURIComponent(raw);
-}
+export { decodeOnboardError } from "@/lib/onboard-errors";

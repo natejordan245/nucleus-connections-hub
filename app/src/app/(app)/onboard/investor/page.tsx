@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ChipGroup } from "@/components/ChipGroup";
 import { DemoFiller } from "@/components/DemoFiller";
 import { Field, Input, Textarea } from "@/components/FormField";
-import { OnboardAccountFields, decodeOnboardError } from "@/components/OnboardAccountFields";
+import { OnboardAccountFields } from "@/components/OnboardAccountFields";
+import { decodeOnboardError } from "@/lib/onboard-errors";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import {
   SECTOR_LABELS,
