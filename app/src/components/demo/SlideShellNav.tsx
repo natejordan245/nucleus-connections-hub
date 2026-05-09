@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { SHOW_SLIDES, findShowSlide } from "@/lib/demo/show-slides";
 
 /**
@@ -66,7 +66,7 @@ export function SlideShellNav() {
           <X className="h-4 w-4" strokeWidth={1.75} aria-hidden />
         </Link>
       </div>
-      <div className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 flex items-center gap-2 rounded-full border border-warmgray-200 bg-white/90 px-2 py-1 text-[11px] text-warmgray-500 shadow-sm backdrop-blur">
+      <div className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 flex items-center gap-1 rounded-full border border-warmgray-200 bg-white/90 px-1.5 py-1 text-warmgray-500 shadow-sm backdrop-blur">
         <button
           type="button"
           onClick={() => {
@@ -77,9 +77,8 @@ export function SlideShellNav() {
           aria-label="Previous slide"
           className="flex h-7 w-7 items-center justify-center rounded-full text-warmgray-500 transition hover:bg-warmgray-100 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
         >
-          <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+          <ChevronLeft className="h-4 w-4" strokeWidth={2} aria-hidden />
         </button>
-        <span className="font-mono uppercase tracking-wider">←  →</span>
         <button
           type="button"
           onClick={() => {
@@ -90,7 +89,7 @@ export function SlideShellNav() {
           aria-label="Next slide"
           className="flex h-7 w-7 items-center justify-center rounded-full text-warmgray-500 transition hover:bg-warmgray-100 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
         >
-          <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+          <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden />
         </button>
       </div>
     </>
