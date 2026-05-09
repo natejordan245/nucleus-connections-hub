@@ -402,7 +402,6 @@ function buildOne(idx: number): TalentDTO {
   const num = String(100 + idx).padStart(12, "0");
   const id = `11111111-1111-4111-8111-${num}`;
 
-  const skills = pick(arch.skillsPool, idx);
   const headline = pick(arch.headlinePool, idx);
   const bio = pick(arch.bioPool, idx);
   const lookingFor = pick(arch.lookingForPool, idx);
@@ -419,7 +418,6 @@ function buildOne(idx: number): TalentDTO {
     lookingFor,
     categories: arch.categories,
     lookingForNeeds: arch.needs,
-    skills,
     domains: arch.domains,
     availability: arch.availability,
     compensation: arch.compensation,
