@@ -28,9 +28,9 @@ const now = "2026-05-08T12:00:00.000Z";
 
 export const candidates: CandidateDTO[] = [
   {
-    id: "tal-sarah",
-    name: "Sarah Chen",
-    email: "sarah@demo.nucleus",
+    id: "tal-zac",
+    name: "Zac Hales",
+    email: "zac@demo.nucleus",
     headline: "Former GTM lead, two seed-stage exits",
     bio: "Built and ran go-to-market for two Utah seed-stage SaaS companies through Series A. Looking for a technical co-founder energy I can pair with on the commercial side.",
     lookingFor: "Sales-leader role at a seed-to-Series-A B2B software company, ideally Utah-based. Open to advisor seats at deep-tech.",
@@ -45,7 +45,7 @@ export const candidates: CandidateDTO[] = [
     utahOrgIds: ["org-uu", "org-uea"],
     networks: ["operator"],
     photoUrl: "https://i.pravatar.cc/240?img=47",
-    linkedinUrl: "https://linkedin.com/in/sarah-chen-demo",
+    linkedinUrl: "https://linkedin.com/in/zac-hales-demo",
     createdAt: now,
   },
   {
@@ -292,19 +292,19 @@ export const investors: InvestorDTO[] = [
 // `candidateKind: "business"` (was `"startup"`) reflects the rename.
 export const baselineMatches: MatchDTO[] = [
   {
-    id: "m-sarah-bramble",
-    subjectId: "tal-sarah",
+    id: "m-zac-bramble",
+    subjectId: "tal-zac",
     candidateId: "sup-bramble",
     candidateKind: "business",
     score: 0.92,
     reason:
-      "Sarah's two prior GTM-leader exits in Utah B2B software map directly to Bramble's stated need for a head of sales. Both come from the U of U network — the Eccles School origin and her engineering-alumni affiliation overlap on the same alumni graph.",
+      "Zac's two prior GTM-leader exits in Utah B2B software map directly to Bramble's stated need for a head of sales. Both come from the U of U network — the Eccles School origin and his engineering-alumni affiliation overlap on the same alumni graph.",
     concerns: [
-      "Sarah hasn't worked in conversation-analytics specifically — vertical familiarity is adjacent, not exact.",
+      "Zac hasn't worked in conversation-analytics specifically — vertical familiarity is adjacent, not exact.",
       "Bramble is pre-Series-A; equity will dominate compensation.",
     ],
     factors: [
-      { label: "Stage fit",          weight: 0.95, detail: "Seed → Series A is exactly Sarah's preferred stage range." },
+      { label: "Stage fit",          weight: 0.95, detail: "Seed → Series A is exactly Zac's preferred stage range." },
       { label: "Skill alignment",    weight: 0.92, detail: "Sales leadership + enterprise-sales + pricing all listed in Bramble's needs." },
       { label: "Domain overlap",     weight: 0.78, detail: "Software direct hit." },
       { label: "Comp compatibility", weight: 0.85, detail: "Cash + equity matches both sides." },
@@ -314,15 +314,15 @@ export const baselineMatches: MatchDTO[] = [
     sharedOrgIds: ["org-uu", "org-uea"],
   },
   {
-    id: "m-sarah-tally",
-    subjectId: "tal-sarah",
+    id: "m-zac-tally",
+    subjectId: "tal-zac",
     candidateId: "sup-tally",
     candidateKind: "business",
     score: 0.81,
     reason:
-      "Tally is post-seed and looking for an enterprise-sales leader to push them toward Series A. Sarah's domain familiarity (software) is a half-step from compliance, but the GTM motion is identical.",
+      "Tally is post-seed and looking for an enterprise-sales leader to push them toward Series A. Zac's domain familiarity (software) is a half-step from compliance, but the GTM motion is identical.",
     concerns: [
-      "Compliance/security is a regulated buyer Sarah hasn't sold into.",
+      "Compliance/security is a regulated buyer Zac hasn't sold into.",
       "Tally has already raised — equity slice is smaller than Bramble's.",
     ],
     factors: [
@@ -447,7 +447,7 @@ export const baselineMatches: MatchDTO[] = [
 export const baselineNotifications: NotificationDTO[] = [
   {
     id: "notif-1",
-    recipientId: "tal-sarah",
+    recipientId: "tal-zac",
     kind: "interest_received",
     title: "Bramble AI is interested",
     body: "The Bramble team marked you as a top match for their head-of-sales seat.",
@@ -470,7 +470,7 @@ export const baselineNotifications: NotificationDTO[] = [
 export const baselineInterests: InterestDTO[] = [
   {
     id: "int-1",
-    talentId: "tal-sarah",
+    talentId: "tal-zac",
     startupId: "sup-bramble",
     talentState: "pending",
     startupState: "interested",

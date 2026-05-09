@@ -33,7 +33,7 @@ export type DemoPersona = {
 };
 
 export const DEMO_PERSONAS: DemoPersona[] = [
-  { id: "tal-sarah",    name: "Sarah Chen",        email: "sarah@demo.nucleus",     role: "candidate" },
+  { id: "tal-zac",      name: "Zac Hales",         email: "zac@demo.nucleus",       role: "candidate" },
   { id: "tal-marcus",   name: "Marcus Okafor",     email: "marcus@demo.nucleus",    role: "candidate" },
   { id: "tal-priya",    name: "Priya Patel",       email: "priya@demo.nucleus",     role: "candidate" },
   { id: "sup-bramble",  name: "Bramble AI",        email: "founders@bramble.demo",  role: "business"  },
