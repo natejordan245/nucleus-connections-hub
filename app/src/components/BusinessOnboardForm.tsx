@@ -157,14 +157,24 @@ export function BusinessOnboardForm({
             <Input
               id="websiteUrl"
               name="websiteUrl"
-              type="url"
-              placeholder="https://example.com"
+              type="text"
+              inputMode="url"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              placeholder="example.com"
               value={form.websiteUrl}
               onChange={(e) => {
                 const v = e.currentTarget.value;
                 setForm((p) => ({ ...p, websiteUrl: v }));
                 if (scrape.status !== "idle" && scrape.status !== "loading") {
                   setScrape({ status: "idle" });
+                }
+              }}
+              onBlur={(e) => {
+                const v = e.currentTarget.value.trim();
+                if (v && !/^https?:\/\//i.test(v)) {
+                  setForm((p) => ({ ...p, websiteUrl: `https://${v}` }));
                 }
               }}
               className="flex-1"
