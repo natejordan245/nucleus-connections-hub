@@ -1,11 +1,13 @@
 import type {
   AffinityPushDTO,
+  BusinessDTO,
+  CandidateDTO,
   InterestDTO,
+  InvestorDTO,
   MatchDTO,
+  MentorDTO,
   NotificationDTO,
   ResourceDTO,
-  StartupDTO,
-  TalentDTO,
   UtahOrg,
 } from "./types";
 
@@ -24,7 +26,7 @@ export const utahOrgs: UtahOrg[] = [
 
 const now = "2026-05-08T12:00:00.000Z";
 
-export const talents: TalentDTO[] = [
+export const candidates: CandidateDTO[] = [
   {
     id: "tal-sarah",
     name: "Sarah Chen",
@@ -137,7 +139,7 @@ export const talents: TalentDTO[] = [
   },
 ];
 
-export const startups: StartupDTO[] = [
+export const businesses: BusinessDTO[] = [
   {
     id: "sup-bramble",
     name: "Bramble AI",
@@ -230,13 +232,75 @@ export const startups: StartupDTO[] = [
   },
 ];
 
+export const mentors: MentorDTO[] = [
+  {
+    id: "men-david",
+    name: "David Holm",
+    email: "david@demo.nucleus",
+    headline: "Two-time founder, post-exit advisor",
+    bio: "Sold my last company to ServiceNow in 2022. Spent the last two years writing small checks into Utah seed deals. Now offering advisor time to founders who are pre-Series-B and want a sounding board on GTM, fundraising, and board management.",
+    areasAdvised: ["software", "fintech", "ai"],
+    hoursPerMonth: 8,
+    boardSeatOpen: true,
+    compPreference: ["equity", "mentor"],
+    sectorsOfInterest: ["software", "fintech", "ai", "cyber"],
+    location: "Lehi, UT",
+    utahOrgIds: ["org-byu", "org-byualum", "org-pelion"],
+    networks: ["mentor", "venture", "sme-advisory"],
+    photoUrl: "https://i.pravatar.cc/240?img=33",
+    linkedinUrl: "https://linkedin.com/in/david-holm-demo",
+    createdAt: now,
+  },
+  {
+    id: "men-aisha",
+    name: "Aisha Rahman",
+    email: "aisha@demo.nucleus",
+    headline: "Regulatory + clinical operations advisor",
+    bio: "Twenty years across J&J and Stryker — FDA submissions, clinical operations, quality systems. Advising Utah med-device and digital-health spinouts on what regulatory work has to happen in parallel with the science.",
+    areasAdvised: ["life-sciences"],
+    hoursPerMonth: 6,
+    boardSeatOpen: false,
+    compPreference: ["cash", "equity"],
+    sectorsOfInterest: ["life-sciences"],
+    location: "Salt Lake City, UT",
+    utahOrgIds: ["org-uu", "org-utto"],
+    networks: ["mentor", "sme-advisory"],
+    photoUrl: "https://i.pravatar.cc/240?img=44",
+    linkedinUrl: "https://linkedin.com/in/aisha-rahman-demo",
+    createdAt: now,
+  },
+];
+
+export const investors: InvestorDTO[] = [
+  {
+    id: "inv-rachel",
+    name: "Rachel Stone",
+    email: "rachel@summit.demo",
+    fundName: "Summit Peak Ventures",
+    headline: "Seed-stage Mountain West generalist",
+    bio: "Investing $250k–$1.5M into Utah and Mountain West founders, seed and pre-seed. Sector-agnostic but our portfolio leans into vertical SaaS, climate, and applied AI.",
+    checkSizeMin: 250_000,
+    checkSizeMax: 1_500_000,
+    sectorsInvested: ["software", "ai", "energy", "life-sciences", "fintech"],
+    stagePrefs: ["pre-seed", "seed"],
+    location: "Park City, UT",
+    utahOrgIds: ["org-pelion", "org-pyc"],
+    networks: ["venture"],
+    photoUrl: "https://i.pravatar.cc/240?img=24",
+    linkedinUrl: "https://linkedin.com/in/rachel-stone-demo",
+    websiteUrl: "https://summitpeak.demo",
+    createdAt: now,
+  },
+];
+
 // Hand-curated baseline matches per persona — same as before, IDs unchanged.
+// `candidateKind: "business"` (was `"startup"`) reflects the rename.
 export const baselineMatches: MatchDTO[] = [
   {
     id: "m-sarah-bramble",
     subjectId: "tal-sarah",
     candidateId: "sup-bramble",
-    candidateKind: "startup",
+    candidateKind: "business",
     score: 0.92,
     reason:
       "Sarah's two prior GTM-leader exits in Utah B2B software map directly to Bramble's stated need for a head of sales. Both come from the U of U network — the Eccles School origin and her engineering-alumni affiliation overlap on the same alumni graph.",
@@ -258,7 +322,7 @@ export const baselineMatches: MatchDTO[] = [
     id: "m-sarah-tally",
     subjectId: "tal-sarah",
     candidateId: "sup-tally",
-    candidateKind: "startup",
+    candidateKind: "business",
     score: 0.81,
     reason:
       "Tally is post-seed and looking for an enterprise-sales leader to push them toward Series A. Sarah's domain familiarity (software) is a half-step from compliance, but the GTM motion is identical.",
@@ -280,7 +344,7 @@ export const baselineMatches: MatchDTO[] = [
     id: "m-marcus-lumen",
     subjectId: "tal-marcus",
     candidateId: "sup-lumen",
-    candidateKind: "startup",
+    candidateKind: "business",
     score: 0.94,
     reason:
       "Lumen needs ML infrastructure for their bioinformatics pipeline. Marcus's NVIDIA + YC-fintech ML-infra background slots in cleanly, and his 'bio curious' lookingFor explicitly names this kind of seat. Both anchored at the U of U / TTO.",
@@ -302,7 +366,7 @@ export const baselineMatches: MatchDTO[] = [
     id: "m-marcus-helio",
     subjectId: "tal-marcus",
     candidateId: "sup-helio",
-    candidateKind: "startup",
+    candidateKind: "business",
     score: 0.78,
     reason:
       "Helio's deposition optimization is a classic ML-on-physical-process problem. Marcus has the infra to run the simulations and the systems chops to productionize. The risk: Helio's ML need is research-y rather than infra-y today.",
@@ -324,7 +388,7 @@ export const baselineMatches: MatchDTO[] = [
     id: "m-priya-lumen",
     subjectId: "tal-priya",
     candidateId: "sup-lumen",
-    candidateKind: "startup",
+    candidateKind: "business",
     score: 0.96,
     reason:
       "Priya's microfluidic diagnostics research at the U is the same lab lineage as Lumen's spinout. Three published papers in adjacent areas. The match here is so direct it's almost a home-team hire.",
@@ -345,7 +409,7 @@ export const baselineMatches: MatchDTO[] = [
     id: "m-david-tally",
     subjectId: "tal-david",
     candidateId: "sup-tally",
-    candidateKind: "startup",
+    candidateKind: "business",
     score: 0.88,
     reason:
       "David's ServiceNow exit and his BYU + Pelion network make him a natural board-shaped advisor for Tally — security-tooling buyers are exactly the type of enterprise motion he ran. Lehi is his backyard.",
@@ -366,7 +430,7 @@ export const baselineMatches: MatchDTO[] = [
     id: "m-jenna-quarry",
     subjectId: "tal-jenna",
     candidateId: "sup-quarry",
-    candidateKind: "startup",
+    candidateKind: "business",
     score: 0.83,
     reason:
       "Quarry needs design that thinks about operators and edge cases — Jenna's Pluralsight 0→1 work and her hardware-adjacent ambitions match. BYU connection on both sides.",

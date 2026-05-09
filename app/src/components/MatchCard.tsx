@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
-import type { MatchDTO, MatchFactor, StartupDTO, TalentDTO } from "@/lib/data/types";
+import type { BusinessDTO, CandidateDTO, MatchDTO, MatchFactor } from "@/lib/data/types";
 import { Avatar } from "./Avatar";
 import { GapCloser } from "./GapCloser";
 import { Pill } from "./Pill";
 
 type Candidate =
-  | { kind: "talent"; talent: TalentDTO }
-  | { kind: "startup"; startup: StartupDTO };
+  | { kind: "candidate"; candidate: CandidateDTO }
+  | { kind: "business"; business: BusinessDTO };
 
 // A match below this score is treated as "partial" — the dashboard surfaces
 // the gap-closer inline so the user is handed a next step instead of an
@@ -21,15 +21,20 @@ export function MatchCard({
   match: MatchDTO;
   candidate: Candidate;
 }) {
-  const name = candidate.kind === "talent" ? candidate.talent.name : candidate.startup.name;
-  const photo = candidate.kind === "talent" ? candidate.talent.photoUrl : candidate.startup.logoUrl;
+  const name =
+    candidate.kind === "candidate" ? candidate.candidate.name : candidate.business.name;
+  const photo =
+    candidate.kind === "candidate" ? candidate.candidate.photoUrl : candidate.business.logoUrl;
   const headline =
-    candidate.kind === "talent" ? candidate.talent.headline : candidate.startup.oneLiner;
+    candidate.kind === "candidate" ? candidate.candidate.headline : candidate.business.oneLiner;
   const location =
-    candidate.kind === "talent" ? candidate.talent.location : candidate.startup.location;
-  const candidateId = candidate.kind === "talent" ? candidate.talent.id : candidate.startup.id;
+    candidate.kind === "candidate" ? candidate.candidate.location : candidate.business.location;
+  const candidateId =
+    candidate.kind === "candidate" ? candidate.candidate.id : candidate.business.id;
   const detailHref =
-    candidate.kind === "talent" ? `/profile/talent/${candidateId}` : `/profile/startup/${candidateId}`;
+    candidate.kind === "candidate"
+      ? `/profile/candidate/${candidateId}`
+      : `/profile/business/${candidateId}`;
   const handshakeHref = `/handshake?with=${candidateId}`;
   const isPartial = match.score < STRONG_THRESHOLD;
 

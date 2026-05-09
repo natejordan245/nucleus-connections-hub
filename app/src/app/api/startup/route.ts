@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
 import { getDataStore } from "@/lib/data";
-import type { StartupDTO } from "@/lib/data";
+import type { BusinessDTO } from "@/lib/data";
+
+// Legacy alias for /api/business.
 
 export async function GET() {
   const store = getDataStore();
-  const startups = await store.listStartups();
-  return NextResponse.json({ startups });
+  const businesses = await store.listBusinesses();
+  return NextResponse.json({ businesses, startups: businesses });
 }
 
 export async function POST(req: Request) {
-  const body = (await req.json()) as Partial<StartupDTO>;
+  const body = (await req.json()) as Partial<BusinessDTO>;
   if (!body.id || !body.name || !body.description) {
     return NextResponse.json(
       { error: "id, name, description are required" },
@@ -17,11 +19,11 @@ export async function POST(req: Request) {
     );
   }
   const store = getDataStore();
-  const created = await store.putStartup(fillStartup(body));
-  return NextResponse.json({ startup: created }, { status: 201 });
+  const created = await store.putBusiness(fillBusiness(body));
+  return NextResponse.json({ business: created, startup: created }, { status: 201 });
 }
 
-function fillStartup(p: Partial<StartupDTO>): StartupDTO {
+function fillBusiness(p: Partial<BusinessDTO>): BusinessDTO {
   return {
     id: p.id!,
     name: p.name!,

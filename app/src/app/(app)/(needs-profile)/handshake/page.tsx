@@ -5,7 +5,7 @@ import { Avatar } from "@/components/Avatar";
 import { ExplainabilityPanel } from "@/components/ExplainabilityPanel";
 import { Pill } from "@/components/Pill";
 import { getDataStore } from "@/lib/data";
-import type { InterestState, StartupDTO, TalentDTO } from "@/lib/data/types";
+import type { BusinessDTO, CandidateDTO, InterestState } from "@/lib/data/types";
 import { requireViewer } from "@/lib/viewer";
 import { vote } from "./actions";
 
@@ -19,47 +19,53 @@ export default async function HandshakePage({
   if (!otherId) notFound();
 
   const store = getDataStore();
-  const [viewerTalent, viewerStartup, otherTalent, otherStartup] = await Promise.all([
-    store.getTalent(viewerId),
-    store.getStartup(viewerId),
-    store.getTalent(otherId),
-    store.getStartup(otherId),
+  const [viewerCandidate, viewerBusiness, otherCandidate, otherBusiness] = await Promise.all([
+    store.getCandidate(viewerId),
+    store.getBusiness(viewerId),
+    store.getCandidate(otherId),
+    store.getBusiness(otherId),
   ]);
 
-  const viewerKind: "talent" | "startup" | null = viewerTalent
-    ? "talent"
-    : viewerStartup
-      ? "startup"
+  const viewerKind: "candidate" | "business" | null = viewerCandidate
+    ? "candidate"
+    : viewerBusiness
+      ? "business"
       : null;
-  const otherKind: "talent" | "startup" | null = otherTalent
-    ? "talent"
-    : otherStartup
-      ? "startup"
+  const otherKind: "candidate" | "business" | null = otherCandidate
+    ? "candidate"
+    : otherBusiness
+      ? "business"
       : null;
 
+  // Handshake is candidate↔business only. Mentor and Investor profiles never
+  // enter this flow.
   if (!viewerKind || !otherKind || viewerKind === otherKind) {
     notFound();
   }
 
-  const talent: TalentDTO = (viewerKind === "talent" ? viewerTalent : otherTalent)!;
-  const startup: StartupDTO = (viewerKind === "startup" ? viewerStartup : otherStartup)!;
+  const candidate: CandidateDTO = (viewerKind === "candidate" ? viewerCandidate : otherCandidate)!;
+  const business: BusinessDTO = (viewerKind === "business" ? viewerBusiness : otherBusiness)!;
   const otherSummary =
-    viewerKind === "talent"
-      ? { name: startup.name, photo: startup.logoUrl, headline: startup.oneLiner }
-      : { name: talent.name, photo: talent.photoUrl, headline: talent.headline };
+    viewerKind === "candidate"
+      ? { name: business.name, photo: business.logoUrl, headline: business.oneLiner }
+      : { name: candidate.name, photo: candidate.photoUrl, headline: candidate.headline };
 
-  const interest = await store.getInterest({ talentId: talent.id, startupId: startup.id });
+  const interest = await store.getInterest({ candidateId: candidate.id, businessId: business.id });
   const matches = await store.matchesFor(viewerId);
   const match = matches.find(
     (m) =>
-      (viewerKind === "talent" && m.candidateId === startup.id) ||
-      (viewerKind === "startup" && m.candidateId === talent.id),
+      (viewerKind === "candidate" && m.candidateId === business.id) ||
+      (viewerKind === "business" && m.candidateId === candidate.id),
   );
 
   const myState: InterestState =
-    viewerKind === "talent" ? interest?.talentState ?? "pending" : interest?.startupState ?? "pending";
+    viewerKind === "candidate"
+      ? interest?.talentState ?? "pending"
+      : interest?.startupState ?? "pending";
   const theirState: InterestState =
-    viewerKind === "talent" ? interest?.startupState ?? "pending" : interest?.talentState ?? "pending";
+    viewerKind === "candidate"
+      ? interest?.startupState ?? "pending"
+      : interest?.talentState ?? "pending";
   const isMutual = interest?.mutualAt !== null && interest?.mutualAt !== undefined;
 
   return (
@@ -87,8 +93,8 @@ export default async function HandshakePage({
               <div>
                 <h2 className="font-serif text-lg font-semibold text-ink">
                   <Link
-                    href={`/profile/${viewerKind === "talent" ? "startup" : "talent"}/${
-                      viewerKind === "talent" ? startup.id : talent.id
+                    href={`/profile/${viewerKind === "candidate" ? "business" : "candidate"}/${
+                      viewerKind === "candidate" ? business.id : candidate.id
                     }`}
                     className="hover:text-orange-700"
                   >
@@ -112,8 +118,8 @@ export default async function HandshakePage({
             ) : (
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <form action={vote}>
-                  <input type="hidden" name="talentId" value={talent.id} />
-                  <input type="hidden" name="startupId" value={startup.id} />
+                  <input type="hidden" name="candidateId" value={candidate.id} />
+                  <input type="hidden" name="businessId" value={business.id} />
                   <input type="hidden" name="side" value={viewerKind} />
                   <input type="hidden" name="state" value="pass" />
                   <button
@@ -124,8 +130,8 @@ export default async function HandshakePage({
                   </button>
                 </form>
                 <form action={vote}>
-                  <input type="hidden" name="talentId" value={talent.id} />
-                  <input type="hidden" name="startupId" value={startup.id} />
+                  <input type="hidden" name="candidateId" value={candidate.id} />
+                  <input type="hidden" name="businessId" value={business.id} />
                   <input type="hidden" name="side" value={viewerKind} />
                   <input type="hidden" name="state" value="interested" />
                   <button

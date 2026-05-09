@@ -3,61 +3,75 @@ import { getDataStore } from "@/lib/data";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const talentId = url.searchParams.get("talentId");
-  const startupId = url.searchParams.get("startupId");
+  // Accept both legacy `talentId`/`startupId` and new `candidateId`/`businessId`.
+  const candidateId = url.searchParams.get("candidateId") ?? url.searchParams.get("talentId");
+  const businessId = url.searchParams.get("businessId") ?? url.searchParams.get("startupId");
   const viewerId = url.searchParams.get("as");
 
   const store = getDataStore();
-  if (talentId && startupId) {
-    const interest = await store.getInterest({ talentId, startupId });
+  if (candidateId && businessId) {
+    const interest = await store.getInterest({ candidateId, businessId });
     return NextResponse.json({ interest });
   }
   if (viewerId) {
     const interests = await store.listInterests(viewerId);
     return NextResponse.json({ interests });
   }
-  return NextResponse.json({ error: "provide talentId+startupId or as=" }, { status: 400 });
+  return NextResponse.json({ error: "provide candidateId+businessId or as=" }, { status: 400 });
 }
 
 export async function POST(req: Request) {
   const body = (await req.json()) as {
+    candidateId?: string;
+    businessId?: string;
     talentId?: string;
     startupId?: string;
-    side?: "talent" | "startup";
+    side?: "candidate" | "business" | "talent" | "startup";
     state?: "interested" | "pass";
   };
-  if (!body.talentId || !body.startupId || !body.side || !body.state) {
+  const candidateId = body.candidateId ?? body.talentId;
+  const businessId = body.businessId ?? body.startupId;
+  // Map legacy side values.
+  const side: "candidate" | "business" | undefined =
+    body.side === "talent"
+      ? "candidate"
+      : body.side === "startup"
+        ? "business"
+        : body.side === "candidate" || body.side === "business"
+          ? body.side
+          : undefined;
+  if (!candidateId || !businessId || !side || !body.state) {
     return NextResponse.json(
-      { error: "talentId, startupId, side, state required" },
+      { error: "candidateId, businessId, side, state required" },
       { status: 400 },
     );
   }
 
   const store = getDataStore();
   const result = await store.vote({
-    talentId: body.talentId,
-    startupId: body.startupId,
-    side: body.side,
+    candidateId,
+    businessId,
+    side,
     state: body.state,
   });
 
   // Side-effects: emit notifications + (on mutual) record an Affinity push.
-  const talent = await store.getTalent(body.talentId);
-  const startup = await store.getStartup(body.startupId);
-  if (result.mutualJustNow && talent && startup) {
+  const candidate = await store.getCandidate(candidateId);
+  const business = await store.getBusiness(businessId);
+  if (result.mutualJustNow && candidate && business) {
     await store.emitNotification({
-      recipientId: talent.id,
+      recipientId: candidate.id,
       kind: "mutual_match",
-      title: `Mutual match: ${startup.name}`,
+      title: `Mutual match: ${business.name}`,
       body: `Both sides flipped to interested. Send a first message →`,
-      href: `/messages?with=${startup.id}`,
+      href: `/messages?with=${business.id}`,
     });
     await store.emitNotification({
-      recipientId: startup.id,
+      recipientId: business.id,
       kind: "mutual_match",
-      title: `Mutual match: ${talent.name}`,
+      title: `Mutual match: ${candidate.name}`,
       body: `Both sides flipped to interested. Send a first message →`,
-      href: `/messages?with=${talent.id}`,
+      href: `/messages?with=${candidate.id}`,
     });
     // Notify the operator(s) so they can broker the intro.
     const adminIds = await store.resolveAdminUserIds();
@@ -65,34 +79,33 @@ export async function POST(req: Request) {
       await store.emitNotification({
         recipientId: adminId,
         kind: "mutual_match",
-        title: `New mutual match: ${talent.name} ↔ ${startup.name}`,
+        title: `New mutual match: ${candidate.name} ↔ ${business.name}`,
         body: `Both sides opted in. Open the queue to broker the intro.`,
         href: "/admin",
       });
     }
     await store.recordAffinityPush({
-      talentId: talent.id,
-      startupId: startup.id,
-      reason: `Mutual interest between ${talent.name} and ${startup.name}.`,
+      talentId: candidate.id,
+      startupId: business.id,
+      reason: `Mutual interest between ${candidate.name} and ${business.name}.`,
       status: "pushed",
     });
-  } else if (body.state === "interested" && talent && startup) {
-    // The other side gets an "interest_received" ping.
-    if (body.side === "talent") {
+  } else if (body.state === "interested" && candidate && business) {
+    if (side === "candidate") {
       await store.emitNotification({
-        recipientId: startup.id,
+        recipientId: business.id,
         kind: "interest_received",
-        title: `${talent.name} is interested`,
+        title: `${candidate.name} is interested`,
         body: `Take a look — they're a fit on stage and skills.`,
-        href: `/handshake?with=${talent.id}`,
+        href: `/handshake?with=${candidate.id}`,
       });
     } else {
       await store.emitNotification({
-        recipientId: talent.id,
+        recipientId: candidate.id,
         kind: "interest_received",
-        title: `${startup.name} is interested`,
+        title: `${business.name} is interested`,
         body: `Take a look — they flagged you as a top candidate.`,
-        href: `/handshake?with=${startup.id}`,
+        href: `/handshake?with=${business.id}`,
       });
     }
   }

@@ -17,7 +17,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * the OpenAI tax twice for the same losing pair.
  */
 
-const PROMPT_VERSION = "2026-05-08-v3";
+const PROMPT_VERSION = "2026-05-09-v1";
 const MODEL = "gpt-5.4-nano";
 
 export type LLMGateVerdict = {
@@ -29,9 +29,11 @@ export type LLMGateVerdict = {
   model: string;
 };
 
+import type { ProfileKind } from "@/lib/data/types";
+
 export type ProfileForGate = {
   id: string;
-  kind: "talent" | "startup";
+  kind: ProfileKind;
   name: string;
   embeddingText: string;
   wantsText: string;
@@ -120,7 +122,7 @@ async function callOpenAI(
   }
 
   const system = [
-    "You are a matchmaking analyst for a Utah-focused talent ↔ startup platform.",
+    "You are a matchmaking analyst for a Utah-focused candidate ↔ business platform.",
     "Given a subject profile and a candidate profile, decide whether the pair is a real match —",
     "good enough that an introduction would be useful to both sides — and explain why or why not",
     "across each relevant dimension.",

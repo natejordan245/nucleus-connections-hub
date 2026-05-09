@@ -4,14 +4,22 @@ import { Avatar } from "@/components/Avatar";
 import { Pill } from "@/components/Pill";
 import { getDataStore } from "@/lib/data";
 import { SECTOR_LABELS } from "@/lib/data/enum-labels";
-import type { ResourceDTO, StartupDTO, TalentDTO } from "@/lib/data/types";
+import type {
+  BusinessDTO,
+  CandidateDTO,
+  InvestorDTO,
+  MentorDTO,
+  ResourceDTO,
+} from "@/lib/data/types";
 
-type Tab = "people" | "companies" | "resources";
+type Tab = "people" | "companies" | "mentors" | "investors" | "resources";
 
 const TABS: { value: Tab; label: string }[] = [
-  { value: "people",    label: "People"    },
-  { value: "companies", label: "Companies" },
-  { value: "resources", label: "Resources" },
+  { value: "people",    label: "People"     },
+  { value: "companies", label: "Companies"  },
+  { value: "mentors",   label: "Mentors"    },
+  { value: "investors", label: "VCs"        },
+  { value: "resources", label: "Resources"  },
 ];
 
 export default async function SearchPage({
@@ -20,19 +28,26 @@ export default async function SearchPage({
   searchParams?: { q?: string; kind?: string };
 }) {
   const q = searchParams?.q ?? "";
+  // Map URL kind values: `business` is also accepted as a synonym for `companies`.
   const tab: Tab =
-    searchParams?.kind === "companies"
+    searchParams?.kind === "companies" || searchParams?.kind === "business"
       ? "companies"
-      : searchParams?.kind === "resources"
-        ? "resources"
-        : "people";
+      : searchParams?.kind === "mentors" || searchParams?.kind === "mentor"
+        ? "mentors"
+        : searchParams?.kind === "investors" || searchParams?.kind === "investor"
+          ? "investors"
+          : searchParams?.kind === "resources"
+            ? "resources"
+            : "people";
 
   const store = getDataStore();
   const results = await store.search(q);
 
   const counts: Record<Tab, number> = {
-    people: results.talent.length,
-    companies: results.startups.length,
+    people: results.candidates.length,
+    companies: results.businesses.length,
+    mentors: results.mentors.length,
+    investors: results.investors.length,
     resources: results.resources.length,
   };
 
@@ -43,8 +58,8 @@ export default async function SearchPage({
         Find people, companies, and resources.
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
-        Search across the network — operators, startups, and the playbooks
-        Nucleus has gathered.
+        Search across the network — operators, businesses, mentors, VCs, and the
+        playbooks Nucleus has gathered.
       </p>
 
       <form
@@ -74,7 +89,7 @@ export default async function SearchPage({
         </button>
       </form>
 
-      <nav className="mt-6 flex items-center gap-1 border-b border-warmgray-100">
+      <nav className="mt-6 flex flex-wrap items-center gap-1 border-b border-warmgray-100">
         {TABS.map((t) => {
           const active = t.value === tab;
           const href = `/search?kind=${t.value}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
@@ -104,8 +119,10 @@ export default async function SearchPage({
       </nav>
 
       <section className="mt-6">
-        {tab === "people" && <PeopleResults items={results.talent} q={q} />}
-        {tab === "companies" && <CompanyResults items={results.startups} q={q} />}
+        {tab === "people" && <PeopleResults items={results.candidates} q={q} />}
+        {tab === "companies" && <CompanyResults items={results.businesses} q={q} />}
+        {tab === "mentors" && <MentorResults items={results.mentors} q={q} />}
+        {tab === "investors" && <InvestorResults items={results.investors} q={q} />}
         {tab === "resources" && <ResourceResults items={results.resources} q={q} />}
       </section>
     </main>
@@ -125,25 +142,25 @@ function EmptyState({ kind, q }: { kind: string; q: string }) {
   );
 }
 
-function PeopleResults({ items, q }: { items: TalentDTO[]; q: string }) {
+function PeopleResults({ items, q }: { items: CandidateDTO[]; q: string }) {
   if (items.length === 0) return <EmptyState kind="people" q={q} />;
   return (
     <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
-      {items.map((t) => (
-        <li key={t.id}>
+      {items.map((c) => (
+        <li key={c.id}>
           <Link
-            href={`/profile/talent/${t.id}`}
+            href={`/profile/candidate/${c.id}`}
             className="flex h-full gap-4 rounded-2xl border border-warmgray-100 bg-white p-5 shadow-sm transition hover:border-warmgray-200"
           >
-            <Avatar name={t.name} src={t.photoUrl} size="md" />
+            <Avatar name={c.name} src={c.photoUrl} size="md" />
             <div className="min-w-0 flex-1">
               <h3 className="truncate font-serif text-lg font-semibold text-ink">
-                {t.name}
+                {c.name}
               </h3>
-              <p className="truncate text-xs text-warmgray-600">{t.headline}</p>
+              <p className="truncate text-xs text-warmgray-600">{c.headline}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                <Pill tone="warmgray">{t.location}</Pill>
-                {t.domains.slice(0, 2).map((d) => (
+                <Pill tone="warmgray">{c.location}</Pill>
+                {c.domains.slice(0, 2).map((d) => (
                   <Pill key={d} tone="orange">
                     {SECTOR_LABELS[d]}
                   </Pill>
@@ -157,14 +174,14 @@ function PeopleResults({ items, q }: { items: TalentDTO[]; q: string }) {
   );
 }
 
-function CompanyResults({ items, q }: { items: StartupDTO[]; q: string }) {
+function CompanyResults({ items, q }: { items: BusinessDTO[]; q: string }) {
   if (items.length === 0) return <EmptyState kind="companies" q={q} />;
   return (
     <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
       {items.map((s) => (
         <li key={s.id}>
           <Link
-            href={`/profile/startup/${s.id}`}
+            href={`/profile/business/${s.id}`}
             className="flex h-full gap-4 rounded-2xl border border-warmgray-100 bg-white p-5 shadow-sm transition hover:border-warmgray-200"
           >
             <Avatar name={s.name} src={s.logoUrl} size="md" />
@@ -176,6 +193,67 @@ function CompanyResults({ items, q }: { items: StartupDTO[]; q: string }) {
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Pill tone="warmgray">{s.location}</Pill>
                 <Pill tone="orange">{SECTOR_LABELS[s.sector]}</Pill>
+              </div>
+            </div>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function MentorResults({ items, q }: { items: MentorDTO[]; q: string }) {
+  if (items.length === 0) return <EmptyState kind="mentors" q={q} />;
+  return (
+    <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      {items.map((m) => (
+        <li key={m.id}>
+          <Link
+            href={`/profile/mentor/${m.id}`}
+            className="flex h-full gap-4 rounded-2xl border border-warmgray-100 bg-white p-5 shadow-sm transition hover:border-warmgray-200"
+          >
+            <Avatar name={m.name} src={m.photoUrl} size="md" />
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate font-serif text-lg font-semibold text-ink">
+                {m.name}
+              </h3>
+              <p className="truncate text-xs text-warmgray-600">{m.headline}</p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                <Pill tone="warmgray">{m.location}</Pill>
+                <Pill tone="orange">{m.hoursPerMonth} hrs/mo</Pill>
+                {m.boardSeatOpen && <Pill tone="emerald">Board OK</Pill>}
+              </div>
+            </div>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function InvestorResults({ items, q }: { items: InvestorDTO[]; q: string }) {
+  if (items.length === 0) return <EmptyState kind="VCs" q={q} />;
+  return (
+    <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      {items.map((i) => (
+        <li key={i.id}>
+          <Link
+            href={`/profile/investor/${i.id}`}
+            className="flex h-full gap-4 rounded-2xl border border-warmgray-100 bg-white p-5 shadow-sm transition hover:border-warmgray-200"
+          >
+            <Avatar name={i.fundName ?? i.name} src={i.photoUrl} size="md" />
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate font-serif text-lg font-semibold text-ink">
+                {i.fundName ?? i.name}
+              </h3>
+              <p className="truncate text-xs text-warmgray-600">{i.headline}</p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                <Pill tone="warmgray">{i.location}</Pill>
+                {i.sectorsInvested.slice(0, 2).map((s) => (
+                  <Pill key={s} tone="orange">
+                    {SECTOR_LABELS[s]}
+                  </Pill>
+                ))}
               </div>
             </div>
           </Link>

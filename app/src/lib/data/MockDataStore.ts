@@ -1,12 +1,14 @@
 import type {
   AffinityPushDTO,
+  BusinessDTO,
+  CandidateDTO,
   InterestDTO,
+  InvestorDTO,
   MatchDTO,
+  MentorDTO,
   MessageDTO,
   NotificationDTO,
   ResourceDTO,
-  StartupDTO,
-  TalentDTO,
   UtahOrg,
 } from "./types";
 import {
@@ -15,8 +17,10 @@ import {
   baselineNotifications,
   baselinePushes,
   baselineResources,
-  startups,
-  talents,
+  businesses,
+  candidates,
+  investors,
+  mentors,
   utahOrgs,
 } from "./seed";
 import type { IDataStore, VoteSide } from "./store";
@@ -25,8 +29,10 @@ import { DEMO_PERSONAS } from "@/lib/mode";
 // In-memory stores. These are module-scoped so they survive across requests
 // within a single Node process. They reset on dev-server restart, which is the
 // expected behavior for the demo.
-const talentMap = new Map<string, TalentDTO>(talents.map((t) => [t.id, t]));
-const startupMap = new Map<string, StartupDTO>(startups.map((s) => [s.id, s]));
+const candidateMap = new Map<string, CandidateDTO>(candidates.map((c) => [c.id, c]));
+const businessMap = new Map<string, BusinessDTO>(businesses.map((b) => [b.id, b]));
+const mentorMap = new Map<string, MentorDTO>(mentors.map((m) => [m.id, m]));
+const investorMap = new Map<string, InvestorDTO>(investors.map((i) => [i.id, i]));
 const interestMap = new Map<string, InterestDTO>(
   baselineInterests.map((i) => [interestKey(i.talentId, i.startupId), i]),
 );
@@ -47,8 +53,8 @@ function pairKey(a: string, b: string) {
   return a < b ? `${a}:${b}` : `${b}:${a}`;
 }
 
-function interestKey(talentId: string, startupId: string) {
-  return `${talentId}::${startupId}`;
+function interestKey(candidateId: string, businessId: string) {
+  return `${candidateId}::${businessId}`;
 }
 
 function lower(s: string) {
@@ -56,17 +62,29 @@ function lower(s: string) {
 }
 
 export class MockDataStore implements IDataStore {
-  async listTalent() {
-    return [...talentMap.values()];
+  async listCandidates() {
+    return [...candidateMap.values()];
   }
-  async getTalent(id: string) {
-    return talentMap.get(id) ?? null;
+  async getCandidate(id: string) {
+    return candidateMap.get(id) ?? null;
   }
-  async listStartups() {
-    return [...startupMap.values()];
+  async listBusinesses() {
+    return [...businessMap.values()];
   }
-  async getStartup(id: string) {
-    return startupMap.get(id) ?? null;
+  async getBusiness(id: string) {
+    return businessMap.get(id) ?? null;
+  }
+  async listMentors() {
+    return [...mentorMap.values()];
+  }
+  async getMentor(id: string) {
+    return mentorMap.get(id) ?? null;
+  }
+  async listInvestors() {
+    return [...investorMap.values()];
+  }
+  async getInvestor(id: string) {
+    return investorMap.get(id) ?? null;
   }
   async listUtahOrgs(): Promise<UtahOrg[]> {
     return [...utahOrgs];
@@ -97,19 +115,19 @@ export class MockDataStore implements IDataStore {
     // Synthesize a match for any other (subject, candidate) pair so search
     // click-throughs always land on a populated analysis page rather than
     // "this profile isn't currently in your matches."
-    const subjTalent = talentMap.get(subjectId);
-    const subjStartup = startupMap.get(subjectId);
-    const candTalent = talentMap.get(candidateId);
-    const candStartup = startupMap.get(candidateId);
+    const subjCandidate = candidateMap.get(subjectId);
+    const subjBusiness = businessMap.get(subjectId);
+    const candCandidate = candidateMap.get(candidateId);
+    const candBusiness = businessMap.get(candidateId);
 
-    if (subjTalent && candStartup) {
-      return synthesizeTalentToStartup(subjTalent, candStartup);
+    if (subjCandidate && candBusiness) {
+      return synthesizeCandidateToBusiness(subjCandidate, candBusiness);
     }
-    if (subjStartup && candTalent) {
-      return synthesizeStartupToTalent(subjStartup, candTalent);
+    if (subjBusiness && candCandidate) {
+      return synthesizeBusinessToCandidate(subjBusiness, candCandidate);
     }
-    if (subjTalent && candTalent) {
-      return synthesizePeer(subjTalent, candTalent);
+    if (subjCandidate && candCandidate) {
+      return synthesizePeer(subjCandidate, candCandidate);
     }
     return null;
   }
@@ -118,26 +136,50 @@ export class MockDataStore implements IDataStore {
     const q = lower(query.trim());
     if (!q) {
       return {
-        talent: [...talentMap.values()],
-        startups: [...startupMap.values()],
+        candidates: [...candidateMap.values()],
+        businesses: [...businessMap.values()],
+        mentors: [...mentorMap.values()],
+        investors: [...investorMap.values()],
         resources: [...resourceMap.values()],
       };
     }
-    const matchTalent = (t: TalentDTO) =>
+    const matchCandidate = (t: CandidateDTO) =>
       [
         t.name,
         t.headline,
         t.bio,
         t.lookingFor,
-        t.categories.join(" "),
-        t.lookingForNeeds.join(" "),
+        (t.categories ?? []).join(" "),
+        (t.lookingForNeeds ?? []).join(" "),
         t.skills.join(" "),
         t.domains.join(" "),
       ]
         .map(lower)
         .some((s) => s.includes(q));
-    const matchStartup = (s: StartupDTO) =>
+    const matchBusiness = (s: BusinessDTO) =>
       [s.name, s.oneLiner, s.description, s.sector, s.needs.join(" "), s.networksWanted.join(" ")]
+        .map(lower)
+        .some((s) => s.includes(q));
+    const matchMentor = (m: MentorDTO) =>
+      [
+        m.name,
+        m.headline,
+        m.bio,
+        m.areasAdvised.join(" "),
+        m.sectorsOfInterest.join(" "),
+        m.networks.join(" "),
+      ]
+        .map(lower)
+        .some((s) => s.includes(q));
+    const matchInvestor = (i: InvestorDTO) =>
+      [
+        i.name,
+        i.fundName ?? "",
+        i.headline,
+        i.bio,
+        i.sectorsInvested.join(" "),
+        i.stagePrefs.join(" "),
+      ]
         .map(lower)
         .some((s) => s.includes(q));
     const matchResource = (r: ResourceDTO) =>
@@ -145,40 +187,50 @@ export class MockDataStore implements IDataStore {
         .map(lower)
         .some((s) => s.includes(q));
     return {
-      talent: [...talentMap.values()].filter(matchTalent),
-      startups: [...startupMap.values()].filter(matchStartup),
+      candidates: [...candidateMap.values()].filter(matchCandidate),
+      businesses: [...businessMap.values()].filter(matchBusiness),
+      mentors: [...mentorMap.values()].filter(matchMentor),
+      investors: [...investorMap.values()].filter(matchInvestor),
       resources: [...resourceMap.values()].filter(matchResource),
     };
   }
 
-  async putTalent(t: TalentDTO) {
-    talentMap.set(t.id, t);
-    return t;
+  async putCandidate(c: CandidateDTO) {
+    candidateMap.set(c.id, c);
+    return c;
   }
-  async putStartup(s: StartupDTO) {
-    startupMap.set(s.id, s);
-    return s;
+  async putBusiness(b: BusinessDTO) {
+    businessMap.set(b.id, b);
+    return b;
+  }
+  async putMentor(m: MentorDTO) {
+    mentorMap.set(m.id, m);
+    return m;
+  }
+  async putInvestor(i: InvestorDTO) {
+    investorMap.set(i.id, i);
+    return i;
   }
 
   async vote(args: {
-    talentId: string;
-    startupId: string;
+    candidateId: string;
+    businessId: string;
     side: VoteSide;
     state: "interested" | "pass";
   }) {
-    const k = interestKey(args.talentId, args.startupId);
+    const k = interestKey(args.candidateId, args.businessId);
     const prior = interestMap.get(k) ?? {
       id: `int-${nextInterestId++}`,
-      talentId: args.talentId,
-      startupId: args.startupId,
+      talentId: args.candidateId,
+      startupId: args.businessId,
       talentState: "pending" as const,
       startupState: "pending" as const,
       mutualAt: null,
     };
     const next: InterestDTO = {
       ...prior,
-      talentState: args.side === "talent" ? args.state : prior.talentState,
-      startupState: args.side === "startup" ? args.state : prior.startupState,
+      talentState: args.side === "candidate" ? args.state : prior.talentState,
+      startupState: args.side === "business" ? args.state : prior.startupState,
     };
     const becameMutual =
       next.mutualAt === null &&
@@ -191,8 +243,8 @@ export class MockDataStore implements IDataStore {
     return { interest: next, mutualJustNow: becameMutual };
   }
 
-  async getInterest(args: { talentId: string; startupId: string }) {
-    return interestMap.get(interestKey(args.talentId, args.startupId)) ?? null;
+  async getInterest(args: { candidateId: string; businessId: string }) {
+    return interestMap.get(interestKey(args.candidateId, args.businessId)) ?? null;
   }
 
   async listInterests(viewerId: string) {
@@ -293,13 +345,13 @@ export class MockDataStore implements IDataStore {
     candidateId: string;
     limit?: number;
   }) {
-    const talent = talentMap.get(subjectId) ?? talentMap.get(candidateId);
-    const startup = startupMap.get(candidateId) ?? startupMap.get(subjectId);
-    if (!talent || !startup) {
+    const candidate = candidateMap.get(subjectId) ?? candidateMap.get(candidateId);
+    const business = businessMap.get(candidateId) ?? businessMap.get(subjectId);
+    if (!candidate || !business) {
       return { gapText: "", resources: [] as ResourceDTO[] };
     }
     const { analyzeGap, recommendResourcesForGap } = await import("@/lib/match/gap");
-    const analysis = analyzeGap(talent, startup);
+    const analysis = analyzeGap(candidate, business);
     const resources = recommendResourcesForGap(
       analysis.gaps,
       [...resourceMap.values()],
@@ -326,26 +378,26 @@ function overlap<T>(a: T[], b: T[]): T[] {
   return a.filter((x) => set.has(x));
 }
 
-function synthesizeTalentToStartup(t: TalentDTO, s: StartupDTO): MatchDTO {
+function synthesizeCandidateToBusiness(c: CandidateDTO, b: BusinessDTO): MatchDTO {
   // Skill / role coverage — reuse the gap engine for consistency with the
   // gap-closer's signal.
   const { analyzeGap } = requireGapModule();
-  const analysis = analyzeGap(t, s);
+  const analysis = analyzeGap(c, b);
   const totalNeeds = analysis.covered.length + analysis.gaps.length;
   const skillWeight =
     totalNeeds === 0
       ? 0.6
       : clamp01(0.45 + (analysis.covered.length / totalNeeds) * 0.5);
 
-  // Domain overlap — startup sector ∈ talent.domains?
-  const domainHit = t.domains.includes(s.sector);
+  // Domain overlap — business sector ∈ candidate.domains?
+  const domainHit = c.domains.includes(b.sector);
   const domainWeight = domainHit ? 0.9 : 0.45;
 
-  // Stage fit — startup stage ∈ talent.stagePrefs?
-  const stageHit = t.stagePrefs.includes(s.fundingStage);
+  // Stage fit — business stage ∈ candidate.stagePrefs?
+  const stageHit = c.stagePrefs.includes(b.fundingStage);
   const stageWeight = stageHit ? 0.95 : 0.4;
 
-  const sharedOrgIds = overlap(t.utahOrgIds, s.utahOrgIds);
+  const sharedOrgIds = overlap(c.utahOrgIds, b.utahOrgIds);
   const proximityBoost = sharedOrgIds.length > 0 ? 0.05 : 0;
 
   // Composite score blends the three factors, lightly boosted for shared
@@ -360,22 +412,22 @@ function synthesizeTalentToStartup(t: TalentDTO, s: StartupDTO): MatchDTO {
   }
   if (!stageHit) {
     concerns.push(
-      `${s.name} is at ${s.fundingStage}; that's outside ${t.name.split(" ")[0]}'s stated stage range.`,
+      `${b.name} is at ${b.fundingStage}; that's outside ${c.name.split(" ")[0]}'s stated stage range.`,
     );
   }
   if (!domainHit) {
     concerns.push(
-      `${s.name}'s sector (${s.sector}) isn't a domain ${t.name.split(" ")[0]} has named.`,
+      `${b.name}'s sector (${b.sector}) isn't a domain ${c.name.split(" ")[0]} has named.`,
     );
   }
 
   const reason = analysis.description;
 
   return {
-    id: `synth-${t.id}-${s.id}`,
-    subjectId: t.id,
-    candidateId: s.id,
-    candidateKind: "startup",
+    id: `synth-${c.id}-${b.id}`,
+    subjectId: c.id,
+    candidateId: b.id,
+    candidateKind: "business",
     score: composite,
     reason,
     concerns,
@@ -392,15 +444,15 @@ function synthesizeTalentToStartup(t: TalentDTO, s: StartupDTO): MatchDTO {
         label: "Domain overlap",
         weight: domainWeight,
         detail: domainHit
-          ? `${s.sector} is in ${t.name.split(" ")[0]}'s stated domains.`
-          : `${s.sector} is outside the talent's named domains.`,
+          ? `${b.sector} is in ${c.name.split(" ")[0]}'s stated domains.`
+          : `${b.sector} is outside the candidate's named domains.`,
       },
       {
         label: "Stage fit",
         weight: stageWeight,
         detail: stageHit
-          ? `${s.fundingStage} matches the talent's stage range.`
-          : `${s.fundingStage} is outside the talent's stage range.`,
+          ? `${b.fundingStage} matches the candidate's stage range.`
+          : `${b.fundingStage} is outside the candidate's stage range.`,
       },
     ],
     proximityBoost,
@@ -408,20 +460,20 @@ function synthesizeTalentToStartup(t: TalentDTO, s: StartupDTO): MatchDTO {
   };
 }
 
-function synthesizeStartupToTalent(s: StartupDTO, t: TalentDTO): MatchDTO {
-  // Mirror of the talent→startup case — reuses the same factors, switches
+function synthesizeBusinessToCandidate(b: BusinessDTO, c: CandidateDTO): MatchDTO {
+  // Mirror of the candidate→business case — reuses the same factors, switches
   // subject/candidate ids and kind so the consumer always knows who's who.
-  const synth = synthesizeTalentToStartup(t, s);
+  const synth = synthesizeCandidateToBusiness(c, b);
   return {
     ...synth,
-    id: `synth-${s.id}-${t.id}`,
-    subjectId: s.id,
-    candidateId: t.id,
-    candidateKind: "talent",
+    id: `synth-${b.id}-${c.id}`,
+    subjectId: b.id,
+    candidateId: c.id,
+    candidateKind: "candidate",
   };
 }
 
-function synthesizePeer(a: TalentDTO, b: TalentDTO): MatchDTO {
+function synthesizePeer(a: CandidateDTO, b: CandidateDTO): MatchDTO {
   // Talent ↔ talent peer match — used for "who else in Utah is doing this?"
   // No skill-fit analysis; lean on domain overlap and shared Utah affiliations.
   const sharedDomains = overlap(a.domains, b.domains);
@@ -438,7 +490,7 @@ function synthesizePeer(a: TalentDTO, b: TalentDTO): MatchDTO {
     id: `synth-${a.id}-${b.id}`,
     subjectId: a.id,
     candidateId: b.id,
-    candidateKind: "talent",
+    candidateKind: "candidate",
     score: composite,
     reason:
       sharedDomains.length > 0

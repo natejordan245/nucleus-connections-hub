@@ -1,27 +1,38 @@
 import type {
   AffinityPushDTO,
+  BusinessDTO,
+  CandidateDTO,
   InterestDTO,
   InterestState,
+  InvestorDTO,
   MatchDTO,
+  MentorDTO,
   MessageDTO,
   NotificationDTO,
   ResourceDTO,
-  StartupDTO,
-  TalentDTO,
   UtahOrg,
 } from "./types";
 
-export type VoteSide = "talent" | "startup";
+/**
+ * Which side of the candidate↔business interest handshake a vote is for.
+ * Mentor and Investor profiles do not enter this flow.
+ */
+export type VoteSide = "candidate" | "business";
 
 export interface IDataStore {
   // ── reads ──
-  listTalent(): Promise<TalentDTO[]>;
-  getTalent(id: string): Promise<TalentDTO | null>;
-  listStartups(): Promise<StartupDTO[]>;
-  getStartup(id: string): Promise<StartupDTO | null>;
+  listCandidates(): Promise<CandidateDTO[]>;
+  getCandidate(id: string): Promise<CandidateDTO | null>;
+  listBusinesses(): Promise<BusinessDTO[]>;
+  getBusiness(id: string): Promise<BusinessDTO | null>;
+  listMentors(): Promise<MentorDTO[]>;
+  getMentor(id: string): Promise<MentorDTO | null>;
+  listInvestors(): Promise<InvestorDTO[]>;
+  getInvestor(id: string): Promise<InvestorDTO | null>;
   listUtahOrgs(): Promise<UtahOrg[]>;
 
-  // matches: returns the candidates ranked for a given subject
+  // matches: returns the candidates ranked for a given subject. For
+  // mentor/investor subjects this returns [] until directional matching ships.
   matchesFor(subjectId: string): Promise<MatchDTO[]>;
 
   // On-demand match for an arbitrary (subject, candidate) pair — used when a
@@ -35,10 +46,12 @@ export interface IDataStore {
     candidateId: string;
   }): Promise<MatchDTO | null>;
 
-  // search across the three pools (simple substring match for now)
+  // search across the four pools (simple substring match for now)
   search(query: string): Promise<{
-    talent: TalentDTO[];
-    startups: StartupDTO[];
+    candidates: CandidateDTO[];
+    businesses: BusinessDTO[];
+    mentors: MentorDTO[];
+    investors: InvestorDTO[];
     resources: ResourceDTO[];
   }>;
 
@@ -48,17 +61,19 @@ export interface IDataStore {
   putResource(r: ResourceDTO): Promise<ResourceDTO>;
 
   // ── writes ──
-  putTalent(t: TalentDTO): Promise<TalentDTO>;
-  putStartup(s: StartupDTO): Promise<StartupDTO>;
+  putCandidate(c: CandidateDTO): Promise<CandidateDTO>;
+  putBusiness(b: BusinessDTO): Promise<BusinessDTO>;
+  putMentor(m: MentorDTO): Promise<MentorDTO>;
+  putInvestor(i: InvestorDTO): Promise<InvestorDTO>;
 
-  // interest handshake
+  // interest handshake — candidate ↔ business only
   vote(args: {
-    talentId: string;
-    startupId: string;
+    candidateId: string;
+    businessId: string;
     side: VoteSide;
     state: Exclude<InterestState, "pending">;
   }): Promise<{ interest: InterestDTO; mutualJustNow: boolean }>;
-  getInterest(args: { talentId: string; startupId: string }): Promise<InterestDTO | null>;
+  getInterest(args: { candidateId: string; businessId: string }): Promise<InterestDTO | null>;
   listInterests(viewerId: string): Promise<InterestDTO[]>;
 
   // notifications

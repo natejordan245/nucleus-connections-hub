@@ -5,13 +5,13 @@ import { getDataStore } from "@/lib/data";
 import { requireViewer } from "@/lib/viewer";
 
 export default async function AffinityPushPage() {
-  const { viewerId } = await requireViewer();
+  const { viewerId: _viewerId } = await requireViewer();
   const store = getDataStore();
 
-  const [pushes, allTalent, allStartups] = await Promise.all([
+  const [pushes, allCandidates, allBusinesses] = await Promise.all([
     store.listAffinityPushes(),
-    store.listTalent(),
-    store.listStartups(),
+    store.listCandidates(),
+    store.listBusinesses(),
   ]);
 
   return (
@@ -35,8 +35,8 @@ export default async function AffinityPushPage() {
         ) : (
           <ul className="mt-8 divide-y divide-warmgray-100 overflow-hidden rounded-2xl border border-warmgray-100 bg-white shadow-sm">
             {pushes.map((p) => {
-              const t = allTalent.find((t) => t.id === p.talentId);
-              const s = allStartups.find((s) => s.id === p.startupId);
+              const cand = allCandidates.find((c) => c.id === p.talentId);
+              const biz = allBusinesses.find((b) => b.id === p.startupId);
               const when = new Date(p.pushedAt).toLocaleString(undefined, {
                 month: "short",
                 day: "numeric",
@@ -50,29 +50,29 @@ export default async function AffinityPushPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-3">
                         <h3 className="font-serif text-lg font-semibold text-ink">
-                          {t?.name ?? p.talentId} ↔ {s?.name ?? p.startupId}
+                          {cand?.name ?? p.talentId} ↔ {biz?.name ?? p.startupId}
                         </h3>
                         <Pill tone={p.status === "pushed" ? "emerald" : "warmgray"}>{p.status}</Pill>
                       </div>
                       <p className="mt-1 text-xs text-warmgray-500">{when}</p>
                       <p className="mt-3 text-sm leading-relaxed text-warmgray-700">{p.reason}</p>
 
-                      {(t || s) && (
+                      {(cand || biz) && (
                         <div className="mt-3 flex flex-wrap gap-3 text-xs">
-                          {t && (
+                          {cand && (
                             <Link
-                              href={`/profile/talent/${t.id}`}
+                              href={`/profile/candidate/${cand.id}`}
                               className="font-medium text-orange-600 hover:text-orange-700"
                             >
-                              View {t.name} →
+                              View {cand.name} →
                             </Link>
                           )}
-                          {s && (
+                          {biz && (
                             <Link
-                              href={`/profile/startup/${s.id}`}
+                              href={`/profile/business/${biz.id}`}
                               className="font-medium text-orange-600 hover:text-orange-700"
                             >
-                              View {s.name} →
+                              View {biz.name} →
                             </Link>
                           )}
                         </div>

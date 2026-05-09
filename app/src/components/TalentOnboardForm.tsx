@@ -41,6 +41,9 @@ import type {
 type Props = {
   error?: string;
   createTalentAction: (formData: FormData) => void | Promise<void>;
+  /** Pre-resolved from auth metadata. The form no longer asks for these. */
+  prefilledName?: string;
+  prefilledEmail?: string;
 };
 
 type TalentFormState = {
@@ -104,8 +107,12 @@ const FIELD_LABELS: Record<ResumeSuggestionField, string> = {
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
-export function TalentOnboardForm({ error, createTalentAction }: Props) {
-  const [form, setForm] = useState<TalentFormState>(INITIAL_FORM);
+export function TalentOnboardForm({ error, createTalentAction, prefilledName, prefilledEmail }: Props) {
+  const [form, setForm] = useState<TalentFormState>(() => ({
+    ...INITIAL_FORM,
+    name: prefilledName ?? "",
+    email: prefilledEmail ?? "",
+  }));
   const [suggestions, setSuggestions] = useState<ResumeSuggestion[]>([]);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -366,8 +373,23 @@ export function TalentOnboardForm({ error, createTalentAction }: Props) {
 
       {error === "missing_required" && (
         <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          Name, email, and a short bio are required.
+          A short bio is required.
         </p>
+      )}
+
+      {(prefilledName || prefilledEmail) && (
+        <div className="mt-6 rounded-2xl border border-warmgray-100 bg-white p-4 text-sm text-warmgray-700 shadow-sm">
+          <span className="eyebrow text-warmgray-400">Onboarding as</span>
+          <p className="mt-1 font-semibold text-ink">
+            {prefilledName || "you"}
+            {prefilledEmail && (
+              <span className="ml-2 font-normal text-warmgray-500">· {prefilledEmail}</span>
+            )}
+          </p>
+          <p className="mt-1 text-xs text-warmgray-500">
+            We pulled these from your account. Change them in settings.
+          </p>
+        </div>
       )}
 
       <form
@@ -509,33 +531,7 @@ export function TalentOnboardForm({ error, createTalentAction }: Props) {
           </section>
         )}
 
-        <Field id="name" name="name" label="Name" required>
-          <Input
-            id="name"
-            name="name"
-            required
-            placeholder="Sarah Chen"
-            value={form.name}
-            onChange={(e) => {
-              setTouched((prev) => ({ ...prev, name: true }));
-              setForm((prev) => ({ ...prev, name: e.currentTarget.value }));
-            }}
-          />
-        </Field>
-        <Field id="email" name="email" label="Email" required>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            required
-            placeholder="you@example.com"
-            value={form.email}
-            onChange={(e) => {
-              setTouched((prev) => ({ ...prev, email: true }));
-              setForm((prev) => ({ ...prev, email: e.currentTarget.value }));
-            }}
-          />
-        </Field>
+        {/* Name + email come from auth metadata — pulled by the server action. */}
         <Field id="headline" name="headline" label="Headline" hint="One line — your professional summary.">
           <Input
             id="headline"

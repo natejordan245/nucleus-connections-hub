@@ -1,0 +1,133 @@
+import Link from "next/link";
+import { ChipGroup } from "@/components/ChipGroup";
+import { Field, Input, Textarea } from "@/components/FormField";
+import { PhotoUpload } from "@/components/PhotoUpload";
+import {
+  SECTOR_LABELS,
+  SECTORS,
+  STAGE_LABELS,
+  STAGES,
+} from "@/lib/data/enum-labels";
+import { getViewer } from "@/lib/session";
+import { createInvestor, skipInvestor } from "../actions";
+
+export default async function OnboardInvestorPage() {
+  const viewer = await getViewer();
+  const prefilledName =
+    viewer.kind === "demo"
+      ? viewer.persona.name
+      : viewer.kind === "live"
+        ? viewer.name ?? viewer.email?.split("@")[0]
+        : undefined;
+  const prefilledEmail =
+    viewer.kind === "demo"
+      ? viewer.persona.email
+      : viewer.kind === "live"
+        ? viewer.email ?? undefined
+        : undefined;
+
+  const sectorOpts = SECTORS.map((s) => ({ value: s, label: SECTOR_LABELS[s] }));
+  const stageOpts = STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }));
+
+  return (
+    <main className="mx-auto w-full max-w-2xl px-8 py-10">
+      <Link href="/onboard" className="text-sm font-medium text-warmgray-600 hover:text-ink">
+        ← Back
+      </Link>
+
+      <span className="eyebrow mt-6 block text-orange-500">VC profile</span>
+      <h1 className="mt-3 font-serif text-3xl font-semibold leading-tight text-ink">
+        Tell us how you invest.
+      </h1>
+      <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
+        All fields are optional. You can fill these in later — or skip straight to
+        browsing Utah businesses.
+      </p>
+
+      {(prefilledName || prefilledEmail) && (
+        <div className="mt-6 rounded-2xl border border-warmgray-100 bg-white p-4 text-sm text-warmgray-700 shadow-sm">
+          <span className="eyebrow text-warmgray-400">Onboarding as</span>
+          <p className="mt-1 font-semibold text-ink">
+            {prefilledName || "you"}
+            {prefilledEmail && (
+              <span className="ml-2 font-normal text-warmgray-500">· {prefilledEmail}</span>
+            )}
+          </p>
+        </div>
+      )}
+
+      <form
+        action={createInvestor}
+        className="mt-6 space-y-6 rounded-2xl border border-warmgray-100 bg-white p-6 shadow-sm"
+      >
+        <Field id="photoUrl" name="photoUrl" label="Profile / fund photo" hint="Optional.">
+          <PhotoUpload name="photoUrl" label="Upload photo" fallbackName={prefilledName ?? "VC"} />
+        </Field>
+
+        <Field id="fundName" name="fundName" label="Fund name" hint="Optional. Leave blank for solo angels.">
+          <Input id="fundName" name="fundName" placeholder="Summit Peak Ventures" />
+        </Field>
+
+        <Field id="headline" name="headline" label="Headline">
+          <Input
+            id="headline"
+            name="headline"
+            placeholder="Seed-stage Mountain West generalist"
+          />
+        </Field>
+
+        <Field id="bio" name="bio" label="Bio" hint="Optional.">
+          <Textarea
+            id="bio"
+            name="bio"
+            rows={3}
+            placeholder="Stage, sectors, the kinds of founders you back."
+          />
+        </Field>
+
+        <Field id="checkSize" name="checkSize" label="Check size (USD)">
+          <div className="grid grid-cols-2 gap-3">
+            <Input id="checkSizeMin" name="checkSizeMin" type="text" placeholder="Min e.g. 250000" />
+            <Input id="checkSizeMax" name="checkSizeMax" type="text" placeholder="Max e.g. 1500000" />
+          </div>
+        </Field>
+
+        <Field id="sectorsInvested" name="sectorsInvested" label="Sectors I invest in" hint="Pick all that apply.">
+          <ChipGroup name="sectorsInvested" options={sectorOpts} />
+        </Field>
+
+        <Field id="stagePrefs" name="stagePrefs" label="Stages I invest at" hint="Pick all that apply.">
+          <ChipGroup name="stagePrefs" options={stageOpts} defaultSelected={["seed"]} />
+        </Field>
+
+        <Field id="location" name="location" label="Location">
+          <Input id="location" name="location" defaultValue="Salt Lake City, UT" />
+        </Field>
+
+        <Field id="websiteUrl" name="websiteUrl" label="Website" hint="Optional.">
+          <Input id="websiteUrl" name="websiteUrl" type="url" placeholder="https://…" />
+        </Field>
+
+        <Field id="linkedinUrl" name="linkedinUrl" label="LinkedIn" hint="Optional.">
+          <Input id="linkedinUrl" name="linkedinUrl" type="url" placeholder="https://linkedin.com/in/…" />
+        </Field>
+
+        <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
+          <button
+            type="submit"
+            className="inline-flex h-10 w-full items-center justify-center rounded-full bg-ink px-5 text-sm font-semibold text-white transition hover:bg-warmgray-800"
+          >
+            Save profile
+          </button>
+          <button
+            type="submit"
+            formAction={skipInvestor}
+            className="inline-flex h-10 w-full items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(37,99,235,0.55)] transition hover:bg-orange-600"
+          >
+            Skip → take me to Businesses
+          </button>
+        </div>
+      </form>
+    </main>
+  );
+}

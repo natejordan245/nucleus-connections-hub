@@ -1,14 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   AffinityPushDTO,
+  BusinessDTO,
+  CandidateDTO,
   InterestDTO,
   InterestState,
+  InvestorDTO,
   MatchDTO,
+  MentorDTO,
   MessageDTO,
   NotificationDTO,
+  ProfileKind,
   ResourceDTO,
-  StartupDTO,
-  TalentDTO,
   UtahOrg,
 } from "./types";
 import type { IDataStore, VoteSide } from "./store";
@@ -25,11 +28,12 @@ import { gatePair, type LLMGateVerdict } from "@/lib/match/llm-gate";
 
 /**
  * Live-mode data store. Reads/writes the `profiles` table (see migration
- * 20260508174314_profiles.sql). Identity comes from `auth.users.id`; profile
- * rows are 1:1 with auth users.
+ * 20260508174314_profiles.sql, retitled by 20260509000000_four_kind_pivot.sql).
+ * Identity comes from `auth.users.id`; profile rows are 1:1 with auth users.
  *
- * Match / interest / notification / affinity-push surfaces are not yet wired
- * for live mode — those throw until the corresponding migrations land.
+ * Match / interest / notification / affinity-push surfaces work for the
+ * candidate↔business pair only; mentor and investor profiles store and
+ * display but do not yet enter the matching flow.
  */
 export class SupabaseDataStore implements IDataStore {
   private clientPromise: Promise<SupabaseClient> | null = null;
@@ -51,8 +55,8 @@ export class SupabaseDataStore implements IDataStore {
 
   // ── profiles → DTO mapping ────────────────────────────────────────────────
 
-  private rowToTalent(row: ProfileRow): TalentDTO {
-    const d = (row.data as Partial<TalentDTO>) ?? {};
+  private rowToCandidate(row: ProfileRow): CandidateDTO {
+    const d = (row.data as Partial<CandidateDTO>) ?? {};
     return {
       id: row.id,
       name: row.name,
@@ -67,7 +71,7 @@ export class SupabaseDataStore implements IDataStore {
       availability: d.availability ?? "full-time",
       compensation: d.compensation ?? ["cash"],
       stagePrefs: d.stagePrefs ?? ["seed"],
-      riskTolerance: (d.riskTolerance ?? 3) as TalentDTO["riskTolerance"],
+      riskTolerance: (d.riskTolerance ?? 3) as CandidateDTO["riskTolerance"],
       location: row.location ?? d.location ?? "Salt Lake City, UT",
       utahOrgIds: d.utahOrgIds ?? [],
       networks: d.networks ?? ["operator"],
@@ -80,8 +84,8 @@ export class SupabaseDataStore implements IDataStore {
     };
   }
 
-  private rowToStartup(row: ProfileRow): StartupDTO {
-    const d = (row.data as Partial<StartupDTO>) ?? {};
+  private rowToBusiness(row: ProfileRow): BusinessDTO {
+    const d = (row.data as Partial<BusinessDTO>) ?? {};
     return {
       id: row.id,
       name: row.name,
@@ -100,15 +104,110 @@ export class SupabaseDataStore implements IDataStore {
       linkedinUrl: d.linkedinUrl,
       xUrl: d.xUrl,
       websiteUrl: d.websiteUrl,
+      bioExtract: d.bioExtract,
       createdAt: row.created_at,
     };
   }
 
-  private talentToRow(t: TalentDTO): ProfileRowInsert {
-    const { id, name, email, headline, bio, location, photoUrl, createdAt: _c, ...rest } = t;
+  private rowToMentor(row: ProfileRow): MentorDTO {
+    const d = (row.data as Partial<MentorDTO>) ?? {};
+    return {
+      id: row.id,
+      name: row.name,
+      email: row.email ?? "",
+      headline: row.headline ?? "",
+      bio: row.bio ?? "",
+      areasAdvised: d.areasAdvised ?? [],
+      hoursPerMonth: typeof d.hoursPerMonth === "number" ? d.hoursPerMonth : 4,
+      boardSeatOpen: d.boardSeatOpen ?? false,
+      compPreference: d.compPreference ?? ["mentor"],
+      sectorsOfInterest: d.sectorsOfInterest ?? [],
+      location: row.location ?? d.location ?? "Salt Lake City, UT",
+      utahOrgIds: d.utahOrgIds ?? [],
+      networks: d.networks ?? ["mentor"],
+      photoUrl: row.photo_url ?? d.photoUrl,
+      linkedinUrl: d.linkedinUrl,
+      xUrl: d.xUrl,
+      websiteUrl: d.websiteUrl,
+      bioExtract: d.bioExtract,
+      createdAt: row.created_at,
+    };
+  }
+
+  private rowToInvestor(row: ProfileRow): InvestorDTO {
+    const d = (row.data as Partial<InvestorDTO>) ?? {};
+    return {
+      id: row.id,
+      name: row.name,
+      email: row.email ?? "",
+      fundName: d.fundName,
+      headline: row.headline ?? "",
+      bio: row.bio ?? "",
+      checkSizeMin: d.checkSizeMin,
+      checkSizeMax: d.checkSizeMax,
+      sectorsInvested: d.sectorsInvested ?? [],
+      stagePrefs: d.stagePrefs ?? ["seed"],
+      location: row.location ?? d.location ?? "Salt Lake City, UT",
+      utahOrgIds: d.utahOrgIds ?? [],
+      networks: d.networks ?? ["venture"],
+      photoUrl: row.photo_url ?? d.photoUrl,
+      linkedinUrl: d.linkedinUrl,
+      xUrl: d.xUrl,
+      websiteUrl: d.websiteUrl,
+      createdAt: row.created_at,
+    };
+  }
+
+  private candidateToRow(c: CandidateDTO): ProfileRowInsert {
+    const { id, name, email, headline, bio, location, photoUrl, createdAt: _c, ...rest } = c;
     return {
       id,
-      kind: "talent",
+      kind: "candidate",
+      name,
+      email,
+      headline,
+      bio,
+      location,
+      photo_url: photoUrl ?? null,
+      data: rest,
+    };
+  }
+
+  private businessToRow(b: BusinessDTO): ProfileRowInsert {
+    const { id, name, oneLiner, description, location, logoUrl, createdAt: _c, ...rest } = b;
+    return {
+      id,
+      kind: "business",
+      name,
+      email: null,
+      headline: oneLiner,
+      bio: description,
+      location,
+      photo_url: logoUrl ?? null,
+      data: rest,
+    };
+  }
+
+  private mentorToRow(m: MentorDTO): ProfileRowInsert {
+    const { id, name, email, headline, bio, location, photoUrl, createdAt: _c, ...rest } = m;
+    return {
+      id,
+      kind: "mentor",
+      name,
+      email,
+      headline,
+      bio,
+      location,
+      photo_url: photoUrl ?? null,
+      data: rest,
+    };
+  }
+
+  private investorToRow(i: InvestorDTO): ProfileRowInsert {
+    const { id, name, email, headline, bio, location, photoUrl, createdAt: _c, ...rest } = i;
+    return {
+      id,
+      kind: "investor",
       name,
       email,
       headline,
@@ -134,67 +233,98 @@ export class SupabaseDataStore implements IDataStore {
     };
   }
 
-  private startupToRow(s: StartupDTO): ProfileRowInsert {
-    const { id, name, oneLiner, description, location, logoUrl, createdAt: _c, ...rest } = s;
-    return {
-      id,
-      kind: "startup",
-      name,
-      email: null,
-      headline: oneLiner,
-      bio: description,
-      location,
-      photo_url: logoUrl ?? null,
-      data: rest,
-    };
-  }
-
   // ── reads ────────────────────────────────────────────────────────────────
 
-  async listTalent(): Promise<TalentDTO[]> {
+  async listCandidates(): Promise<CandidateDTO[]> {
     const sb = await this.getClient();
     const { data, error } = await sb
       .from("profiles")
       .select("*")
-      .eq("kind", "talent")
+      .eq("kind", "candidate")
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return (data ?? []).map((r) => this.rowToTalent(r as ProfileRow));
+    return (data ?? []).map((r) => this.rowToCandidate(r as ProfileRow));
   }
 
-  async getTalent(id: string): Promise<TalentDTO | null> {
+  async getCandidate(id: string): Promise<CandidateDTO | null> {
     const sb = await this.getClient();
     const { data, error } = await sb
       .from("profiles")
       .select("*")
       .eq("id", id)
-      .eq("kind", "talent")
+      .eq("kind", "candidate")
       .maybeSingle();
     if (error) throw error;
-    return data ? this.rowToTalent(data as ProfileRow) : null;
+    return data ? this.rowToCandidate(data as ProfileRow) : null;
   }
 
-  async listStartups(): Promise<StartupDTO[]> {
+  async listBusinesses(): Promise<BusinessDTO[]> {
     const sb = await this.getClient();
     const { data, error } = await sb
       .from("profiles")
       .select("*")
-      .eq("kind", "startup")
+      .eq("kind", "business")
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return (data ?? []).map((r) => this.rowToStartup(r as ProfileRow));
+    return (data ?? []).map((r) => this.rowToBusiness(r as ProfileRow));
   }
 
-  async getStartup(id: string): Promise<StartupDTO | null> {
+  async getBusiness(id: string): Promise<BusinessDTO | null> {
     const sb = await this.getClient();
     const { data, error } = await sb
       .from("profiles")
       .select("*")
       .eq("id", id)
-      .eq("kind", "startup")
+      .eq("kind", "business")
       .maybeSingle();
     if (error) throw error;
-    return data ? this.rowToStartup(data as ProfileRow) : null;
+    return data ? this.rowToBusiness(data as ProfileRow) : null;
+  }
+
+  async listMentors(): Promise<MentorDTO[]> {
+    const sb = await this.getClient();
+    const { data, error } = await sb
+      .from("profiles")
+      .select("*")
+      .eq("kind", "mentor")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((r) => this.rowToMentor(r as ProfileRow));
+  }
+
+  async getMentor(id: string): Promise<MentorDTO | null> {
+    const sb = await this.getClient();
+    const { data, error } = await sb
+      .from("profiles")
+      .select("*")
+      .eq("id", id)
+      .eq("kind", "mentor")
+      .maybeSingle();
+    if (error) throw error;
+    return data ? this.rowToMentor(data as ProfileRow) : null;
+  }
+
+  async listInvestors(): Promise<InvestorDTO[]> {
+    const sb = await this.getClient();
+    const { data, error } = await sb
+      .from("profiles")
+      .select("*")
+      .eq("kind", "investor")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((r) => this.rowToInvestor(r as ProfileRow));
+  }
+
+  async getInvestor(id: string): Promise<InvestorDTO | null> {
+    const sb = await this.getClient();
+    const { data, error } = await sb
+      .from("profiles")
+      .select("*")
+      .eq("id", id)
+      .eq("kind", "investor")
+      .maybeSingle();
+    if (error) throw error;
+    return data ? this.rowToInvestor(data as ProfileRow) : null;
   }
 
   async listUtahOrgs(): Promise<UtahOrg[]> {
@@ -207,12 +337,14 @@ export class SupabaseDataStore implements IDataStore {
     const sb = await this.getClient();
     const q = query.trim();
     if (!q) {
-      const [talent, startups, resources] = await Promise.all([
-        this.listTalent(),
-        this.listStartups(),
+      const [candidates, businesses, mentors, investors, resources] = await Promise.all([
+        this.listCandidates(),
+        this.listBusinesses(),
+        this.listMentors(),
+        this.listInvestors(),
         this.listResources(),
       ]);
-      return { talent, startups, resources };
+      return { candidates, businesses, mentors, investors, resources };
     }
 
     // Embed the query and rank candidates by cosine similarity.
@@ -264,12 +396,18 @@ export class SupabaseDataStore implements IDataStore {
         .sort((a, b) => b.score - a.score);
 
       return {
-        talent: rankedProfiles
-          .filter((x) => x.row.kind === "talent")
-          .map((x) => this.rowToTalent(x.row)),
-        startups: rankedProfiles
-          .filter((x) => x.row.kind === "startup")
-          .map((x) => this.rowToStartup(x.row)),
+        candidates: rankedProfiles
+          .filter((x) => x.row.kind === "candidate")
+          .map((x) => this.rowToCandidate(x.row)),
+        businesses: rankedProfiles
+          .filter((x) => x.row.kind === "business")
+          .map((x) => this.rowToBusiness(x.row)),
+        mentors: rankedProfiles
+          .filter((x) => x.row.kind === "mentor")
+          .map((x) => this.rowToMentor(x.row)),
+        investors: rankedProfiles
+          .filter((x) => x.row.kind === "investor")
+          .map((x) => this.rowToInvestor(x.row)),
         resources: rankedResources.map((x) => this.rowToResource(x.row)),
       };
     }
@@ -305,8 +443,10 @@ export class SupabaseDataStore implements IDataStore {
 
     const rows = (profileRows ?? []) as ProfileRow[];
     return {
-      talent: rows.filter((r) => r.kind === "talent").map((r) => this.rowToTalent(r)),
-      startups: rows.filter((r) => r.kind === "startup").map((r) => this.rowToStartup(r)),
+      candidates: rows.filter((r) => r.kind === "candidate").map((r) => this.rowToCandidate(r)),
+      businesses: rows.filter((r) => r.kind === "business").map((r) => this.rowToBusiness(r)),
+      mentors: rows.filter((r) => r.kind === "mentor").map((r) => this.rowToMentor(r)),
+      investors: rows.filter((r) => r.kind === "investor").map((r) => this.rowToInvestor(r)),
       resources: ((resourceRows ?? []) as ResourceRow[]).map((r) => this.rowToResource(r)),
     };
   }
@@ -361,11 +501,11 @@ export class SupabaseDataStore implements IDataStore {
 
   // ── writes ───────────────────────────────────────────────────────────────
 
-  async putTalent(t: TalentDTO): Promise<TalentDTO> {
+  async putCandidate(c: CandidateDTO): Promise<CandidateDTO> {
     const sb = await this.getClient();
-    const row = this.talentToRow(t);
-    const profileText = textForTalentProfile(t);
-    const wantsText = textForTalentWants(t);
+    const row = this.candidateToRow(c);
+    const profileText = textForTalentProfile(c);
+    const wantsText = textForTalentWants(c);
     const [profileVec, wantsVec] = await Promise.all([
       embed(profileText),
       embed(wantsText),
@@ -383,14 +523,14 @@ export class SupabaseDataStore implements IDataStore {
       .select("*")
       .single();
     if (error) throw error;
-    return this.rowToTalent(data as ProfileRow);
+    return this.rowToCandidate(data as ProfileRow);
   }
 
-  async putStartup(s: StartupDTO): Promise<StartupDTO> {
+  async putBusiness(b: BusinessDTO): Promise<BusinessDTO> {
     const sb = await this.getClient();
-    const row = this.startupToRow(s);
-    const profileText = textForStartupProfile(s);
-    const wantsText = textForStartupWants(s);
+    const row = this.businessToRow(b);
+    const profileText = textForStartupProfile(b);
+    const wantsText = textForStartupWants(b);
     const [profileVec, wantsVec] = await Promise.all([
       embed(profileText),
       embed(wantsText),
@@ -408,18 +548,54 @@ export class SupabaseDataStore implements IDataStore {
       .select("*")
       .single();
     if (error) throw error;
-    return this.rowToStartup(data as ProfileRow);
+    return this.rowToBusiness(data as ProfileRow);
+  }
+
+  async putMentor(m: MentorDTO): Promise<MentorDTO> {
+    const sb = await this.getClient();
+    const row = this.mentorToRow(m);
+    // Mentors aren't yet matched, but we still embed the bio for free-text
+    // search to surface them in /search results.
+    const profileText = `${m.headline}\n\n${m.bio}\n\nAdvises: ${m.areasAdvised.join(", ")}\nNetworks: ${m.networks.join(", ")}`;
+    const profileVec = await embed(profileText);
+    const payload = {
+      ...row,
+      embedding_text: profileText,
+      embedding: profileVec ? toVectorLiteral(profileVec) : null,
+      embedding_wants_text: null,
+      embedding_wants: null,
+    };
+    const { data, error } = await sb
+      .from("profiles")
+      .upsert(payload, { onConflict: "id" })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return this.rowToMentor(data as ProfileRow);
+  }
+
+  async putInvestor(i: InvestorDTO): Promise<InvestorDTO> {
+    const sb = await this.getClient();
+    const row = this.investorToRow(i);
+    const profileText = `${i.fundName ? `${i.fundName} — ` : ""}${i.headline}\n\n${i.bio}\n\nInvests in: ${i.sectorsInvested.join(", ")}\nStages: ${i.stagePrefs.join(", ")}`;
+    const profileVec = await embed(profileText);
+    const payload = {
+      ...row,
+      embedding_text: profileText,
+      embedding: profileVec ? toVectorLiteral(profileVec) : null,
+      embedding_wants_text: null,
+      embedding_wants: null,
+    };
+    const { data, error } = await sb
+      .from("profiles")
+      .upsert(payload, { onConflict: "id" })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return this.rowToInvestor(data as ProfileRow);
   }
 
   // ── matches / interest / notifications / affinity ────────────────────────
-  // Not yet implemented for live mode. Pages calling these will surface the
-  // error to the user; demo mode is the working path until the migrations land.
-
-  private notImplemented(op: string): never {
-    throw new Error(
-      `SupabaseDataStore.${op}: not yet wired for live mode. Run in demo mode (NEXT_PUBLIC_APP_MODE=demo) or add the missing migration.`,
-    );
-  }
 
   // On-demand single-pair match. Reads both profile rows, runs the LLM gate
   // (which caches per-pair in `match_summaries`, so repeat calls are free),
@@ -498,13 +674,16 @@ export class SupabaseDataStore implements IDataStore {
     if (viewerErr || !viewerRow) return [];
     const viewer = viewerRow as ProfileRow;
 
+    // Mentor / Investor profiles do not yet enter the matching flow.
+    if (viewer.kind !== "candidate" && viewer.kind !== "business") return [];
+
     // Need both embeddings to do bidirectional matching.
     const viewerProfile = parseVector(viewer.embedding);
     const viewerWants = parseVector(viewer.embedding_wants);
     if (!viewerProfile || !viewerWants) return [];
 
-    const oppositeKind: "talent" | "startup" =
-      viewer.kind === "talent" ? "startup" : "talent";
+    const oppositeKind: ProfileKind =
+      viewer.kind === "candidate" ? "business" : "candidate";
 
     const { data: candRows, error: candErr } = await sb
       .from("profiles")
@@ -690,31 +869,33 @@ export class SupabaseDataStore implements IDataStore {
       sharedOrgIds: [],
     };
   }
-  // ── interest handshake ────────────────────────────────────────────────────
-  async vote(args: { talentId: string; startupId: string; side: VoteSide; state: "interested" | "pass" }) {
-    const sb = await this.getClient();
-    const { talentId, startupId, side, state } = args;
 
-    // Read existing row (if any) so we can detect a mutual flip on this update.
+  // ── interest handshake ────────────────────────────────────────────────────
+  // The DB columns `talent_id` / `startup_id` are kept for compat; semantically
+  // they hold the candidate-side and business-side ids of the binary handshake.
+  async vote(args: { candidateId: string; businessId: string; side: VoteSide; state: "interested" | "pass" }) {
+    const sb = await this.getClient();
+    const { candidateId, businessId, side, state } = args;
+
     const { data: prior } = await sb
       .from("interests")
       .select("*")
-      .eq("talent_id", talentId)
-      .eq("startup_id", startupId)
+      .eq("talent_id", candidateId)
+      .eq("startup_id", businessId)
       .maybeSingle();
 
     const priorTalent = (prior?.talent_state as InterestState | undefined) ?? "pending";
     const priorStartup = (prior?.startup_state as InterestState | undefined) ?? "pending";
-    const newTalent = side === "talent" ? state : priorTalent;
-    const newStartup = side === "startup" ? state : priorStartup;
+    const newTalent = side === "candidate" ? state : priorTalent;
+    const newStartup = side === "business" ? state : priorStartup;
     const wasMutual = !!prior?.mutual_at;
     const isMutual = newTalent === "interested" && newStartup === "interested";
     const mutualJustNow = isMutual && !wasMutual;
     const mutualAt = isMutual ? prior?.mutual_at ?? new Date().toISOString() : null;
 
     const payload = {
-      talent_id: talentId,
-      startup_id: startupId,
+      talent_id: candidateId,
+      startup_id: businessId,
       talent_state: newTalent,
       startup_state: newStartup,
       mutual_at: mutualAt,
@@ -730,13 +911,13 @@ export class SupabaseDataStore implements IDataStore {
     return { interest, mutualJustNow };
   }
 
-  async getInterest({ talentId, startupId }: { talentId: string; startupId: string }): Promise<InterestDTO | null> {
+  async getInterest({ candidateId, businessId }: { candidateId: string; businessId: string }): Promise<InterestDTO | null> {
     const sb = await this.getClient();
     const { data, error } = await sb
       .from("interests")
       .select("*")
-      .eq("talent_id", talentId)
-      .eq("startup_id", startupId)
+      .eq("talent_id", candidateId)
+      .eq("startup_id", businessId)
       .maybeSingle();
     if (error) throw error;
     return data ? this.rowToInterest(data as InterestRow) : null;
@@ -882,10 +1063,6 @@ export class SupabaseDataStore implements IDataStore {
   }
 
   // ── gap-closing resource recommender ──────────────────────────────────────
-  // Pulls the cached LLM verdict for the pair, builds a "gap text" out of the
-  // weak/miss factors + concerns, embeds it, and cosine-matches against every
-  // embedded resource. Falls back to a structural gap text if no LLM verdict
-  // is cached.
   async recommendGapResources({
     subjectId,
     candidateId,
@@ -897,8 +1074,6 @@ export class SupabaseDataStore implements IDataStore {
   }): Promise<{ gapText: string; resources: ResourceDTO[] }> {
     const sb = await this.getClient();
 
-    // 1. Find an LLM verdict — try (subject, candidate) first, then reverse
-    // (the cache is direction-specific but both sides give us the gap signal).
     const { data: verdictRows } = await sb
       .from("match_summaries")
       .select("subject_id, candidate_id, factors, concerns")
@@ -909,9 +1084,6 @@ export class SupabaseDataStore implements IDataStore {
       (r) => (r as { subject_id: string }).subject_id === subjectId,
     ) ?? verdictRows?.[0];
 
-    // 2. Build the gap text. The LLM gave us per-factor verdicts (strong / ok /
-    // weak / miss) plus short concern strings — the weak/miss factors and the
-    // concerns are exactly the gap signal we want to embed.
     const gapText = await this.buildGapText(
       sb,
       subjectId,
@@ -925,7 +1097,6 @@ export class SupabaseDataStore implements IDataStore {
     );
     if (!gapText) return { gapText: "", resources: [] };
 
-    // 3. Embed + cosine-rank resources.
     const queryVec = await embed(gapText);
     if (!queryVec) return { gapText, resources: [] };
 
@@ -959,8 +1130,6 @@ export class SupabaseDataStore implements IDataStore {
       concerns?: string[];
     },
   ): Promise<string> {
-    // Preferred path: LLM verdict in cache. Take the weak/miss factor details
-    // and the concerns — they describe the gap in natural language.
     if (verdict?.factors?.length || verdict?.concerns?.length) {
       const weak = (verdict.factors ?? [])
         .filter((f) => f.verdict === "weak" || f.verdict === "miss")
@@ -975,8 +1144,6 @@ export class SupabaseDataStore implements IDataStore {
       }
     }
 
-    // Fallback: no LLM cache yet. Pull both rows and synthesize a structural
-    // gap text from raw embedding_text fields. Less precise, still useful.
     const { data: rows } = await sb
       .from("profiles")
       .select("id, kind, name, embedding_wants_text, embedding_text")
@@ -1016,8 +1183,6 @@ export class SupabaseDataStore implements IDataStore {
   }
 
   // ── admin lookup ──────────────────────────────────────────────────────────
-  // Public so the API layer can fan out admin notifications without reaching
-  // into internals. Resolves ADMIN_EMAILS to profile ids.
   async resolveAdminUserIds(): Promise<string[]> {
     const raw = process.env.ADMIN_EMAILS ?? "";
     const emails = raw
@@ -1111,42 +1276,48 @@ function clamp01(n: number): number {
 // ── hard filters ────────────────────────────────────────────────────────────
 // Cheap predicates that drop pairs the embedding can't possibly fix. Run
 // before the cosine compute so we don't burn cycles on obvious mismatches.
+// Currently only applies to candidate↔business pairs.
 
 function passesHardFilters(viewer: ProfileRow, cand: ProfileRow): boolean {
-  const talent = viewer.kind === "talent" ? viewer : cand;
-  const startup = viewer.kind === "startup" ? viewer : cand;
-  const t = (talent.data ?? {}) as {
+  // Skip hard filters for any pair touching mentor/investor — those kinds
+  // don't enter matching yet, but defensively return true if they show up.
+  if (viewer.kind === "mentor" || viewer.kind === "investor") return true;
+  if (cand.kind === "mentor" || cand.kind === "investor") return true;
+
+  const candidate = viewer.kind === "candidate" ? viewer : cand;
+  const business = viewer.kind === "business" ? viewer : cand;
+  const c = (candidate.data ?? {}) as {
     stagePrefs?: string[];
     availability?: string;
     networks?: string[];
   };
-  const s = (startup.data ?? {}) as {
+  const b = (business.data ?? {}) as {
     fundingStage?: string;
     needs?: string[];
     networksWanted?: string[];
   };
 
-  // Stage overlap — talent's preferred stages must include the startup's stage.
-  if (t.stagePrefs?.length && s.fundingStage) {
-    if (!t.stagePrefs.includes(s.fundingStage)) return false;
+  // Stage overlap — candidate's preferred stages must include the business's stage.
+  if (c.stagePrefs?.length && b.fundingStage) {
+    if (!c.stagePrefs.includes(b.fundingStage)) return false;
   }
 
-  // Networks overlap — talent's network must intersect the startup's wanted set.
-  if (t.networks?.length && s.networksWanted?.length) {
-    const overlap = t.networks.some((n) => s.networksWanted!.includes(n));
+  // Networks overlap — candidate's network must intersect the business's wanted set.
+  if (c.networks?.length && b.networksWanted?.length) {
+    const overlap = c.networks.some((n) => b.networksWanted!.includes(n));
     if (!overlap) return false;
   }
 
   // Availability ↔ needs alignment.
-  // - Full-time talent only matches startups with FTE-style needs.
-  // - Advisory talent only matches startups asking for advisors / mentors.
-  if (t.availability === "advisory") {
-    const wantsAdvisors = (s.networksWanted ?? []).some((n) =>
+  // - Full-time candidate only matches businesses with FTE-style needs.
+  // - Advisory candidate only matches businesses asking for advisors / mentors.
+  if (c.availability === "advisory") {
+    const wantsAdvisors = (b.networksWanted ?? []).some((n) =>
       ["mentor", "sme-advisory", "venture"].includes(n),
     );
     if (!wantsAdvisors) return false;
-  } else if (t.availability === "full-time" || t.availability === "part-time") {
-    const wantsHires = (s.needs ?? []).length > 0;
+  } else if (c.availability === "full-time" || c.availability === "part-time") {
+    const wantsHires = (b.needs ?? []).length > 0;
     if (!wantsHires) return false;
   }
 
@@ -1157,7 +1328,7 @@ function passesHardFilters(viewer: ProfileRow, cand: ProfileRow): boolean {
 
 type ProfileRow = {
   id: string;
-  kind: "talent" | "startup";
+  kind: ProfileKind;
   name: string;
   email: string | null;
   headline: string | null;
@@ -1175,7 +1346,7 @@ type ProfileRow = {
 
 type ProfileRowInsert = {
   id: string;
-  kind: "talent" | "startup";
+  kind: ProfileKind;
   name: string;
   email: string | null;
   headline: string | null;

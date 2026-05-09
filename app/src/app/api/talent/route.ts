@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
 import { getDataStore } from "@/lib/data";
-import type { TalentDTO } from "@/lib/data";
+import type { CandidateDTO } from "@/lib/data";
+
+// Legacy alias for /api/candidate. Returns `{ talent }` / `{ candidate }`
+// either way so existing callers keep working post-rename.
 
 export async function GET() {
   const store = getDataStore();
-  const talent = await store.listTalent();
-  return NextResponse.json({ talent });
+  const candidates = await store.listCandidates();
+  return NextResponse.json({ candidates, talent: candidates });
 }
 
 export async function POST(req: Request) {
-  const body = (await req.json()) as Partial<TalentDTO>;
+  const body = (await req.json()) as Partial<CandidateDTO>;
   if (!body.id || !body.name || !body.email || !body.bio) {
     return NextResponse.json(
       { error: "id, name, email, bio are required" },
@@ -17,11 +20,11 @@ export async function POST(req: Request) {
     );
   }
   const store = getDataStore();
-  const created = await store.putTalent(fillTalent(body));
-  return NextResponse.json({ talent: created }, { status: 201 });
+  const created = await store.putCandidate(fillCandidate(body));
+  return NextResponse.json({ candidate: created, talent: created }, { status: 201 });
 }
 
-function fillTalent(p: Partial<TalentDTO>): TalentDTO {
+function fillCandidate(p: Partial<CandidateDTO>): CandidateDTO {
   return {
     id: p.id!,
     name: p.name!,

@@ -1,15 +1,6 @@
-import { TalentOnboardForm } from "@/components/TalentOnboardForm";
-import { createTalent } from "../actions";
+import { permanentRedirect } from "next/navigation";
 
-export default async function OnboardTalentPage({
-  searchParams,
-}: {
-  searchParams?: { error?: string };
-}) {
-  return (
-    <TalentOnboardForm
-      error={searchParams?.error}
-      createTalentAction={createTalent}
-    />
-  );
+/** Legacy redirect: `/onboard/talent` → `/onboard/candidate`. */
+export default function LegacyOnboardTalentRedirect() {
+  permanentRedirect("/onboard/candidate");
 }
