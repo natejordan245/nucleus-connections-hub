@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { DelicateArch } from "@/components/DelicateArch";
-import { ModeBadge } from "@/components/ModeBadge";
 import { getAppMode } from "@/lib/mode";
 import { getViewer } from "@/lib/session";
 
@@ -21,7 +20,6 @@ export default async function LandingPage() {
           </span>
         </div>
         <div className="flex items-center gap-4">
-          <ModeBadge />
           {signedIn ? (
             <Link
               href="/dashboard"
