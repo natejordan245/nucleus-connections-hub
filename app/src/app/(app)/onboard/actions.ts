@@ -19,17 +19,19 @@ import {
 import { getViewer } from "@/lib/session";
 import type {
   Availability,
+  BusinessDTO,
+  CandidateDTO,
   Compensation,
   FundingStatus,
+  InvestorDTO,
+  MentorDTO,
   Network,
   Origin,
+  ResumeExtractMeta,
   Sector,
   Stage,
-  ResumeExtractMeta,
-  StartupDTO,
   StartupNeed,
   TalentCategory,
-  TalentDTO,
 } from "@/lib/data/types";
 
 const ONE_DAY = 60 * 60 * 24;
@@ -65,11 +67,11 @@ function pickOne<T extends string>(value: string, allowed: readonly T[], fallbac
   return (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
 }
 
-function clampRisk(v: string): TalentDTO["riskTolerance"] {
+function clampRisk(v: string): CandidateDTO["riskTolerance"] {
   const n = Number(v);
   if (!Number.isFinite(n)) return 3;
   const r = Math.round(Math.max(1, Math.min(5, n)));
-  return r as TalentDTO["riskTolerance"];
+  return r as CandidateDTO["riskTolerance"];
 }
 
 function parseResumeExtractMeta(input: FormDataEntryValue | null): ResumeExtractMeta | undefined {
@@ -116,24 +118,52 @@ function parseResumeExtractMeta(input: FormDataEntryValue | null): ResumeExtract
   }
 }
 
-function uid(prefix: "tal" | "sup", name: string) {
+function uid(prefix: "tal" | "sup" | "men" | "inv", name: string) {
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24) || "anon";
   const suffix = Math.floor(Math.random() * 9000 + 1000);
   return `${prefix}-${slug}-${suffix}`;
 }
 
-async function resolveProfileId(prefix: "tal" | "sup", name: string): Promise<string> {
-  if (getAppMode() !== "live") return uid(prefix, name);
+/**
+ * Resolves the viewer's identity for a fresh profile insert. In live mode, the
+ * profile id MUST equal `auth.users.id` (the row pk + RLS). In demo mode we
+ * synthesize a stable slug.
+ */
+async function resolveIdentity(prefix: "tal" | "sup" | "men" | "inv"): Promise<{
+  id: string;
+  name: string;
+  email: string;
+}> {
   const viewer = await getViewer();
-  if (viewer.kind !== "live") {
-    redirect(`/login?error=${encodeURIComponent("sign in before completing your profile")}`);
+  if (viewer.kind === "demo") {
+    return {
+      id: viewer.persona.id,
+      name: viewer.persona.name,
+      email: viewer.persona.email,
+    };
   }
-  return viewer.userId;
+  if (viewer.kind === "live") {
+    const fallbackName = viewer.email?.split("@")[0] ?? "You";
+    return {
+      id: viewer.userId,
+      name: viewer.name ?? fallbackName,
+      email: viewer.email ?? "",
+    };
+  }
+  // anon — but if app is in demo mode and there's no persona cookie set, fall
+  // back to a synthesized id so the demo flow still completes for first-time
+  // visitors who skipped /login.
+  if (getAppMode() === "demo") {
+    const id = uid(prefix, "demo-guest");
+    return { id, name: "Demo Guest", email: `${id}@demo.nucleus` };
+  }
+  redirect(`/login?error=${encodeURIComponent("sign in before completing your profile")}`);
 }
 
-export async function createTalent(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
+// ── Candidate ────────────────────────────────────────────────────────────────
+
+export async function createCandidate(formData: FormData) {
+  const { id, name, email } = await resolveIdentity("tal");
   const headline = String(formData.get("headline") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim();
   const lookingFor = String(formData.get("lookingFor") ?? "").trim();
@@ -156,12 +186,11 @@ export async function createTalent(formData: FormData) {
   const photoUrl = String(formData.get("photoUrl") ?? "").trim() || undefined;
   const resumeExtract = parseResumeExtractMeta(formData.get("resumeExtractMeta"));
 
-  if (!name || !email || !bio) {
-    redirect("/onboard/talent?error=missing_required");
+  if (!bio) {
+    redirect("/onboard/candidate?error=missing_required");
   }
 
-  const id = await resolveProfileId("tal", name);
-  const created: TalentDTO = {
+  const created: CandidateDTO = {
     id,
     name,
     email,
@@ -187,13 +216,18 @@ export async function createTalent(formData: FormData) {
   };
 
   const store = getDataStore();
-  await store.putTalent(created);
+  await store.putCandidate(created);
   if (getAppMode() === "demo") setDemoCookie(id);
-  redirect(`/profile/talent/${id}`);
+  redirect(`/profile/candidate/${id}`);
 }
 
-export async function createStartup(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
+// ── Business ─────────────────────────────────────────────────────────────────
+
+export async function createBusiness(formData: FormData) {
+  const { id, name } = await resolveIdentity("sup");
+  // Business `name` form field overrides the auth-derived name (e.g. "Bramble AI"
+  // != founder name). Required.
+  const formName = String(formData.get("name") ?? "").trim() || name;
   const oneLiner = String(formData.get("oneLiner") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const sector = pickOne<Sector>(String(formData.get("sector") ?? ""), SECTORS, "software");
@@ -215,14 +249,13 @@ export async function createStartup(formData: FormData) {
   const linkedinUrl = String(formData.get("linkedinUrl") ?? "").trim() || undefined;
   const logoUrl = String(formData.get("logoUrl") ?? "").trim() || undefined;
 
-  if (!name || !description) {
-    redirect("/onboard/startup?error=missing_required");
+  if (!formName || !description) {
+    redirect("/onboard/business?error=missing_required");
   }
 
-  const id = await resolveProfileId("sup", name);
-  const created: StartupDTO = {
+  const created: BusinessDTO = {
     id,
-    name,
+    name: formName,
     oneLiner,
     description,
     sector,
@@ -240,7 +273,119 @@ export async function createStartup(formData: FormData) {
   };
 
   const store = getDataStore();
-  await store.putStartup(created);
+  await store.putBusiness(created);
   if (getAppMode() === "demo") setDemoCookie(id);
-  redirect(`/profile/startup/${id}`);
+  redirect(`/profile/business/${id}`);
+}
+
+// ── Mentor ───────────────────────────────────────────────────────────────────
+
+export async function createMentor(formData: FormData) {
+  const { id, name, email } = await resolveIdentity("men");
+  const headline = String(formData.get("headline") ?? "").trim();
+  const bio = String(formData.get("bio") ?? "").trim();
+  const areasAdvised = pick<Sector>(formData.getAll("areasAdvised"), SECTORS);
+  const sectorsOfInterest = pick<Sector>(formData.getAll("sectorsOfInterest"), SECTORS);
+  const compPreference = pick<Compensation>(formData.getAll("compPreference"), COMPENSATIONS);
+  const networks = pick<Network>(formData.getAll("networks"), NETWORKS);
+  const hoursRaw = Number(String(formData.get("hoursPerMonth") ?? "4"));
+  const hoursPerMonth = Number.isFinite(hoursRaw) ? Math.max(0, Math.min(40, Math.round(hoursRaw))) : 4;
+  const boardSeatOpen = String(formData.get("boardSeatOpen") ?? "") === "yes";
+  const location = String(formData.get("location") ?? "Salt Lake City, UT").trim();
+  const linkedinUrl = String(formData.get("linkedinUrl") ?? "").trim() || undefined;
+  const websiteUrl = String(formData.get("websiteUrl") ?? "").trim() || undefined;
+  const photoUrl = String(formData.get("photoUrl") ?? "").trim() || undefined;
+
+  if (!bio) {
+    redirect("/onboard/mentor?error=missing_required");
+  }
+
+  const created: MentorDTO = {
+    id,
+    name,
+    email,
+    headline,
+    bio,
+    areasAdvised,
+    hoursPerMonth,
+    boardSeatOpen,
+    compPreference: compPreference.length > 0 ? compPreference : ["mentor"],
+    sectorsOfInterest,
+    location,
+    utahOrgIds: [],
+    networks: networks.length > 0 ? networks : ["mentor"],
+    photoUrl,
+    linkedinUrl,
+    websiteUrl,
+    createdAt: new Date().toISOString(),
+  };
+
+  const store = getDataStore();
+  await store.putMentor(created);
+  if (getAppMode() === "demo") setDemoCookie(id);
+  redirect(`/profile/mentor/${id}`);
+}
+
+// ── Investor (VC) ────────────────────────────────────────────────────────────
+
+function buildInvestor(formData: FormData, identity: { id: string; name: string; email: string }): InvestorDTO {
+  const fundName = String(formData.get("fundName") ?? "").trim() || undefined;
+  const headline = String(formData.get("headline") ?? "").trim();
+  const bio = String(formData.get("bio") ?? "").trim();
+  const sectorsInvested = pick<Sector>(formData.getAll("sectorsInvested"), SECTORS);
+  const stagePrefs = pick<Stage>(formData.getAll("stagePrefs"), STAGES);
+  const networks = pick<Network>(formData.getAll("networks"), NETWORKS);
+  const location = String(formData.get("location") ?? "Salt Lake City, UT").trim();
+  const websiteUrl = String(formData.get("websiteUrl") ?? "").trim() || undefined;
+  const linkedinUrl = String(formData.get("linkedinUrl") ?? "").trim() || undefined;
+  const photoUrl = String(formData.get("photoUrl") ?? "").trim() || undefined;
+
+  const checkSizeMin = parseUsd(formData.get("checkSizeMin"));
+  const checkSizeMax = parseUsd(formData.get("checkSizeMax"));
+
+  return {
+    id: identity.id,
+    name: identity.name,
+    email: identity.email,
+    fundName,
+    headline,
+    bio,
+    checkSizeMin,
+    checkSizeMax,
+    sectorsInvested,
+    stagePrefs,
+    location,
+    utahOrgIds: [],
+    networks: networks.length > 0 ? networks : ["venture"],
+    photoUrl,
+    linkedinUrl,
+    websiteUrl,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function parseUsd(v: FormDataEntryValue | null): number | undefined {
+  if (typeof v !== "string") return undefined;
+  const cleaned = v.replace(/[$,_\s]/g, "");
+  if (!cleaned) return undefined;
+  const n = Number(cleaned);
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : undefined;
+}
+
+export async function createInvestor(formData: FormData) {
+  const identity = await resolveIdentity("inv");
+  const created = buildInvestor(formData, identity);
+  const store = getDataStore();
+  await store.putInvestor(created);
+  if (getAppMode() === "demo") setDemoCookie(identity.id);
+  redirect(`/profile/investor/${identity.id}`);
+}
+
+export async function skipInvestor(formData: FormData) {
+  const identity = await resolveIdentity("inv");
+  const created = buildInvestor(formData, identity);
+  const store = getDataStore();
+  await store.putInvestor(created);
+  if (getAppMode() === "demo") setDemoCookie(identity.id);
+  redirect("/search?kind=business");
 }

@@ -41,7 +41,7 @@ export async function POST(req: Request) {
   type Result = {
     id: string;
     name: string;
-    kind: "talent" | "startup";
+    kind: "candidate" | "business";
     authStatus: "created" | "existing" | "error";
     profileStatus: "written" | "error";
     error?: string;
@@ -54,8 +54,8 @@ export async function POST(req: Request) {
       id: t.id,
       email: t.email,
       name: t.name,
-      kind: "talent",
-      write: () => store.putTalent(t),
+      kind: "candidate",
+      write: () => store.putCandidate(t),
     });
     results.push(r);
   }
@@ -66,8 +66,8 @@ export async function POST(req: Request) {
       id: s.id,
       email,
       name: s.name,
-      kind: "startup",
-      write: () => store.putStartup(s),
+      kind: "business",
+      write: () => store.putBusiness(s),
     });
     results.push(r);
   }
@@ -143,12 +143,12 @@ async function ensureUserAndProfile(args: {
   id: string;
   email: string;
   name: string;
-  kind: "talent" | "startup";
+  kind: "candidate" | "business";
   write: () => Promise<unknown>;
 }): Promise<{
   id: string;
   name: string;
-  kind: "talent" | "startup";
+  kind: "candidate" | "business";
   authStatus: "created" | "existing" | "error";
   profileStatus: "written" | "error";
   error?: string;

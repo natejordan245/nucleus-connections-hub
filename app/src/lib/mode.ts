@@ -29,16 +29,18 @@ export type DemoPersona = {
   id: string;
   name: string;
   email: string;
-  role: "talent" | "startup" | "admin";
+  role: "candidate" | "business" | "mentor" | "investor" | "admin";
 };
 
 export const DEMO_PERSONAS: DemoPersona[] = [
-  { id: "tal-sarah",    name: "Sarah Chen",        email: "sarah@demo.nucleus",     role: "talent"  },
-  { id: "tal-marcus",   name: "Marcus Okafor",     email: "marcus@demo.nucleus",    role: "talent"  },
-  { id: "tal-priya",    name: "Priya Patel",       email: "priya@demo.nucleus",     role: "talent"  },
-  { id: "sup-bramble",  name: "Bramble AI",        email: "founders@bramble.demo",  role: "startup" },
-  { id: "sup-lumen",    name: "Lumen Bio",         email: "team@lumen.demo",        role: "startup" },
-  { id: "adm-operator", name: "Nucleus Operator",  email: "ops@demo.nucleus",       role: "admin"   },
+  { id: "tal-sarah",    name: "Sarah Chen",        email: "sarah@demo.nucleus",     role: "candidate" },
+  { id: "tal-marcus",   name: "Marcus Okafor",     email: "marcus@demo.nucleus",    role: "candidate" },
+  { id: "tal-priya",    name: "Priya Patel",       email: "priya@demo.nucleus",     role: "candidate" },
+  { id: "sup-bramble",  name: "Bramble AI",        email: "founders@bramble.demo",  role: "business"  },
+  { id: "sup-lumen",    name: "Lumen Bio",         email: "team@lumen.demo",        role: "business"  },
+  { id: "men-david",    name: "David Holm",        email: "david@demo.nucleus",     role: "mentor"    },
+  { id: "inv-rachel",   name: "Rachel Stone",      email: "rachel@summit.demo",     role: "investor"  },
+  { id: "adm-operator", name: "Nucleus Operator",  email: "ops@demo.nucleus",       role: "admin"     },
 ];
 
 export function findPersona(id: string | undefined): DemoPersona | null {

@@ -4,6 +4,7 @@ import type {
   FundingStatus,
   Network,
   Origin,
+  ProfileKind,
   ResourceKind,
   Sector,
   Stage,
@@ -123,6 +124,16 @@ export const RESOURCE_KIND_LABELS: Record<ResourceKind, string> = {
   "mentor":   "Mentor",
   "event":    "Event",
 };
+
+export const PROFILE_KIND_LABELS: Record<ProfileKind, string> = {
+  "candidate": "Candidate",
+  "business":  "Business",
+  "mentor":    "Mentor",
+  "investor":  "VC",
+};
+
+export const PROFILE_KINDS = Object.keys(PROFILE_KIND_LABELS) as ProfileKind[];
+
 
 export const AVAILABILITIES = Object.keys(AVAILABILITY_LABELS) as Availability[];
 export const COMPENSATIONS = Object.keys(COMPENSATION_LABELS) as Compensation[];

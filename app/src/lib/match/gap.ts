@@ -1,14 +1,14 @@
 import { NEED_LABELS } from "@/lib/data/enum-labels";
 import type {
+  BusinessDTO,
+  CandidateDTO,
   ResourceDTO,
-  StartupDTO,
   StartupNeed,
-  TalentDTO,
 } from "@/lib/data/types";
 
 /**
- * Heuristic mapping from a startup's stated need → the skills / topic
- * keywords a talent would need to cover it. Used to compute the gap
+ * Heuristic mapping from a business's stated need → the skills / topic
+ * keywords a candidate would need to cover it. Used to compute the gap
  * between an applicant and a "perfect" match. The shape is the same one
  * an embedding-based recommender will replace later.
  */
@@ -35,30 +35,27 @@ const NEED_TO_KEYWORDS: Record<StartupNeed, string[]> = {
 };
 
 export type GapAnalysis = {
-  /** Needs the talent's existing skills already cover. */
+  /** Needs the candidate's existing skills already cover. */
   covered: StartupNeed[];
-  /** Needs the talent's skills don't yet hit. */
+  /** Needs the candidate's skills don't yet hit. */
   gaps: StartupNeed[];
   /** Templated description of what's missing. Will be replaced by an LLM. */
   description: string;
 };
 
 /**
- * Compares a talent's skills against a startup's needs. Returns which needs
+ * Compares a candidate's skills against a business's needs. Returns which needs
  * are already covered and which are open (the "gap"), plus a short
- * description suitable for showing the user. The description is templated
- * for now; the long-term plan is to swap it out for an LLM that takes
- * `talent.bio + lookingFor + skills` and `startup.description + needs` and
- * writes a one-paragraph gap explanation.
+ * description suitable for showing the user.
  */
-export function analyzeGap(talent: TalentDTO, startup: StartupDTO): GapAnalysis {
-  const skillsLower = talent.skills.map((s) => s.toLowerCase());
-  const domainsLower = talent.domains.map((s) => s.toLowerCase());
+export function analyzeGap(candidate: CandidateDTO, business: BusinessDTO): GapAnalysis {
+  const skillsLower = candidate.skills.map((s) => s.toLowerCase());
+  const domainsLower = candidate.domains.map((s) => s.toLowerCase());
   const haystack = [...skillsLower, ...domainsLower];
 
   const covered: StartupNeed[] = [];
   const gaps: StartupNeed[] = [];
-  for (const need of startup.needs) {
+  for (const need of business.needs) {
     const keywords = NEED_TO_KEYWORDS[need] ?? [need];
     const hit = keywords.some((kw) =>
       haystack.some((s) => s.includes(kw)),
@@ -67,23 +64,23 @@ export function analyzeGap(talent: TalentDTO, startup: StartupDTO): GapAnalysis 
     else gaps.push(need);
   }
 
-  const description = describeGap(talent, startup, covered, gaps);
+  const description = describeGap(candidate, business, covered, gaps);
   return { covered, gaps, description };
 }
 
 function describeGap(
-  talent: TalentDTO,
-  startup: StartupDTO,
+  candidate: CandidateDTO,
+  business: BusinessDTO,
   covered: StartupNeed[],
   gaps: StartupNeed[],
 ): string {
   if (gaps.length === 0) {
-    return `${talent.name.split(" ")[0]} covers every need ${startup.name} listed. The conversation is about fit, not gap-closing.`;
+    return `${candidate.name.split(" ")[0]} covers every need ${business.name} listed. The conversation is about fit, not gap-closing.`;
   }
 
   const coveredLabels = covered.map((n) => NEED_LABELS[n].toLowerCase());
   const gapLabels = gaps.map((n) => NEED_LABELS[n].toLowerCase());
-  const lead = talent.name.split(" ")[0];
+  const lead = candidate.name.split(" ")[0];
 
   const have =
     coveredLabels.length === 0
@@ -92,8 +89,8 @@ function describeGap(
 
   const need =
     gapLabels.length === 1
-      ? `${startup.name} also wants ${gapLabels[0]}`
-      : `${startup.name} also wants ${humanList(gapLabels)}`;
+      ? `${business.name} also wants ${gapLabels[0]}`
+      : `${business.name} also wants ${humanList(gapLabels)}`;
 
   return `${have}. ${need}. The resources below are the shortest path to closing that gap before the first conversation.`;
 }

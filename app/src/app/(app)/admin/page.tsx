@@ -10,16 +10,16 @@ import {
   SECTOR_LABELS,
 } from "@/lib/data/enum-labels";
 import type {
+  BusinessDTO,
+  CandidateDTO,
   MatchDTO,
   Network,
-  StartupDTO,
-  TalentDTO,
 } from "@/lib/data/types";
 
 type Row = {
-  talent: TalentDTO;
+  candidate: CandidateDTO;
   matches: MatchDTO[];
-  topCandidates: (StartupDTO | TalentDTO | null)[];
+  topCandidates: (BusinessDTO | CandidateDTO | null)[];
 };
 
 export default async function AdminPage({
@@ -33,37 +33,41 @@ export default async function AdminPage({
       : null;
 
   const store = getDataStore();
-  const [allTalent, allStartups, pushes] = await Promise.all([
-    store.listTalent(),
-    store.listStartups(),
+  const [allCandidates, allBusinesses, allMentors, allInvestors, pushes] = await Promise.all([
+    store.listCandidates(),
+    store.listBusinesses(),
+    store.listMentors(),
+    store.listInvestors(),
     store.listAffinityPushes(),
   ]);
 
-  // Run the matchmaking engine for every talent in the queue, in parallel.
+  // Run the matchmaking engine for every candidate in the queue, in parallel.
   // In live mode, embeddings are cached per-process so this is fast on the
   // second visit. In demo mode, baseline matches are looked up from seed.
   const queue = networkFilter
-    ? allTalent.filter((t) => (t.networks ?? ["operator"]).includes(networkFilter))
-    : allTalent;
+    ? allCandidates.filter((c) => (c.networks ?? ["operator"]).includes(networkFilter))
+    : allCandidates;
 
   const rows: Row[] = await Promise.all(
-    queue.map(async (talent) => {
-      const matches = await store.matchesFor(talent.id);
+    queue.map(async (candidate) => {
+      const matches = await store.matchesFor(candidate.id);
       const top = matches.slice(0, 3);
       const topCandidates = await Promise.all(
         top.map((m) =>
-          m.candidateKind === "startup"
-            ? store.getStartup(m.candidateId)
-            : store.getTalent(m.candidateId),
+          m.candidateKind === "business"
+            ? store.getBusiness(m.candidateId)
+            : store.getCandidate(m.candidateId),
         ),
       );
-      return { talent, matches: top, topCandidates };
+      return { candidate, matches: top, topCandidates };
     }),
   );
 
   const counts = {
-    talent: allTalent.length,
-    startups: allStartups.length,
+    candidates: allCandidates.length,
+    businesses: allBusinesses.length,
+    mentors: allMentors.length,
+    investors: allInvestors.length,
     mutual: pushes.length,
     queueWithMatches: rows.filter((r) => r.matches.length > 0).length,
   };
@@ -78,13 +82,15 @@ export default async function AdminPage({
         Match the queue.
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
-        Every signed-up talent gets auto-ranked against the company pool. Use
+        Every signed-up candidate gets auto-ranked against the business pool. Use
         the queue to triage who's ready for an introduction.
       </p>
 
-      <dl className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Talent" value={counts.talent} />
-        <Stat label="Startups" value={counts.startups} />
+      <dl className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <Stat label="Candidates" value={counts.candidates} />
+        <Stat label="Businesses" value={counts.businesses} />
+        <Stat label="Mentors" value={counts.mentors} />
+        <Stat label="VCs" value={counts.investors} />
         <Stat label="With matches" value={counts.queueWithMatches} />
         <Stat label="Mutual intros" value={counts.mutual} />
       </dl>
@@ -96,7 +102,7 @@ export default async function AdminPage({
       ) : (
         <ul className="mt-6 space-y-4">
           {rows.map((row) => (
-            <QueueRow key={row.talent.id} row={row} />
+            <QueueRow key={row.candidate.id} row={row} />
           ))}
         </ul>
       )}
@@ -159,7 +165,7 @@ function EmptyState({ networkFilter }: { networkFilter: Network | null }) {
     <div className="mt-8 rounded-2xl border border-dashed border-warmgray-200 bg-white p-10 text-center">
       <p className="font-serif text-xl font-semibold text-ink">
         {networkFilter
-          ? `No talent in the ${NETWORK_LABELS[networkFilter]} yet.`
+          ? `No candidates in the ${NETWORK_LABELS[networkFilter]} yet.`
           : "Queue is empty."}
       </p>
       <p className="mt-2 text-sm text-warmgray-600">
@@ -170,33 +176,33 @@ function EmptyState({ networkFilter }: { networkFilter: Network | null }) {
 }
 
 function QueueRow({ row }: { row: Row }) {
-  const { talent, matches, topCandidates } = row;
+  const { candidate, matches, topCandidates } = row;
   return (
     <li className="rounded-2xl border border-warmgray-100 bg-white p-5 shadow-sm">
       <header className="flex items-start gap-4">
-        <Avatar name={talent.name} src={talent.photoUrl} size="md" />
+        <Avatar name={candidate.name} src={candidate.photoUrl} size="md" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-serif text-lg font-semibold text-ink">
               <Link
-                href={`/profile/talent/${talent.id}`}
+                href={`/profile/candidate/${candidate.id}`}
                 className="hover:text-orange-700"
               >
-                {talent.name}
+                {candidate.name}
               </Link>
             </h3>
-            <Pill tone="orange">{AVAILABILITY_LABELS[talent.availability]}</Pill>
-            {(talent.networks ?? ["operator"]).map((n) => (
+            <Pill tone="orange">{AVAILABILITY_LABELS[candidate.availability]}</Pill>
+            {(candidate.networks ?? ["operator"]).map((n) => (
               <Pill key={n} tone="warmgray">
                 {NETWORK_LABELS[n]}
               </Pill>
             ))}
           </div>
-          <p className="mt-1 truncate text-sm text-warmgray-600">{talent.headline}</p>
-          {talent.lookingFor && (
+          <p className="mt-1 truncate text-sm text-warmgray-600">{candidate.headline}</p>
+          {candidate.lookingFor && (
             <p className="mt-1 line-clamp-1 text-xs text-warmgray-500">
               <span className="font-semibold text-warmgray-600">Wants:</span>{" "}
-              {talent.lookingFor}
+              {candidate.lookingFor}
             </p>
           )}
         </div>
@@ -216,12 +222,12 @@ function QueueRow({ row }: { row: Row }) {
             {matches.map((m, idx) => {
               const cand = topCandidates[idx];
               if (!cand) return null;
-              const isStartup = m.candidateKind === "startup";
-              const startup = isStartup ? (cand as StartupDTO) : null;
-              const talent2 = !isStartup ? (cand as TalentDTO) : null;
-              const photo = isStartup ? startup!.logoUrl : talent2!.photoUrl;
-              const headline = isStartup ? startup!.oneLiner : talent2!.headline;
-              const sector = isStartup ? SECTOR_LABELS[startup!.sector] : null;
+              const isBusiness = m.candidateKind === "business";
+              const business = isBusiness ? (cand as BusinessDTO) : null;
+              const candidate2 = !isBusiness ? (cand as CandidateDTO) : null;
+              const photo = isBusiness ? business!.logoUrl : candidate2!.photoUrl;
+              const headline = isBusiness ? business!.oneLiner : candidate2!.headline;
+              const sector = isBusiness ? SECTOR_LABELS[business!.sector] : null;
               const href = `/profile/${m.candidateKind}/${cand.id}`;
               return (
                 <li key={m.id}>

@@ -9,16 +9,22 @@ export default async function SettingsPage() {
   const { viewer, viewerId } = await requireViewer();
   const mode = getAppMode();
   const store = getDataStore();
-  const [talent, startup] = await Promise.all([
-    store.getTalent(viewerId),
-    store.getStartup(viewerId),
+  const [candidate, business, mentor, investor] = await Promise.all([
+    store.getCandidate(viewerId),
+    store.getBusiness(viewerId),
+    store.getMentor(viewerId),
+    store.getInvestor(viewerId),
   ]);
-  const profile = talent ?? startup;
-  const profileHref = talent
-    ? `/profile/talent/${talent.id}`
-    : startup
-      ? `/profile/startup/${startup.id}`
-      : "/onboard";
+  const profile = candidate ?? business ?? mentor ?? investor;
+  const profileHref = candidate
+    ? `/profile/candidate/${candidate.id}`
+    : business
+      ? `/profile/business/${business.id}`
+      : mentor
+        ? `/profile/mentor/${mentor.id}`
+        : investor
+          ? `/profile/investor/${investor.id}`
+          : "/onboard";
 
   return (
     <main className="mx-auto w-full max-w-3xl px-8 py-10">

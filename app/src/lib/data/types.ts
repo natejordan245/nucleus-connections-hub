@@ -4,6 +4,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * The four profile kinds. Stored as the `kind` column on `profiles`.
+ * - `candidate` — job-seeker (was `talent`).
+ * - `business`  — company (was `startup`).
+ * - `mentor`    — advisor / SME.
+ * - `investor`  — VC.
+ */
+export type ProfileKind = "candidate" | "business" | "mentor" | "investor";
+
+/**
  * The five Nucleus networks (mirror of the role list on nucleusutah.org/contact).
  * A person can belong to more than one — e.g. an advisor / angel sits in both
  * Mentor and Venture.
@@ -90,7 +99,7 @@ export type UtahOrg = {
   universities?: string[];
 };
 
-export type TalentDTO = {
+export type CandidateDTO = {
   id: string;
   name: string;
   email: string;
@@ -98,10 +107,12 @@ export type TalentDTO = {
   bio: string;
   /** Free-text answer to "what are you looking for?" — drives match intent. */
   lookingFor: string;
-  /** Structured role categories this person can fill in a company. */
-  categories: TalentCategory[];
-  /** Structured intent: role shapes this person wants from startups. */
-  lookingForNeeds: StartupNeed[];
+  /** Structured role categories this person can fill in a company. Optional;
+   *  data-store readers populate a default when absent. */
+  categories?: TalentCategory[];
+  /** Structured intent: role shapes this person wants from businesses.
+   *  Optional; data-store readers populate a default when absent. */
+  lookingForNeeds?: StartupNeed[];
   skills: string[];
   domains: Sector[];
   availability: Availability;
@@ -124,6 +135,9 @@ export type TalentDTO = {
   createdAt: string;
 };
 
+/** Legacy alias — call sites being migrated incrementally. */
+export type TalentDTO = CandidateDTO;
+
 export type ResumeExtractMeta = {
   sourceFilename: string;
   extractedAt: string;
@@ -136,7 +150,17 @@ export type ResumeExtractMeta = {
   truncatedFlags?: Array<"model_input" | "stored_text" | "pdf_pages" | "docx_images">;
 };
 
-export type StartupDTO = {
+/** Bio extraction metadata for Mentor / Business onboarding (text paste). */
+export type BioExtractMeta = {
+  extractedAt: string;
+  parser: "text";
+  charCount: number;
+  model: string;
+  sourceText: string;
+  warnings?: string[];
+};
+
+export type BusinessDTO = {
   id: string;
   name: string;
   oneLiner: string;
@@ -148,11 +172,64 @@ export type StartupDTO = {
   fundingStage: Stage;
   fundingStatus: FundingStatus;
   needs: StartupNeed[];
-  /** Which Nucleus networks this startup wants to pull from. */
+  /** Which Nucleus networks this business wants to pull from. */
   networksWanted: Network[];
   location: string;
   utahOrgIds: string[];
   logoUrl?: string;
+  linkedinUrl?: string;
+  xUrl?: string;
+  websiteUrl?: string;
+  bioExtract?: BioExtractMeta;
+  createdAt: string;
+};
+
+/** Legacy alias — call sites being migrated incrementally. */
+export type StartupDTO = BusinessDTO;
+
+export type MentorDTO = {
+  id: string;
+  name: string;
+  email: string;
+  headline: string;
+  bio: string;
+  /** Sectors this mentor advises in. */
+  areasAdvised: Sector[];
+  /** Hours per month available, 0–40. */
+  hoursPerMonth: number;
+  /** Open to taking a board seat? */
+  boardSeatOpen: boolean;
+  /** How they prefer to be compensated for advisory work. */
+  compPreference: Compensation[];
+  /** Sectors they're personally interested in beyond what they advise on. */
+  sectorsOfInterest: Sector[];
+  location: string;
+  utahOrgIds: string[];
+  /** Which Nucleus networks this mentor sits in. */
+  networks: Network[];
+  photoUrl?: string;
+  linkedinUrl?: string;
+  xUrl?: string;
+  websiteUrl?: string;
+  bioExtract?: BioExtractMeta;
+  createdAt: string;
+};
+
+export type InvestorDTO = {
+  id: string;
+  name: string;
+  email: string;
+  fundName?: string;
+  headline: string;
+  bio: string;
+  checkSizeMin?: number;
+  checkSizeMax?: number;
+  sectorsInvested: Sector[];
+  stagePrefs: Stage[];
+  location: string;
+  utahOrgIds: string[];
+  networks: Network[];
+  photoUrl?: string;
   linkedinUrl?: string;
   xUrl?: string;
   websiteUrl?: string;
@@ -169,7 +246,7 @@ export type MatchDTO = {
   id: string;
   subjectId: string;
   candidateId: string;
-  candidateKind: "talent" | "startup";
+  candidateKind: ProfileKind;
   score: number;
   reason: string;
   concerns: string[];
@@ -180,6 +257,11 @@ export type MatchDTO = {
 
 export type InterestState = "pending" | "interested" | "pass";
 
+/**
+ * The interest handshake. Field names `talentId` / `startupId` are legacy DB
+ * column names — semantically they are the candidate-side and business-side
+ * of the binary handshake. Mentor/Investor profiles do not enter this flow.
+ */
 export type InterestDTO = {
   id: string;
   talentId: string;
@@ -237,7 +319,7 @@ export type ResourceDTO = {
   /**
    * Short text suitable for an embedding — captures *what gap this closes*.
    * Used by the gap-closer recommender (and, eventually, vectorized for
-   * semantic match against a talent ↔ startup gap description from an LLM).
+   * semantic match against a candidate ↔ business gap description from an LLM).
    */
   summary: string;
   uploadedById: string | null;
