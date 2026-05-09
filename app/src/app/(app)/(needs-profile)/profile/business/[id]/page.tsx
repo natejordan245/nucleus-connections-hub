@@ -85,7 +85,11 @@ export default async function BusinessProfilePage({ params }: { params: { id: st
         )}
       </header>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
+      <div
+        className={
+          "mt-4 grid grid-cols-1 gap-4 " + (isOwner ? "" : "lg:grid-cols-[2fr_1fr]")
+        }
+      >
         <section className="space-y-4">
           <Card title="About">
             <p className="text-sm leading-relaxed text-warmgray-700">{business.description}</p>
@@ -107,23 +111,25 @@ export default async function BusinessProfilePage({ params }: { params: { id: st
           </Card>
         </section>
 
-        <aside className="space-y-4">
-          {match ? (
-            <ExplainabilityPanel match={match} />
-          ) : (
-            <Card title="Why was I matched?">
-              <p className="text-sm text-warmgray-600">
-                This profile isn't currently in your matches.
-              </p>
-            </Card>
-          )}
-          {showGapCloser && viewerCandidate && (
-            <GapCloser
-              subjectId={viewerCandidate.id}
-              candidateId={business.id}
-            />
-          )}
-        </aside>
+        {!isOwner && (
+          <aside className="space-y-4">
+            {match ? (
+              <ExplainabilityPanel match={match} />
+            ) : (
+              <Card title="Why was I matched?">
+                <p className="text-sm text-warmgray-600">
+                  This profile isn't currently in your matches.
+                </p>
+              </Card>
+            )}
+            {showGapCloser && viewerCandidate && (
+              <GapCloser
+                subjectId={viewerCandidate.id}
+                candidateId={business.id}
+              />
+            )}
+          </aside>
+        )}
       </div>
     </main>
   );

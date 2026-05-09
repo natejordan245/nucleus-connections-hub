@@ -50,7 +50,9 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
     </div>
   );
 
-  const aside = match ? (
+  // Owners viewing their own profile don't get a "why was I matched" aside —
+  // there's nothing to explain. Layout falls back to single-column.
+  const aside = isOwner ? undefined : match ? (
     <ExplainabilityPanel match={match} />
   ) : (
     <section className="rounded-lg border border-warmgray-200 bg-white">

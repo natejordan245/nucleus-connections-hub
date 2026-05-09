@@ -47,7 +47,11 @@ export function CandidateProfileCard({
         {headerAction}
       </header>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
+      <div
+        className={
+          "mt-4 grid grid-cols-1 gap-4 " + (aside ? "lg:grid-cols-[2fr_1fr]" : "")
+        }
+      >
         <section className="space-y-4">
           <Card title="About">
             <p className="text-sm leading-relaxed text-warmgray-700">{candidate.bio}</p>
@@ -84,7 +88,7 @@ export function CandidateProfileCard({
           </Card>
         </section>
 
-        <aside className="space-y-4">{aside}</aside>
+        {aside && <aside className="space-y-4">{aside}</aside>}
       </div>
     </>
   );
