@@ -12,6 +12,7 @@ import type {
   MatchDTO,
   ProfileKind,
 } from "@/lib/data/types";
+import { primeQueryEmbeddings } from "@/lib/embedding/prewarm";
 import { requireViewer } from "@/lib/viewer";
 
 type DashboardSearchParams = {
@@ -27,6 +28,11 @@ export default async function DashboardPage({
 }) {
   const { viewerId } = await requireViewer();
   const store = getDataStore();
+
+  // Kick off the demo-query embedding pre-warm in the background. Doesn't
+  // block the dashboard render — by the time the user clicks Search, the
+  // common phrases are already cached in `embed()`'s content-hash map.
+  void primeQueryEmbeddings();
 
   // Fetch the viewer's profile kind first so we only load the opposite-side
   // list. (matchesFor already loads opposite-kind rows internally — but the

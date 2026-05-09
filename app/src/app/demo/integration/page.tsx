@@ -17,13 +17,15 @@ import { AffinityWire } from "./AffinityWire";
 export default function IntegrationSlidePage() {
   return (
     <main className="mx-auto w-full max-w-5xl px-6 pt-12 pb-24">
-      <span className="eyebrow text-orange-500">Integration</span>
+      <span className="eyebrow text-orange-500">Matching · Curation</span>
       <h1 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.01em] text-ink">
-        Mutual matches land in Affinity.
+        Intelligent matching. Curated connections. Pushed to Affinity.
       </h1>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-warmgray-600">
-        Organization + person + list-entry + note. The note body is the same
-        reason paragraph the user saw — Nucleus operators see exactly{" "}
+        The algorithm scores every pair, surfaces the best ones, and when both
+        sides opt in we push the curated connection straight into Affinity —
+        organization, person, list-entry, and the same reason paragraph the
+        user saw. Nucleus operators see exactly{" "}
         <em className="not-italic text-orange-700">why</em> we matched these two.
       </p>
 

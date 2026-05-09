@@ -1,5 +1,4 @@
 import { ArrowRight } from "lucide-react";
-import { DelicateArch } from "@/components/DelicateArch";
 
 export default function HandoffPage() {
   return (
@@ -38,16 +37,6 @@ export default function HandoffPage() {
           />
         </button>
       </form>
-
-      <div
-        className="show-fade-in absolute bottom-8 left-0 right-0 flex items-center justify-center gap-2 text-[11px] text-warmgray-500"
-        style={{ animationDelay: "1000ms" }}
-      >
-        <DelicateArch className="h-5 w-5" />
-        <span className="font-mono uppercase tracking-wider text-orange-400">
-          Connections Hub
-        </span>
-      </div>
     </main>
   );
 }

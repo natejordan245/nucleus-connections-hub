@@ -22,11 +22,12 @@ export default function MatchSlidePage() {
     <main className="mx-auto w-full max-w-3xl px-6 pt-12 pb-24">
       <span className="eyebrow text-orange-500">Match Quality · Innovation</span>
       <h1 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.01em] text-ink">
-        Score, reason, concerns, bridge.
+        Intelligent matching. Better than LinkedIn.
       </h1>
       <p className="mt-2 max-w-xl text-sm leading-relaxed text-warmgray-600">
         Every match carries the same trust surface. When the score is partial,
-        the gap-closer routes to Utah resources that close the distance.
+        the gap-closer routes to local Utah resources — mentors, cohorts, and
+        playbooks already in the ecosystem — that close the distance.
       </p>
 
       <div className="mt-8">
