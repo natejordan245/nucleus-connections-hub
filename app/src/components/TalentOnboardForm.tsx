@@ -268,7 +268,8 @@ export function TalentOnboardForm({
     if (requestId !== requestIdRef.current) return;
     setResumeMetaJson(JSON.stringify(payload.extractedTextMeta));
     const filtered = payload.suggestions.filter((s) => !DROPPED_FIELDS.includes(s.field));
-    const filled = applyResumeSuggestions(filtered, touched, setForm);
+    const { next, filled } = applyResumeSuggestions(filtered, touched, form);
+    setForm(next);
     setExtract({ status: "ok", filled });
   }
 
@@ -549,71 +550,75 @@ export function TalentOnboardForm({
   );
 }
 
+/**
+ * Apply resume suggestions against a form snapshot. Pure — returns the
+ * next state plus the count of fields that actually changed. The caller
+ * passes the result to `setForm`. We can't increment a closure counter
+ * inside a `setForm((prev) => ...)` updater and read it synchronously,
+ * because React processes the updater on a later tick.
+ */
 function applyResumeSuggestions(
   suggestions: ResumeSuggestion[],
   touched: Record<string, boolean>,
-  setForm: React.Dispatch<React.SetStateAction<TalentFormState>>,
-): number {
+  prev: TalentFormState,
+): { next: TalentFormState; filled: number } {
+  const next = { ...prev };
   let filled = 0;
 
-  setForm((prev) => {
-    const next = { ...prev };
-    for (const s of suggestions) {
-      if (touched[s.field]) continue;
+  for (const s of suggestions) {
+    if (touched[s.field]) continue;
 
-      if (s.kind === "scalar") {
-        switch (s.field) {
-          case "name":
-          case "bio":
-          case "lookingFor":
-          case "location":
-          case "linkedinUrl":
-            if (typeof s.value === "string" && s.value && next[s.field] !== s.value) {
-              next[s.field] = s.value;
-              filled += 1;
-            }
-            break;
-          case "availability":
-            if (typeof s.value === "string" && next.availability !== s.value) {
-              next.availability = s.value as Availability;
-              filled += 1;
-            }
-            break;
-          // headline, xUrl, riskTolerance are filtered upstream; nothing to do here.
-        }
-        continue;
-      }
-
-      const items = s.items.map((item) => String(item.value));
+    if (s.kind === "scalar") {
       switch (s.field) {
-        case "categories": {
-          if (items.length > 0) {
-            next.categories = dedupe(items) as TalentCategory[];
+        case "name":
+        case "bio":
+        case "lookingFor":
+        case "location":
+        case "linkedinUrl":
+          if (typeof s.value === "string" && s.value && next[s.field] !== s.value) {
+            next[s.field] = s.value;
             filled += 1;
           }
           break;
-        }
-        case "lookingForNeeds": {
-          if (items.length > 0) {
-            next.lookingForNeeds = dedupe(items) as StartupNeed[];
+        case "availability":
+          if (typeof s.value === "string" && next.availability !== s.value) {
+            next.availability = s.value as Availability;
             filled += 1;
           }
           break;
-        }
-        case "domains": {
-          if (items.length > 0) {
-            next.domains = dedupe(items) as Sector[];
-            filled += 1;
-          }
-          break;
-        }
-        // networks, compensation, stagePrefs are filtered upstream.
+        // headline, xUrl, riskTolerance are filtered upstream; nothing to do here.
       }
+      continue;
     }
-    return next;
-  });
 
-  return filled;
+    const items = s.items.map((item) => String(item.value));
+    switch (s.field) {
+      case "categories": {
+        if (items.length > 0) {
+          next.categories = dedupe(items) as TalentCategory[];
+          filled += 1;
+        }
+        break;
+      }
+      case "lookingForNeeds": {
+        if (items.length > 0) {
+          next.lookingForNeeds = dedupe(items) as StartupNeed[];
+          filled += 1;
+        }
+        break;
+      }
+      case "domains": {
+        if (items.length > 0) {
+          next.domains = dedupe(items) as Sector[];
+          filled += 1;
+        }
+        break;
+      }
+      // networks, compensation, stagePrefs are filtered upstream.
+    }
+  }
+
+  return { next, filled };
 }
 
 function dedupe<T>(values: T[]): T[] {

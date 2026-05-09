@@ -172,6 +172,7 @@ export async function POST(req: Request) {
 
   const warnings: string[] = [];
   let sourceText = typeof body.text === "string" ? body.text.trim() : "";
+  let faviconUrl: string | undefined;
 
   if (!sourceText && typeof body.url === "string" && body.url.trim()) {
     if (kind !== "business") {
@@ -183,6 +184,7 @@ export async function POST(req: Request) {
     try {
       const fetched = await fetchWebsiteText(body.url.trim());
       sourceText = fetched.text;
+      faviconUrl = fetched.faviconUrl;
       if (fetched.warning) warnings.push(fetched.warning);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -202,6 +204,9 @@ export async function POST(req: Request) {
   try {
     const raw = await callOpenAI(apiKey, kind, truncated);
     const suggestions = normalizeSuggestions(kind, raw);
+    if (faviconUrl) {
+      suggestions.push({ field: "logoUrl", value: faviconUrl, confidence: 0.95 });
+    }
     return NextResponse.json({ suggestions, warnings } satisfies ProfileExtractResponse);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -212,7 +217,9 @@ export async function POST(req: Request) {
 const FETCH_TIMEOUT_MS = 12_000;
 const MAX_HTML_BYTES = 1_500_000;
 
-async function fetchWebsiteText(rawUrl: string): Promise<{ text: string; warning?: string }> {
+async function fetchWebsiteText(
+  rawUrl: string,
+): Promise<{ text: string; faviconUrl?: string; warning?: string }> {
   const url = normalizeUrl(rawUrl);
   if (!url) throw new Error("invalid url");
 
@@ -260,10 +267,66 @@ async function fetchWebsiteText(rawUrl: string): Promise<{ text: string; warning
   const html = new TextDecoder("utf-8", { fatal: false }).decode(Buffer.concat(chunks.map((c) => Buffer.from(c))));
   const text = htmlToText(html);
   if (!text) throw new Error("no readable text on page");
+  // Resolve favicon against the post-redirect URL so relative hrefs land
+  // on the right origin (e.g. www.example.com vs example.com).
+  const baseUrl = (() => {
+    try {
+      return new URL(res.url);
+    } catch {
+      return url;
+    }
+  })();
+  const faviconUrl = extractFaviconUrl(html, baseUrl);
   return {
     text,
+    faviconUrl,
     warning: truncatedBytes ? "Page exceeded 1.5MB — only the first portion was read." : undefined,
   };
+}
+
+/**
+ * Pull the best icon URL out of a page's <head>. Prefers the largest
+ * declared `<link rel="…icon…">` so the logo reads at avatar size; falls
+ * back to `/favicon.ico` at the site root.
+ */
+function extractFaviconUrl(html: string, baseUrl: URL): string | undefined {
+  const head = html.slice(0, 32_000); // head is always near the top; cap work.
+  const linkRe = /<link\b[^>]*>/gi;
+  const candidates: { href: string; rank: number }[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = linkRe.exec(head))) {
+    const tag = m[0];
+    const relMatch = /\brel\s*=\s*["']([^"']+)["']/i.exec(tag);
+    if (!relMatch) continue;
+    const rel = relMatch[1].toLowerCase();
+    if (!rel.includes("icon")) continue;
+    const hrefMatch = /\bhref\s*=\s*["']([^"']+)["']/i.exec(tag);
+    if (!hrefMatch) continue;
+    const href = hrefMatch[1].trim();
+    if (!href) continue;
+    // Apple-touch-icon is usually 180px+; declared sizes win when present.
+    let rank = rel.includes("apple-touch-icon") ? 180 : 32;
+    const sizesMatch = /\bsizes\s*=\s*["']([^"']+)["']/i.exec(tag);
+    if (sizesMatch) {
+      const first = sizesMatch[1].split(/[\s,]+/)[0];
+      const n = parseInt(first.split("x")[0], 10);
+      if (Number.isFinite(n) && n > 0) rank = n;
+    }
+    candidates.push({ href, rank });
+  }
+  candidates.sort((a, b) => b.rank - a.rank);
+  for (const c of candidates) {
+    try {
+      return new URL(c.href, baseUrl).toString();
+    } catch {
+      continue;
+    }
+  }
+  try {
+    return new URL("/favicon.ico", baseUrl).toString();
+  } catch {
+    return undefined;
+  }
 }
 
 function normalizeUrl(input: string): URL | null {
