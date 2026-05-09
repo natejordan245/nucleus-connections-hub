@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChipGroup } from "@/components/ChipGroup";
 import { Field, Input, Textarea } from "@/components/FormField";
+import { OnboardAccountFields, decodeOnboardError } from "@/components/OnboardAccountFields";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import {
   SECTOR_LABELS,
@@ -11,23 +12,23 @@ import {
 import { getViewer } from "@/lib/session";
 import { createInvestor, skipInvestor } from "../actions";
 
-export default async function OnboardInvestorPage() {
+export default async function OnboardInvestorPage({
+  searchParams,
+}: {
+  searchParams?: { error?: string };
+}) {
   const viewer = await getViewer();
+  const signedIn = viewer.kind !== "anon";
   const prefilledName =
     viewer.kind === "demo"
       ? viewer.persona.name
       : viewer.kind === "live"
         ? viewer.name ?? viewer.email?.split("@")[0]
         : undefined;
-  const prefilledEmail =
-    viewer.kind === "demo"
-      ? viewer.persona.email
-      : viewer.kind === "live"
-        ? viewer.email ?? undefined
-        : undefined;
 
   const sectorOpts = SECTORS.map((s) => ({ value: s, label: SECTOR_LABELS[s] }));
   const stageOpts = STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }));
+  const errorMessage = decodeOnboardError(searchParams?.error);
 
   return (
     <main className="mx-auto w-full max-w-2xl px-8 py-10">
@@ -40,21 +41,9 @@ export default async function OnboardInvestorPage() {
         Tell us how you invest.
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
-        All fields are optional. You can fill these in later — or skip straight to
+        Most fields are optional. You can fill these in later — or skip straight to
         browsing Utah businesses.
       </p>
-
-      {(prefilledName || prefilledEmail) && (
-        <div className="mt-6 rounded-2xl border border-warmgray-100 bg-white p-4 text-sm text-warmgray-700 shadow-sm">
-          <span className="eyebrow text-warmgray-400">Onboarding as</span>
-          <p className="mt-1 font-semibold text-ink">
-            {prefilledName || "you"}
-            {prefilledEmail && (
-              <span className="ml-2 font-normal text-warmgray-500">· {prefilledEmail}</span>
-            )}
-          </p>
-        </div>
-      )}
 
       <form
         action={createInvestor}
@@ -62,6 +51,17 @@ export default async function OnboardInvestorPage() {
       >
         <Field id="photoUrl" name="photoUrl" label="Profile / fund photo" hint="Optional.">
           <PhotoUpload name="photoUrl" label="Upload photo" fallbackName={prefilledName ?? "VC"} />
+        </Field>
+
+        <Field id="name" name="name" label="Your name" required>
+          <Input
+            id="name"
+            name="name"
+            required
+            autoComplete="name"
+            placeholder="Rachel Stone"
+            defaultValue={prefilledName ?? ""}
+          />
         </Field>
 
         <Field id="fundName" name="fundName" label="Fund name" hint="Optional. Leave blank for solo angels.">
@@ -112,19 +112,21 @@ export default async function OnboardInvestorPage() {
           <Input id="linkedinUrl" name="linkedinUrl" type="url" placeholder="https://linkedin.com/in/…" />
         </Field>
 
+        <OnboardAccountFields signedIn={signedIn} errorMessage={errorMessage} />
+
         <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
           <button
             type="submit"
             className="inline-flex h-10 w-full items-center justify-center rounded-full bg-ink px-5 text-sm font-semibold text-white transition hover:bg-warmgray-800"
           >
-            Save profile
+            {signedIn ? "Save profile" : "Create account & save"}
           </button>
           <button
             type="submit"
             formAction={skipInvestor}
             className="inline-flex h-10 w-full items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(37,99,235,0.55)] transition hover:bg-orange-600"
           >
-            Skip → take me to Businesses
+            {signedIn ? "Skip → take me to Businesses" : "Create account & browse"}
           </button>
         </div>
       </form>

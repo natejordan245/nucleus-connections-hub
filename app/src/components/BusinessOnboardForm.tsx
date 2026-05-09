@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { ChipGroup } from "@/components/ChipGroup";
 import { Field, Input, Select, Textarea } from "@/components/FormField";
+import { OnboardAccountFields, decodeOnboardError } from "@/components/OnboardAccountFields";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import {
   FUNDING_STATUS_LABELS,
@@ -32,6 +33,7 @@ import type {
 type Props = {
   error?: string;
   createBusinessAction: (formData: FormData) => void | Promise<void>;
+  signedIn?: boolean;
 };
 
 type BusinessFormState = {
@@ -70,7 +72,11 @@ const VALID_STAGE = new Set(STAGES);
 const VALID_FUNDING = new Set(FUNDING_STATUSES);
 const VALID_NEEDS = new Set(ROLE_NEEDS);
 
-export function BusinessOnboardForm({ error, createBusinessAction }: Props) {
+export function BusinessOnboardForm({
+  error,
+  createBusinessAction,
+  signedIn = true,
+}: Props) {
   const [paste, setPaste] = useState("");
   const [form, setForm] = useState<BusinessFormState>(INITIAL);
   const [isExtracting, setIsExtracting] = useState(false);
@@ -402,12 +408,14 @@ export function BusinessOnboardForm({ error, createBusinessAction }: Props) {
           />
         </Field>
 
+        <OnboardAccountFields signedIn={signedIn} errorMessage={decodeOnboardError(error)} />
+
         <div className="pt-2">
           <button
             type="submit"
             className="inline-flex h-10 w-full items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(255,114,39,0.55)] transition hover:bg-orange-600"
           >
-            Save and see matches →
+            {signedIn ? "Save and see matches →" : "Create account & see matches →"}
           </button>
         </div>
       </form>

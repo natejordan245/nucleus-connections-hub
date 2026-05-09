@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { ChipGroup } from "@/components/ChipGroup";
 import { Field, Input, Select, Textarea } from "@/components/FormField";
+import { OnboardAccountFields, decodeOnboardError } from "@/components/OnboardAccountFields";
 import {
   AVAILABILITIES,
   AVAILABILITY_LABELS,
@@ -41,9 +42,12 @@ import type {
 type Props = {
   error?: string;
   createTalentAction: (formData: FormData) => void | Promise<void>;
-  /** Pre-resolved from auth metadata. The form no longer asks for these. */
+  /** Prefill values from auth metadata (when signed in). */
   prefilledName?: string;
   prefilledEmail?: string;
+  /** When false, the form renders email + password fields and the action
+   *  signs the user up before writing the profile. */
+  signedIn?: boolean;
 };
 
 type TalentFormState = {
@@ -107,7 +111,13 @@ const FIELD_LABELS: Record<ResumeSuggestionField, string> = {
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
-export function TalentOnboardForm({ error, createTalentAction, prefilledName, prefilledEmail }: Props) {
+export function TalentOnboardForm({
+  error,
+  createTalentAction,
+  prefilledName,
+  prefilledEmail,
+  signedIn = true,
+}: Props) {
   const [form, setForm] = useState<TalentFormState>(() => ({
     ...INITIAL_FORM,
     name: prefilledName ?? "",
@@ -377,21 +387,6 @@ export function TalentOnboardForm({ error, createTalentAction, prefilledName, pr
         </p>
       )}
 
-      {(prefilledName || prefilledEmail) && (
-        <div className="mt-6 rounded-2xl border border-warmgray-100 bg-white p-4 text-sm text-warmgray-700 shadow-sm">
-          <span className="eyebrow text-warmgray-400">Onboarding as</span>
-          <p className="mt-1 font-semibold text-ink">
-            {prefilledName || "you"}
-            {prefilledEmail && (
-              <span className="ml-2 font-normal text-warmgray-500">· {prefilledEmail}</span>
-            )}
-          </p>
-          <p className="mt-1 text-xs text-warmgray-500">
-            We pulled these from your account. Change them in settings.
-          </p>
-        </div>
-      )}
-
       <form
         action={createTalentAction}
         className="mt-8 space-y-6 rounded-2xl border border-warmgray-100 bg-white p-6 shadow-sm"
@@ -531,7 +526,20 @@ export function TalentOnboardForm({ error, createTalentAction, prefilledName, pr
           </section>
         )}
 
-        {/* Name + email come from auth metadata — pulled by the server action. */}
+        <Field id="name" name="name" label="Name" required>
+          <Input
+            id="name"
+            name="name"
+            required
+            autoComplete="name"
+            placeholder="Sarah Chen"
+            value={form.name}
+            onChange={(e) => {
+              setTouched((prev) => ({ ...prev, name: true }));
+              setForm((prev) => ({ ...prev, name: e.currentTarget.value }));
+            }}
+          />
+        </Field>
         <Field id="headline" name="headline" label="Headline" hint="One line — your professional summary.">
           <Input
             id="headline"
@@ -745,12 +753,14 @@ export function TalentOnboardForm({ error, createTalentAction, prefilledName, pr
           />
         </Field>
 
+        <OnboardAccountFields signedIn={signedIn} errorMessage={decodeOnboardError(error)} />
+
         <div className="pt-2">
           <button
             type="submit"
             className="inline-flex h-10 w-full items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(255,114,39,0.55)] transition hover:bg-orange-600"
           >
-            Save and see matches →
+            {signedIn ? "Save and see matches →" : "Create account & see matches →"}
           </button>
         </div>
       </form>
