@@ -76,6 +76,10 @@ export function CandidateProfileCard({
               ))}
             </div>
           </Card>
+        </section>
+
+        <aside className="space-y-4">
+          {aside}
           <Card title="Domains">
             <div className="flex flex-wrap gap-2">
               {candidate.domains.map((d) => (
@@ -85,10 +89,6 @@ export function CandidateProfileCard({
               ))}
             </div>
           </Card>
-        </section>
-
-        <aside className="space-y-4">
-          {aside}
           <Card title="Compensation fit">
             <dl className="space-y-1.5 font-mono text-[11px]">
               <div className="flex items-baseline justify-between gap-2">
