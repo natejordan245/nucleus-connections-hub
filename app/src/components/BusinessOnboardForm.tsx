@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
 import { ChipGroup } from "@/components/ChipGroup";
 import { Field, Input, Select, Textarea } from "@/components/FormField";
 import { OnboardAccountFields, decodeOnboardError } from "@/components/OnboardAccountFields";
@@ -66,22 +65,12 @@ const INITIAL: BusinessFormState = {
   linkedinUrl: "",
 };
 
-const VALID_SECTOR = new Set(SECTORS);
-const VALID_ORIGIN = new Set(ORIGINS);
-const VALID_STAGE = new Set(STAGES);
-const VALID_FUNDING = new Set(FUNDING_STATUSES);
-const VALID_NEEDS = new Set(ROLE_NEEDS);
-
 export function BusinessOnboardForm({
   error,
   createBusinessAction,
   signedIn = true,
 }: Props) {
-  const [paste, setPaste] = useState("");
   const [form, setForm] = useState<BusinessFormState>(INITIAL);
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [extractError, setExtractError] = useState<string | null>(null);
-  const [extractedFields, setExtractedFields] = useState<string[]>([]);
 
   const sectorOpts = SECTORS.map((s) => ({ value: s, label: SECTOR_LABELS[s] }));
   const originOpts = ORIGINS.map((o) => ({ value: o, label: ORIGIN_LABELS[o] }));
@@ -89,118 +78,6 @@ export function BusinessOnboardForm({
   const fundingOpts = FUNDING_STATUSES.map((f) => ({ value: f, label: FUNDING_STATUS_LABELS[f] }));
   const needOpts = ROLE_NEEDS.map((n) => ({ value: n, label: NEED_LABELS[n] }));
   const networkOpts = NETWORKS.map((n) => ({ value: n, label: NETWORK_LABELS[n] }));
-
-  async function onExtract() {
-    setExtractError(null);
-    setExtractedFields([]);
-    if (!paste.trim()) {
-      setExtractError("Paste a description first.");
-      return;
-    }
-    setIsExtracting(true);
-    try {
-      const res = await fetch("/api/profile/extract", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "business", text: paste }),
-      });
-      const data = (await res.json().catch(() => ({}))) as
-        | { suggestions?: { field: string; value: string | string[]; confidence: number }[] }
-        | { error?: string };
-      if (!res.ok || "error" in data) {
-        setExtractError(("error" in data && data.error) || "Extraction failed.");
-        return;
-      }
-      const suggestions = "suggestions" in data ? data.suggestions ?? [] : [];
-      const filled: string[] = [];
-      setForm((prev) => {
-        const next = { ...prev };
-        for (const s of suggestions) {
-          const val = s.value;
-          switch (s.field) {
-            case "name":
-              if (typeof val === "string" && !next.name) {
-                next.name = val;
-                filled.push("name");
-              }
-              break;
-            case "oneLiner":
-              if (typeof val === "string" && !next.oneLiner) {
-                next.oneLiner = val;
-                filled.push("oneLiner");
-              }
-              break;
-            case "description":
-              if (typeof val === "string" && !next.description) {
-                next.description = val;
-                filled.push("description");
-              }
-              break;
-            case "sector":
-              if (typeof val === "string" && VALID_SECTOR.has(val as Sector)) {
-                next.sector = val as Sector;
-                filled.push("sector");
-              }
-              break;
-            case "origin":
-              if (typeof val === "string" && VALID_ORIGIN.has(val as Origin)) {
-                next.origin = val as Origin;
-                filled.push("origin");
-              }
-              break;
-            case "fundingStage":
-              if (typeof val === "string" && VALID_STAGE.has(val as Stage)) {
-                next.fundingStage = val as Stage;
-                filled.push("fundingStage");
-              }
-              break;
-            case "fundingStatus":
-              if (typeof val === "string" && VALID_FUNDING.has(val as FundingStatus)) {
-                next.fundingStatus = val as FundingStatus;
-                filled.push("fundingStatus");
-              }
-              break;
-            case "needs":
-              if (Array.isArray(val)) {
-                const filtered = val.filter((v): v is StartupNeed => VALID_NEEDS.has(v as StartupNeed));
-                if (filtered.length > 0) {
-                  next.needs = filtered;
-                  filled.push("needs");
-                }
-              }
-              break;
-            case "location":
-              if (typeof val === "string") {
-                next.location = val;
-                filled.push("location");
-              }
-              break;
-            case "websiteUrl":
-              if (typeof val === "string") {
-                next.websiteUrl = val;
-                filled.push("websiteUrl");
-              }
-              break;
-            case "linkedinUrl":
-              if (typeof val === "string") {
-                next.linkedinUrl = val;
-                filled.push("linkedinUrl");
-              }
-              break;
-          }
-        }
-        return next;
-      });
-      setExtractedFields(filled);
-      if (filled.length === 0) {
-        setExtractError("No high-confidence fields could be extracted. Fill in below.");
-      }
-    } catch (err) {
-      setExtractError(err instanceof Error ? err.message : "Extraction failed.");
-    } finally {
-      setIsExtracting(false);
-    }
-  }
 
   return (
     <main className="mx-auto w-full max-w-2xl px-8 py-10">
@@ -213,7 +90,7 @@ export function BusinessOnboardForm({
         Tell us about your company.
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
-        Paste your website's About section, deck blurb, or pitch summary. We'll auto-fill what we can.
+        Free-text where it matters; quick chips for the rest.
       </p>
 
       {error === "missing_required" && (
@@ -221,39 +98,6 @@ export function BusinessOnboardForm({
           Company name and a short description are required.
         </p>
       )}
-
-      <section className="mt-6 rounded-2xl border border-warmgray-100 bg-orange-50/40 p-5 shadow-sm">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-orange-500" strokeWidth={1.75} aria-hidden />
-          <span className="eyebrow text-orange-500">Smart fill</span>
-        </div>
-        <p className="mt-2 text-sm text-warmgray-700">
-          Paste a website blurb, pitch summary, or deck slide here. We'll extract what we can.
-        </p>
-        <Textarea
-          rows={5}
-          value={paste}
-          onChange={(e) => setPaste(e.currentTarget.value)}
-          placeholder="Paste your About section, deck blurb, or pitch summary…"
-          className="mt-3"
-        />
-        <div className="mt-3 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onExtract}
-            disabled={isExtracting || !paste.trim()}
-            className="inline-flex h-10 items-center justify-center rounded-full bg-ink px-5 text-sm font-semibold text-white transition hover:bg-warmgray-800 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isExtracting ? "Extracting…" : "Extract details →"}
-          </button>
-          {extractedFields.length > 0 && (
-            <p className="text-xs text-emerald-700">
-              Pre-filled {extractedFields.length} {extractedFields.length === 1 ? "field" : "fields"} below.
-            </p>
-          )}
-        </div>
-        {extractError && <p className="mt-2 text-xs text-red-700">{extractError}</p>}
-      </section>
 
       <form
         action={createBusinessAction}
