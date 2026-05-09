@@ -16,7 +16,7 @@ export default async function LandingPage() {
         <div className="flex items-center gap-3">
           <DelicateArch className="h-7 w-7 text-orange-500" />
           <span className="font-serif text-lg font-semibold text-ink">
-            Nucleus Connections Hub
+            Connections Hub
           </span>
         </div>
         <div className="flex items-center gap-4">
@@ -86,7 +86,7 @@ export default async function LandingPage() {
       </main>
 
       <footer className="mx-auto flex w-full max-w-6xl items-center justify-between border-t border-warmgray-100 px-8 py-6 text-[10px] uppercase tracking-track text-warmgray-400">
-        <span>© 2026 Nucleus Connections Hub</span>
+        <span>© 2026 Connections Hub</span>
         <span>Salt Lake City, Utah</span>
       </footer>
     </div>

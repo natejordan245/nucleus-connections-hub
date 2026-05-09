@@ -1,4 +1,4 @@
-# Nucleus Connections Hub — design language
+# Connections Hub — design language
 
 This file is the source of truth for visual choices in `app/`. When you build a
 new page or component, conform to what's here. When you change the language,
@@ -147,8 +147,8 @@ glyphs that need to read at small sizes.
 Decorative arrows in CTAs are kept as text (`→`) for letterforms — those are
 a typographic flourish, not iconography.
 
-The Delicate Arch silhouette in `components/DelicateArch.tsx` is the only
-custom-drawn glyph and serves as the wordmark icon. Don't substitute it.
+The shared brand mark in `components/DelicateArch.tsx` renders
+`/icon.webp` and serves as the wordmark icon.
 
 ## Forms
 
@@ -192,7 +192,8 @@ Prefer:
 
 - Every interactive control has a real role (`button`, `a`) and a text label
   or `aria-label`.
-- Decorative SVGs (`DelicateArch`, lucide icons) carry `aria-hidden`.
+- Decorative brand images (`DelicateArch`) and lucide icons carry
+  `aria-hidden`.
 - Color-only signals are paired with an icon or text — score pills use
   number + tone, not tone alone.
 - Tap targets are `h-9` (36px) minimum on icon buttons.
@@ -209,7 +210,7 @@ src/
     mode.ts            — APP_MODE + demo personas.
     session.ts         — getViewer().
     viewer.ts          — requireViewer() / maybeViewer() helpers.
-public/                — Static assets (delicate-arch.svg, photos cached locally).
+public/                — Static assets (`icon.webp`, photos cached locally).
 ```
 
 When in doubt, look at how `/dashboard` and `/matches` are built — those are
