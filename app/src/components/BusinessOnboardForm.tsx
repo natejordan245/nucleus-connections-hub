@@ -70,6 +70,7 @@ type BusinessFormState = {
   location: string;
   websiteUrl: string;
   linkedinUrl: string;
+  logoUrl: string;
 };
 
 const INITIAL: BusinessFormState = {
@@ -85,6 +86,7 @@ const INITIAL: BusinessFormState = {
   location: "Salt Lake City, UT",
   websiteUrl: "",
   linkedinUrl: "",
+  logoUrl: "",
 };
 
 export function BusinessOnboardForm({
@@ -109,6 +111,7 @@ export function BusinessOnboardForm({
           location: initial.location,
           websiteUrl: initial.websiteUrl ?? "",
           linkedinUrl: initial.linkedinUrl ?? "",
+          logoUrl: initial.logoUrl ?? "",
         }
       : INITIAL,
   );
@@ -139,9 +142,10 @@ export function BusinessOnboardForm({
         });
         return;
       }
-      const result = applySuggestions(data.suggestions ?? [], setForm);
-      setAutoFilled(new Set(result.fields));
-      setScrape({ status: "ok", filled: result.count });
+      const { next, fields } = applySuggestions(data.suggestions ?? [], form);
+      setForm(next);
+      setAutoFilled(new Set(fields));
+      setScrape({ status: "ok", filled: fields.length });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Network error.";
       setScrape({ status: "error", message });
@@ -306,12 +310,17 @@ export function BusinessOnboardForm({
             title="Identity"
             description="The basics — what you're called, and what you do."
           >
-            <LabeledField id="logoUrl" label="Logo" hint="Optional. Helps your card stand out.">
+            <LabeledField
+              id="logoUrl"
+              label="Logo"
+              hint="Optional. Helps your card stand out."
+              marked={autoFilled.has("logoUrl")}
+            >
               <PhotoUpload
                 name="logoUrl"
                 label="Upload logo"
                 fallbackName="Co"
-                defaultUrl={initial?.logoUrl}
+                defaultUrl={form.logoUrl || initial?.logoUrl}
               />
             </LabeledField>
 
@@ -724,77 +733,76 @@ function countFilled(f: BusinessFormState): number {
   return c;
 }
 
+/**
+ * Apply scraped suggestions to a form snapshot. Pure — returns the next
+ * state plus the list of fields that actually changed. The caller passes
+ * the result into `setForm` and reports the count from `fields.length`,
+ * which matters because `setForm((prev) => ...)` updaters run on a later
+ * tick — we can't read a closure counter inside one and expect the value
+ * to be ready synchronously.
+ */
 function applySuggestions(
   suggestions: Suggestion[],
-  setForm: React.Dispatch<React.SetStateAction<BusinessFormState>>,
-): { count: number; fields: string[] } {
+  prev: BusinessFormState,
+): { next: BusinessFormState; fields: string[] } {
   const stringFields: (keyof BusinessFormState)[] = [
     "name",
     "oneLiner",
     "description",
     "location",
     "linkedinUrl",
+    "logoUrl",
   ];
-  let filled = 0;
+  const next = { ...prev };
   const fields: string[] = [];
 
-  setForm((prev) => {
-    const next = { ...prev };
-    for (const s of suggestions) {
-      const value = s.value;
-      if (typeof value === "string") {
-        if (s.field === "sector" && (SECTORS as readonly string[]).includes(value)) {
-          if (next.sector !== value) {
-            next.sector = value as Sector;
-            filled += 1;
-            fields.push("sector");
-          }
-        } else if (s.field === "origin" && (ORIGINS as readonly string[]).includes(value)) {
-          if (next.origin !== value) {
-            next.origin = value as Origin;
-            filled += 1;
-            fields.push("origin");
-          }
-        } else if (s.field === "fundingStage" && (STAGES as readonly string[]).includes(value)) {
-          if (next.fundingStage !== value) {
-            next.fundingStage = value as Stage;
-            filled += 1;
-            fields.push("fundingStage");
-          }
-        } else if (
-          s.field === "fundingStatus" &&
-          (FUNDING_STATUSES as readonly string[]).includes(value)
-        ) {
-          if (next.fundingStatus !== value) {
-            next.fundingStatus = value as FundingStatus;
-            filled += 1;
-            fields.push("fundingStatus");
-          }
-        } else if ((stringFields as string[]).includes(s.field)) {
-          const key = s.field as keyof BusinessFormState;
-          if (!next[key]) {
-            (next[key] as string) = value;
-            filled += 1;
-            fields.push(s.field);
-          }
+  for (const s of suggestions) {
+    const value = s.value;
+    if (typeof value === "string") {
+      if (s.field === "sector" && (SECTORS as readonly string[]).includes(value)) {
+        if (next.sector !== value) {
+          next.sector = value as Sector;
+          fields.push("sector");
         }
-      } else if (Array.isArray(value)) {
-        if (s.field === "needs") {
-          const valid = value.filter((v) =>
-            (ROLE_NEEDS as readonly string[]).includes(v),
-          ) as StartupNeed[];
-          if (valid.length > 0 && next.needs.length === 0) {
-            next.needs = valid;
-            filled += 1;
-            fields.push("needs");
-          }
+      } else if (s.field === "origin" && (ORIGINS as readonly string[]).includes(value)) {
+        if (next.origin !== value) {
+          next.origin = value as Origin;
+          fields.push("origin");
+        }
+      } else if (s.field === "fundingStage" && (STAGES as readonly string[]).includes(value)) {
+        if (next.fundingStage !== value) {
+          next.fundingStage = value as Stage;
+          fields.push("fundingStage");
+        }
+      } else if (
+        s.field === "fundingStatus" &&
+        (FUNDING_STATUSES as readonly string[]).includes(value)
+      ) {
+        if (next.fundingStatus !== value) {
+          next.fundingStatus = value as FundingStatus;
+          fields.push("fundingStatus");
+        }
+      } else if ((stringFields as string[]).includes(s.field)) {
+        const key = s.field as keyof BusinessFormState;
+        if (!next[key]) {
+          (next[key] as string) = value;
+          fields.push(s.field);
+        }
+      }
+    } else if (Array.isArray(value)) {
+      if (s.field === "needs") {
+        const valid = value.filter((v) =>
+          (ROLE_NEEDS as readonly string[]).includes(v),
+        ) as StartupNeed[];
+        if (valid.length > 0 && next.needs.length === 0) {
+          next.needs = valid;
+          fields.push("needs");
         }
       }
     }
-    return next;
-  });
+  }
 
-  return { count: filled, fields };
+  return { next, fields };
 }
 
 function humanizeError(raw: string): string {
