@@ -264,7 +264,7 @@ export function BusinessOnboardForm({ error, createBusinessAction }: Props) {
             required
             placeholder="Bramble AI"
             value={form.name}
-            onChange={(e) => setForm((p) => ({ ...p, name: e.currentTarget.value }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, name: v })); }}
           />
         </Field>
 
@@ -274,7 +274,7 @@ export function BusinessOnboardForm({ error, createBusinessAction }: Props) {
             name="oneLiner"
             placeholder="Customer-conversation analytics for vertical SaaS"
             value={form.oneLiner}
-            onChange={(e) => setForm((p) => ({ ...p, oneLiner: e.currentTarget.value }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, oneLiner: v })); }}
           />
         </Field>
 
@@ -286,7 +286,7 @@ export function BusinessOnboardForm({ error, createBusinessAction }: Props) {
             rows={5}
             placeholder="Who you are, what you make, who buys it, and where you are in the journey."
             value={form.description}
-            onChange={(e) => setForm((p) => ({ ...p, description: e.currentTarget.value }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, description: v })); }}
           />
         </Field>
 
@@ -295,7 +295,7 @@ export function BusinessOnboardForm({ error, createBusinessAction }: Props) {
             id="sector"
             name="sector"
             value={form.sector}
-            onChange={(e) => setForm((p) => ({ ...p, sector: e.currentTarget.value as Sector }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, sector: v as Sector })); }}
           >
             {sectorOpts.map((o) => (
               <option key={o.value} value={o.value}>
@@ -310,7 +310,7 @@ export function BusinessOnboardForm({ error, createBusinessAction }: Props) {
             id="origin"
             name="origin"
             value={form.origin}
-            onChange={(e) => setForm((p) => ({ ...p, origin: e.currentTarget.value as Origin }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, origin: v as Origin })); }}
           >
             {originOpts.map((o) => (
               <option key={o.value} value={o.value}>
@@ -343,7 +343,7 @@ export function BusinessOnboardForm({ error, createBusinessAction }: Props) {
             id="fundingStage"
             name="fundingStage"
             value={form.fundingStage}
-            onChange={(e) => setForm((p) => ({ ...p, fundingStage: e.currentTarget.value as Stage }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, fundingStage: v as Stage })); }}
           >
             {stageOpts.map((o) => (
               <option key={o.value} value={o.value}>
@@ -358,9 +358,10 @@ export function BusinessOnboardForm({ error, createBusinessAction }: Props) {
             id="fundingStatus"
             name="fundingStatus"
             value={form.fundingStatus}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, fundingStatus: e.currentTarget.value as FundingStatus }))
-            }
+            onChange={(e) => {
+              const v = e.currentTarget.value as FundingStatus;
+              setForm((p) => ({ ...p, fundingStatus: v }));
+            }}
           >
             {fundingOpts.map((o) => (
               <option key={o.value} value={o.value}>
@@ -375,7 +376,7 @@ export function BusinessOnboardForm({ error, createBusinessAction }: Props) {
             id="location"
             name="location"
             value={form.location}
-            onChange={(e) => setForm((p) => ({ ...p, location: e.currentTarget.value }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, location: v })); }}
           />
         </Field>
 
@@ -386,7 +387,7 @@ export function BusinessOnboardForm({ error, createBusinessAction }: Props) {
             type="url"
             placeholder="https://example.com"
             value={form.websiteUrl}
-            onChange={(e) => setForm((p) => ({ ...p, websiteUrl: e.currentTarget.value }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, websiteUrl: v })); }}
           />
         </Field>
 
@@ -397,7 +398,7 @@ export function BusinessOnboardForm({ error, createBusinessAction }: Props) {
             type="url"
             placeholder="https://linkedin.com/company/…"
             value={form.linkedinUrl}
-            onChange={(e) => setForm((p) => ({ ...p, linkedinUrl: e.currentTarget.value }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, linkedinUrl: v })); }}
           />
         </Field>
 

@@ -263,7 +263,7 @@ export function MentorOnboardForm({
             name="headline"
             placeholder="Two-time founder · post-exit advisor for SaaS GTM"
             value={form.headline}
-            onChange={(e) => setForm((p) => ({ ...p, headline: e.currentTarget.value }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, headline: v })); }}
           />
         </Field>
 
@@ -275,7 +275,7 @@ export function MentorOnboardForm({
             rows={5}
             placeholder="Background, the kinds of founders you advise, and what's worked."
             value={form.bio}
-            onChange={(e) => setForm((p) => ({ ...p, bio: e.currentTarget.value }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, bio: v })); }}
           />
         </Field>
 
@@ -301,7 +301,7 @@ export function MentorOnboardForm({
             min={0}
             max={40}
             value={form.hoursPerMonth}
-            onChange={(e) => setForm((p) => ({ ...p, hoursPerMonth: e.currentTarget.value }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, hoursPerMonth: v })); }}
           />
         </Field>
 
@@ -353,7 +353,7 @@ export function MentorOnboardForm({
             id="location"
             name="location"
             value={form.location}
-            onChange={(e) => setForm((p) => ({ ...p, location: e.currentTarget.value }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, location: v })); }}
           />
         </Field>
 
@@ -364,7 +364,7 @@ export function MentorOnboardForm({
             type="url"
             placeholder="https://linkedin.com/in/…"
             value={form.linkedinUrl}
-            onChange={(e) => setForm((p) => ({ ...p, linkedinUrl: e.currentTarget.value }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, linkedinUrl: v })); }}
           />
         </Field>
 
@@ -375,7 +375,7 @@ export function MentorOnboardForm({
             type="url"
             placeholder="https://…"
             value={form.websiteUrl}
-            onChange={(e) => setForm((p) => ({ ...p, websiteUrl: e.currentTarget.value }))}
+            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, websiteUrl: v })); }}
           />
         </Field>
 

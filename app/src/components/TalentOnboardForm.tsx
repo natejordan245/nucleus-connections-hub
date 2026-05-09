@@ -539,8 +539,9 @@ export function TalentOnboardForm({ error, createTalentAction, prefilledName, pr
             placeholder="Former GTM lead, two seed-stage exits"
             value={form.headline}
             onChange={(e) => {
+              const value = e.currentTarget.value;
               setTouched((prev) => ({ ...prev, headline: true }));
-              setForm((prev) => ({ ...prev, headline: e.currentTarget.value }));
+              setForm((prev) => ({ ...prev, headline: value }));
             }}
           />
         </Field>
@@ -552,8 +553,9 @@ export function TalentOnboardForm({ error, createTalentAction, prefilledName, pr
             placeholder="What you've worked on, what you're proud of, what kind of company you'd want to join."
             value={form.bio}
             onChange={(e) => {
+              const value = e.currentTarget.value;
               setTouched((prev) => ({ ...prev, bio: true }));
-              setForm((prev) => ({ ...prev, bio: e.currentTarget.value }));
+              setForm((prev) => ({ ...prev, bio: value }));
             }}
           />
         </Field>
@@ -565,8 +567,9 @@ export function TalentOnboardForm({ error, createTalentAction, prefilledName, pr
             placeholder="Sales-leader role at a seed-to-Series-A B2B software company, ideally Utah-based."
             value={form.lookingFor}
             onChange={(e) => {
+              const value = e.currentTarget.value;
               setTouched((prev) => ({ ...prev, lookingFor: true }));
-              setForm((prev) => ({ ...prev, lookingFor: e.currentTarget.value }));
+              setForm((prev) => ({ ...prev, lookingFor: value }));
             }}
           />
         </Field>
@@ -609,8 +612,9 @@ export function TalentOnboardForm({ error, createTalentAction, prefilledName, pr
             placeholder="sales-leadership, gtm-strategy, pricing"
             value={form.skills}
             onChange={(e) => {
+              const value = e.currentTarget.value;
               setTouched((prev) => ({ ...prev, skills: true }));
-              setForm((prev) => ({ ...prev, skills: e.currentTarget.value }));
+              setForm((prev) => ({ ...prev, skills: value }));
             }}
           />
         </Field>
@@ -645,8 +649,9 @@ export function TalentOnboardForm({ error, createTalentAction, prefilledName, pr
             name="availability"
             value={form.availability}
             onChange={(e) => {
+              const value = e.currentTarget.value as Availability;
               setTouched((prev) => ({ ...prev, availability: true }));
-              setForm((prev) => ({ ...prev, availability: e.currentTarget.value as Availability }));
+              setForm((prev) => ({ ...prev, availability: value }));
             }}
           >
             {AVAILABILITIES.map((v) => (
@@ -690,8 +695,9 @@ export function TalentOnboardForm({ error, createTalentAction, prefilledName, pr
             max={5}
             value={form.riskTolerance}
             onChange={(e) => {
+              const value = e.currentTarget.value;
               setTouched((prev) => ({ ...prev, riskTolerance: true }));
-              setForm((prev) => ({ ...prev, riskTolerance: e.currentTarget.value }));
+              setForm((prev) => ({ ...prev, riskTolerance: value }));
             }}
           />
         </Field>
@@ -702,8 +708,9 @@ export function TalentOnboardForm({ error, createTalentAction, prefilledName, pr
             name="location"
             value={form.location}
             onChange={(e) => {
+              const value = e.currentTarget.value;
               setTouched((prev) => ({ ...prev, location: true }));
-              setForm((prev) => ({ ...prev, location: e.currentTarget.value }));
+              setForm((prev) => ({ ...prev, location: value }));
             }}
           />
         </Field>
@@ -716,8 +723,9 @@ export function TalentOnboardForm({ error, createTalentAction, prefilledName, pr
             placeholder="https://linkedin.com/in/…"
             value={form.linkedinUrl}
             onChange={(e) => {
+              const value = e.currentTarget.value;
               setTouched((prev) => ({ ...prev, linkedinUrl: true }));
-              setForm((prev) => ({ ...prev, linkedinUrl: e.currentTarget.value }));
+              setForm((prev) => ({ ...prev, linkedinUrl: value }));
             }}
           />
         </Field>
@@ -730,8 +738,9 @@ export function TalentOnboardForm({ error, createTalentAction, prefilledName, pr
             placeholder="https://x.com/…"
             value={form.xUrl}
             onChange={(e) => {
+              const value = e.currentTarget.value;
               setTouched((prev) => ({ ...prev, xUrl: true }));
-              setForm((prev) => ({ ...prev, xUrl: e.currentTarget.value }));
+              setForm((prev) => ({ ...prev, xUrl: value }));
             }}
           />
         </Field>
