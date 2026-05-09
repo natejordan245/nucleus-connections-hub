@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { ExplainabilityPanel } from "@/components/ExplainabilityPanel";
 import { GapCloser } from "@/components/GapCloser";
 import { Pill } from "@/components/Pill";
@@ -28,12 +29,13 @@ export default async function BusinessProfilePage({ params }: { params: { id: st
 
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-8">
-      <Link
-        href="/dashboard"
-        className="text-sm font-medium text-warmgray-500 transition hover:text-ink"
-      >
-        ← Back to dashboard
-      </Link>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Business" },
+          { label: business.name },
+        ]}
+      />
 
       <header className="mt-4 flex items-start gap-5 rounded-lg border border-warmgray-200 bg-white p-5">
         <Avatar name={business.name} src={business.logoUrl} size="lg" />

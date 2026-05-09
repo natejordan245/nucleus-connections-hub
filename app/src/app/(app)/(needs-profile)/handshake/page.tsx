@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Check } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { ExplainabilityPanel } from "@/components/ExplainabilityPanel";
 import { Pill } from "@/components/Pill";
 import { getDataStore } from "@/lib/data";
@@ -70,12 +71,13 @@ export default async function HandshakePage({
 
   return (
     <main className="mx-auto w-full max-w-4xl px-6 py-8">
-      <Link
-        href="/dashboard"
-        className="text-sm font-medium text-warmgray-500 transition hover:text-ink"
-      >
-        ← Back to dashboard
-      </Link>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Handshake" },
+          { label: otherSummary.name },
+        ]}
+      />
 
       <header className="mt-4">
         <span className="eyebrow text-orange-500">Handshake</span>
