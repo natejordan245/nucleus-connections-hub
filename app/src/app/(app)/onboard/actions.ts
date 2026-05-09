@@ -325,7 +325,7 @@ export async function createBusiness(formData: FormData) {
     await store.putBusiness(created);
   } catch (err) {
     console.error("[createBusiness] putBusiness failed:", err);
-    throw err;
+    redirect("/onboard/business?error=save_failed");
   }
   if (getAppMode() === "demo") setDemoCookie(id);
   void store.matchesFor(id).catch((err) => {

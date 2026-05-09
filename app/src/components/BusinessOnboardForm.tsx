@@ -209,6 +209,11 @@ export function BusinessOnboardForm({
           Company name and a short description are required.
         </p>
       )}
+      {error === "save_failed" && (
+        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          Couldn't save your profile — please try again in a moment.
+        </p>
+      )}
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
         <form action={createBusinessAction} className="space-y-4" onInvalidCapture={scrollToInvalid}>
