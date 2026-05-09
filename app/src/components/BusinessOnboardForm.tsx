@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Sparkles, Loader2 } from "lucide-react";
 import { ChipGroup } from "@/components/ChipGroup";
 import { DemoFiller } from "@/components/DemoFiller";
 import { Field, Input, Select, Textarea } from "@/components/FormField";
@@ -29,6 +30,13 @@ import type {
   Stage,
   StartupNeed,
 } from "@/lib/data/types";
+
+type Suggestion = { field: string; value: string | string[]; confidence: number };
+type ScrapeState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "ok"; filled: number }
+  | { status: "error"; message: string };
 
 type Props = {
   error?: string;
@@ -72,6 +80,39 @@ export function BusinessOnboardForm({
   signedIn = true,
 }: Props) {
   const [form, setForm] = useState<BusinessFormState>(INITIAL);
+  const [scrape, setScrape] = useState<ScrapeState>({ status: "idle" });
+
+  async function handleScrape() {
+    const url = form.websiteUrl.trim();
+    if (!url) {
+      setScrape({ status: "error", message: "Enter your website URL first." });
+      return;
+    }
+    setScrape({ status: "loading" });
+    try {
+      const res = await fetch("/api/profile/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "business", url }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        suggestions?: Suggestion[];
+        error?: string;
+      };
+      if (!res.ok) {
+        setScrape({
+          status: "error",
+          message: data.error ? humanizeError(data.error) : "Couldn't read that website.",
+        });
+        return;
+      }
+      const filled = applySuggestions(data.suggestions ?? [], setForm);
+      setScrape({ status: "ok", filled });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Network error.";
+      setScrape({ status: "error", message });
+    }
+  }
 
   const sectorOpts = SECTORS.map((s) => ({ value: s, label: SECTOR_LABELS[s] }));
   const originOpts = ORIGINS.map((o) => ({ value: o, label: ORIGIN_LABELS[o] }));
@@ -106,6 +147,57 @@ export function BusinessOnboardForm({
         action={createBusinessAction}
         className="mt-6 space-y-6 rounded-2xl border border-warmgray-100 bg-white p-6 shadow-sm"
       >
+        <Field
+          id="websiteUrl"
+          name="websiteUrl"
+          label="Company website"
+          hint="We'll read your site and pre-fill what we can find."
+        >
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Input
+              id="websiteUrl"
+              name="websiteUrl"
+              type="url"
+              placeholder="https://example.com"
+              value={form.websiteUrl}
+              onChange={(e) => {
+                const v = e.currentTarget.value;
+                setForm((p) => ({ ...p, websiteUrl: v }));
+                if (scrape.status !== "idle" && scrape.status !== "loading") {
+                  setScrape({ status: "idle" });
+                }
+              }}
+              className="flex-1"
+            />
+            <button
+              type="button"
+              onClick={handleScrape}
+              disabled={scrape.status === "loading" || !form.websiteUrl.trim()}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white transition hover:bg-warmgray-800 disabled:cursor-not-allowed disabled:bg-warmgray-300"
+            >
+              {scrape.status === "loading" ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} aria-hidden />
+                  Reading…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                  Auto-fill from website
+                </>
+              )}
+            </button>
+          </div>
+          {scrape.status === "ok" && (
+            <p className="mt-2 text-xs font-medium text-emerald-700">
+              Filled in {scrape.filled} field{scrape.filled === 1 ? "" : "s"} from your website. Review and edit below.
+            </p>
+          )}
+          {scrape.status === "error" && (
+            <p className="mt-2 text-xs font-medium text-red-700">{scrape.message}</p>
+          )}
+        </Field>
+
         <Field id="logoUrl" name="logoUrl" label="Company logo" hint="Optional. Helps your card stand out.">
           <PhotoUpload name="logoUrl" label="Upload logo" fallbackName="Co" />
         </Field>
@@ -237,18 +329,6 @@ export function BusinessOnboardForm({
           />
         </Field>
 
-        <Field id="websiteUrl" name="websiteUrl" label="Website" hint="Optional.">
-          <Input
-            id="websiteUrl"
-            name="websiteUrl"
-            type="url"
-            placeholder="https://example.com"
-            data-sample="https://beaconhealth.example.com"
-            value={form.websiteUrl}
-            onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, websiteUrl: v })); }}
-          />
-        </Field>
-
         <Field id="linkedinUrl" name="linkedinUrl" label="LinkedIn" hint="Optional.">
           <Input
             id="linkedinUrl"
@@ -274,4 +354,78 @@ export function BusinessOnboardForm({
       </form>
     </main>
   );
+}
+
+function applySuggestions(
+  suggestions: Suggestion[],
+  setForm: React.Dispatch<React.SetStateAction<BusinessFormState>>,
+): number {
+  const stringFields: (keyof BusinessFormState)[] = [
+    "name",
+    "oneLiner",
+    "description",
+    "location",
+    "linkedinUrl",
+  ];
+  let filled = 0;
+
+  setForm((prev) => {
+    const next = { ...prev };
+    for (const s of suggestions) {
+      const value = s.value;
+      if (typeof value === "string") {
+        if (s.field === "sector" && (SECTORS as readonly string[]).includes(value)) {
+          if (next.sector !== value) {
+            next.sector = value as Sector;
+            filled += 1;
+          }
+        } else if (s.field === "origin" && (ORIGINS as readonly string[]).includes(value)) {
+          if (next.origin !== value) {
+            next.origin = value as Origin;
+            filled += 1;
+          }
+        } else if (s.field === "fundingStage" && (STAGES as readonly string[]).includes(value)) {
+          if (next.fundingStage !== value) {
+            next.fundingStage = value as Stage;
+            filled += 1;
+          }
+        } else if (
+          s.field === "fundingStatus" &&
+          (FUNDING_STATUSES as readonly string[]).includes(value)
+        ) {
+          if (next.fundingStatus !== value) {
+            next.fundingStatus = value as FundingStatus;
+            filled += 1;
+          }
+        } else if ((stringFields as string[]).includes(s.field)) {
+          const key = s.field as keyof BusinessFormState;
+          if (!next[key]) {
+            (next[key] as string) = value;
+            filled += 1;
+          }
+        }
+      } else if (Array.isArray(value)) {
+        if (s.field === "needs") {
+          const valid = value.filter((v) =>
+            (ROLE_NEEDS as readonly string[]).includes(v),
+          ) as StartupNeed[];
+          if (valid.length > 0 && next.needs.length === 0) {
+            next.needs = valid;
+            filled += 1;
+          }
+        }
+      }
+    }
+    return next;
+  });
+
+  return filled;
+}
+
+function humanizeError(raw: string): string {
+  if (raw.startsWith("fetch_failed")) return "Couldn't reach that website. Check the URL and try again.";
+  if (raw.includes("OPENAI_API_KEY")) return "Auto-fill is unavailable in this environment.";
+  if (raw.includes("invalid url")) return "That doesn't look like a valid URL.";
+  if (raw.includes("unsupported content-type")) return "That URL didn't return a webpage.";
+  return raw.length > 120 ? "Couldn't read that website." : raw;
 }

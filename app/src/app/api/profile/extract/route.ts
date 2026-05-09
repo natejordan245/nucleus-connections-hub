@@ -150,20 +150,16 @@ const BUSINESS_PROMPT = [
 ].join("\n");
 
 export async function POST(req: Request) {
-  let body: { kind?: string; text?: string };
+  let body: { kind?: string; text?: string; url?: string };
   try {
-    body = (await req.json()) as { kind?: string; text?: string };
+    body = (await req.json()) as { kind?: string; text?: string; url?: string };
   } catch {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
 
   const kind = body.kind === "mentor" ? "mentor" : body.kind === "business" ? "business" : null;
-  const text = typeof body.text === "string" ? body.text.trim() : "";
   if (!kind) {
     return NextResponse.json({ error: "kind must be 'mentor' or 'business'" }, { status: 400 });
-  }
-  if (!text) {
-    return NextResponse.json({ error: "text required" }, { status: 400 });
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
@@ -174,9 +170,32 @@ export async function POST(req: Request) {
     );
   }
 
-  const truncated = text.slice(0, MAX_INPUT_CHARS);
   const warnings: string[] = [];
-  if (text.length > MAX_INPUT_CHARS) {
+  let sourceText = typeof body.text === "string" ? body.text.trim() : "";
+
+  if (!sourceText && typeof body.url === "string" && body.url.trim()) {
+    if (kind !== "business") {
+      return NextResponse.json(
+        { error: "url scraping is only supported for kind=business" },
+        { status: 400 },
+      );
+    }
+    try {
+      const fetched = await fetchWebsiteText(body.url.trim());
+      sourceText = fetched.text;
+      if (fetched.warning) warnings.push(fetched.warning);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return NextResponse.json({ error: `fetch_failed: ${message}` }, { status: 502 });
+    }
+  }
+
+  if (!sourceText) {
+    return NextResponse.json({ error: "text or url required" }, { status: 400 });
+  }
+
+  const truncated = sourceText.slice(0, MAX_INPUT_CHARS);
+  if (sourceText.length > MAX_INPUT_CHARS) {
     warnings.push(`Input was truncated at ${MAX_INPUT_CHARS} characters.`);
   }
 
@@ -188,6 +207,132 @@ export async function POST(req: Request) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: `extraction_failed: ${message}` }, { status: 500 });
   }
+}
+
+const FETCH_TIMEOUT_MS = 12_000;
+const MAX_HTML_BYTES = 1_500_000;
+
+async function fetchWebsiteText(rawUrl: string): Promise<{ text: string; warning?: string }> {
+  const url = normalizeUrl(rawUrl);
+  if (!url) throw new Error("invalid url");
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(url.toString(), {
+      signal: controller.signal,
+      redirect: "follow",
+      headers: {
+        "User-Agent": "NucleusConnectionsBot/1.0 (+onboarding)",
+        Accept: "text/html,application/xhtml+xml",
+      },
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const contentType = res.headers.get("content-type") ?? "";
+  if (contentType && !contentType.includes("text/html") && !contentType.includes("xhtml")) {
+    throw new Error(`unsupported content-type: ${contentType}`);
+  }
+
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error("empty response body");
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  let truncatedBytes = false;
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    received += value.byteLength;
+    if (received > MAX_HTML_BYTES) {
+      truncatedBytes = true;
+      try {
+        await reader.cancel();
+      } catch {}
+      break;
+    }
+    chunks.push(value);
+  }
+  const html = new TextDecoder("utf-8", { fatal: false }).decode(Buffer.concat(chunks.map((c) => Buffer.from(c))));
+  const text = htmlToText(html);
+  if (!text) throw new Error("no readable text on page");
+  return {
+    text,
+    warning: truncatedBytes ? "Page exceeded 1.5MB — only the first portion was read." : undefined,
+  };
+}
+
+function normalizeUrl(input: string): URL | null {
+  let raw = input.trim();
+  if (!raw) return null;
+  if (!/^https?:\/\//i.test(raw)) raw = `https://${raw}`;
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+    return u;
+  } catch {
+    return null;
+  }
+}
+
+function htmlToText(html: string): string {
+  let s = html;
+  s = s.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, " ");
+  s = s.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, " ");
+  s = s.replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, " ");
+  s = s.replace(/<!--[\s\S]*?-->/g, " ");
+
+  const titleMatch = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(s);
+  const title = titleMatch ? decodeEntities(stripTags(titleMatch[1])) : "";
+
+  const metaDescriptions: string[] = [];
+  const metaRe = /<meta\b[^>]*>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = metaRe.exec(s))) {
+    const tag = m[0];
+    const nameMatch = /\b(name|property)\s*=\s*"([^"]+)"/i.exec(tag);
+    const contentMatch = /\bcontent\s*=\s*"([^"]*)"/i.exec(tag);
+    if (!nameMatch || !contentMatch) continue;
+    const key = nameMatch[2].toLowerCase();
+    if (
+      key === "description" ||
+      key === "og:description" ||
+      key === "og:title" ||
+      key === "og:site_name" ||
+      key === "twitter:description"
+    ) {
+      const v = decodeEntities(contentMatch[1]).trim();
+      if (v) metaDescriptions.push(`${key}: ${v}`);
+    }
+  }
+
+  const body = stripTags(s);
+  const collapsed = decodeEntities(body).replace(/\s+/g, " ").trim();
+
+  const head = [title && `TITLE: ${title}`, ...metaDescriptions].filter(Boolean).join("\n");
+  return [head, collapsed].filter(Boolean).join("\n\n");
+}
+
+function stripTags(html: string): string {
+  return html.replace(/<\/?[a-z][^>]*>/gi, " ");
+}
+
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => {
+      const code = Number(n);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : "";
+    });
 }
 
 async function callOpenAI(apiKey: string, kind: Kind, text: string): Promise<unknown> {
