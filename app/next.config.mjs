@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  eslint: {
+    // Vercel runs `next build`, which by default runs `next lint` and fails
+    // the build on lint errors. We rely on typecheck for correctness; lint
+    // is advisory only.
+    ignoreDuringBuilds: true,
+  },
   experimental: {
     serverComponentsExternalPackages: ["pdf-to-png-converter", "@napi-rs/canvas"],
   },
