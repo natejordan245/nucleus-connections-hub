@@ -15,14 +15,15 @@ export default async function StartupProfilePage({ params }: { params: { id: str
   const startup = await store.getStartup(params.id);
   if (!startup) notFound();
 
-  const [matches, viewerTalent, resources] = await Promise.all([
-    viewerId ? store.matchesFor(viewerId) : Promise.resolve([]),
+  const [match, viewerTalent] = await Promise.all([
+    viewerId
+      ? store.computeMatch({ subjectId: viewerId, candidateId: startup.id })
+      : Promise.resolve(null),
     viewerId ? store.getTalent(viewerId) : Promise.resolve(null),
-    store.listResources(),
   ]);
-  const match = matches.find(
-    (m) => m.candidateId === startup.id && m.candidateKind === "startup",
-  );
+  // Gap-closer surfaces alongside the explainability panel for any non-perfect
+  // match. The viewer must be a talent because the gap-closer's signal is
+  // built from talent → startup factor verdicts.
   const showGapCloser = Boolean(viewerTalent && (match ? match.score < 1 : true));
 
   return (

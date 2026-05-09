@@ -24,6 +24,17 @@ export interface IDataStore {
   // matches: returns the candidates ranked for a given subject
   matchesFor(subjectId: string): Promise<MatchDTO[]>;
 
+  // On-demand match for an arbitrary (subject, candidate) pair — used when a
+  // user clicks through from search to a profile that isn't necessarily in
+  // their top-K. Runs the same hard-filter → cosine → LLM-gate pipeline as
+  // `matchesFor` but for a single pair. Returns null if either profile is
+  // missing or both directions fall under the cosine floor (genuinely
+  // incompatible — not worth surfacing a fake score).
+  computeMatch(args: {
+    subjectId: string;
+    candidateId: string;
+  }): Promise<MatchDTO | null>;
+
   // search across the three pools (simple substring match for now)
   search(query: string): Promise<{
     talent: TalentDTO[];

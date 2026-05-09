@@ -21,9 +21,12 @@ export default async function TalentProfilePage({ params }: { params: { id: stri
   const talent = await store.getTalent(params.id);
   if (!talent) notFound();
 
-  // The match record (if any) the *viewer* would see for this talent.
-  const matches = viewerId ? await store.matchesFor(viewerId) : [];
-  const match = matches.find((m) => m.candidateId === talent.id && m.candidateKind === "talent");
+  // On-demand match analysis for this (viewer, talent) pair. Computed even
+  // when the talent isn't in the viewer's top-K, so a search click-through
+  // always lands on a populated "why was I matched?" surface.
+  const match = viewerId
+    ? await store.computeMatch({ subjectId: viewerId, candidateId: talent.id })
+    : null;
 
   return (
       <main className="mx-auto w-full max-w-5xl px-8 py-10">
