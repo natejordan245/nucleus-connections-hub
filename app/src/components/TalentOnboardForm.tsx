@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { Loader2, Sparkles } from "lucide-react";
 import { ChipGroup } from "@/components/ChipGroup";
 import { DemoFiller } from "@/components/DemoFiller";
 import { Field, Input, Select, Textarea } from "@/components/FormField";
@@ -35,12 +36,16 @@ import type {
 } from "@/lib/data/types";
 import type {
   ResumeExtractResponse,
-  ResumeExtractStage,
   ResumeSuggestion,
   ResumeSuggestionField,
-  ResumeSuggestionSource,
   ResumeExtractStreamEvent,
 } from "@/lib/resume/types";
+
+type ExtractState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "ok"; filled: number }
+  | { status: "error"; message: string };
 
 type Props = {
   error?: string;
@@ -95,25 +100,16 @@ const INITIAL_FORM: TalentFormState = {
   xUrl: "",
 };
 
-const FIELD_LABELS: Record<ResumeSuggestionField, string> = {
-  name: "Name",
-  headline: "Headline",
-  bio: "Short bio",
-  lookingFor: "What are you looking for?",
-  location: "Location",
-  linkedinUrl: "LinkedIn",
-  xUrl: "X URL",
-  categories: "Categories",
-  lookingForNeeds: "Roles you're looking for",
-  domains: "Domains of interest",
-  networks: "Nucleus networks",
-  compensation: "Compensation interest",
-  stagePrefs: "Stage preference",
-  availability: "Availability",
-  riskTolerance: "Risk tolerance",
-};
-
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
+
+const DROPPED_FIELDS: ResumeSuggestionField[] = [
+  "headline",
+  "xUrl",
+  "networks",
+  "compensation",
+  "stagePrefs",
+  "riskTolerance",
+];
 
 export function TalentOnboardForm({
   error,
@@ -150,17 +146,13 @@ export function TalentOnboardForm({
           email: prefilledEmail ?? "",
         },
   );
-  const [suggestions, setSuggestions] = useState<ResumeSuggestion[]>([]);
-  const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [warnings, setWarnings] = useState<string[]>([]);
-  const [extractError, setExtractError] = useState<string | null>(null);
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [statusStage, setStatusStage] = useState<ResumeExtractStage | null>(null);
+  const [extract, setExtract] = useState<ExtractState>({ status: "idle" });
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [resumeMetaJson, setResumeMetaJson] = useState("");
   const [resumeFilename, setResumeFilename] = useState<string | null>(null);
   const requestIdRef = useRef(0);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const sectorOpts = SECTORS.map((v) => ({ value: v, label: SECTOR_LABELS[v] }));
   const compOpts = COMPENSATIONS.map((v) => ({ value: v, label: COMPENSATION_LABELS[v] }));
@@ -170,36 +162,29 @@ export function TalentOnboardForm({
   const needOpts = ROLE_NEEDS.map((v) => ({ value: v, label: NEED_LABELS[v] }));
 
   async function onResumeChange(file: File | null) {
-    setExtractError(null);
-    setWarnings([]);
-    setSuggestions([]);
-    setSelected({});
-    setStatusStage(null);
     setStatusMessage("");
     setResumeMetaJson("");
 
     if (!file) {
       setResumeFilename(null);
+      setExtract({ status: "idle" });
       return;
     }
     setResumeFilename(file.name);
 
-    const lower = file.name.toLowerCase();
-    const isPdf = lower.endsWith(".pdf") || file.type === "application/pdf";
-    const isDocx =
-      lower.endsWith(".docx") ||
-      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-    if (!isPdf && !isDocx) {
-      setExtractError("Unsupported file type. Please upload a .pdf or .docx resume.");
+    const isPdf = file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
+    if (!isPdf) {
+      setExtract({ status: "error", message: "Please upload a PDF resume." });
       return;
     }
     if (file.size > MAX_FILE_BYTES) {
-      setExtractError("File too large. Max size is 5 MB.");
+      setExtract({ status: "error", message: "File too large. Max size is 5 MB." });
       return;
     }
 
     const requestId = ++requestIdRef.current;
-    setIsExtracting(true);
+    setExtract({ status: "loading" });
+    setStatusMessage("Reading your resume…");
     try {
       const body = new FormData();
       body.set("resume", file);
@@ -220,10 +205,10 @@ export function TalentOnboardForm({
             typeof data === "object" && data !== null && "error" in data
               ? (data.error as string | undefined)
               : undefined;
-          setExtractError(message ?? "Resume extraction failed.");
+          setExtract({ status: "error", message: message ?? "Couldn't read that resume." });
           return;
         }
-        consumeExtractPayload(data as ResumeExtractResponse);
+        applyPayload(data as ResumeExtractResponse, requestId);
         return;
       }
 
@@ -231,7 +216,6 @@ export function TalentOnboardForm({
       const decoder = new TextDecoder();
       let buffer = "";
       let finalPayload: ResumeExtractResponse | null = null;
-      const collectedWarnings: string[] = [];
       let streamError: string | null = null;
 
       while (true) {
@@ -251,10 +235,7 @@ export function TalentOnboardForm({
           }
           if (event.type === "status") {
             if (requestId !== requestIdRef.current) return;
-            setStatusStage(event.stage);
             setStatusMessage(event.message);
-          } else if (event.type === "warning") {
-            collectedWarnings.push(event.message);
           } else if (event.type === "result") {
             finalPayload = event.payload;
           } else if (event.type === "error") {
@@ -265,137 +246,30 @@ export function TalentOnboardForm({
 
       if (requestId !== requestIdRef.current) return;
       if (streamError) {
-        setExtractError(streamError);
+        setExtract({ status: "error", message: streamError });
         return;
       }
       if (!finalPayload) {
-        setExtractError("Resume extraction did not return suggestions.");
+        setExtract({ status: "error", message: "Couldn't read that resume." });
         return;
       }
-      consumeExtractPayload({
-        ...finalPayload,
-        warnings: [...(finalPayload.warnings ?? []), ...collectedWarnings],
-      });
+      applyPayload(finalPayload, requestId);
     } catch {
       if (requestId !== requestIdRef.current) return;
-      setExtractError("Resume extraction failed. You can continue filling fields manually.");
+      setExtract({ status: "error", message: "Couldn't read that resume. Try again or fill manually." });
     } finally {
       if (requestId === requestIdRef.current) {
-        setIsExtracting(false);
-        setStatusStage(null);
+        setStatusMessage("");
       }
     }
   }
 
-  function consumeExtractPayload(payload: ResumeExtractResponse) {
-    // Skip suggestions for fields the form no longer renders.
-    const dropped: ResumeSuggestionField[] = [
-      "headline",
-      "xUrl",
-      "networks",
-      "compensation",
-      "stagePrefs",
-      "riskTolerance",
-    ];
-    const filteredSuggestions = payload.suggestions.filter(
-      (s) => !dropped.includes(s.field),
-    );
-    const nextSelected: Record<string, boolean> = {};
-    for (const suggestion of filteredSuggestions) {
-      if (suggestion.kind === "scalar") {
-        nextSelected[suggestion.field] = suggestion.autoSelect;
-        continue;
-      }
-      for (const item of suggestion.items) {
-        nextSelected[itemSelectionKey(suggestion.field, item.value)] = item.autoSelect;
-      }
-    }
-    setWarnings(dedupeWarnings(payload.warnings ?? []));
-    setSuggestions(filteredSuggestions);
-    setSelected(nextSelected);
+  function applyPayload(payload: ResumeExtractResponse, requestId: number) {
+    if (requestId !== requestIdRef.current) return;
     setResumeMetaJson(JSON.stringify(payload.extractedTextMeta));
-  }
-
-  function applySelectedSuggestions() {
-    if (suggestions.length === 0) return;
-
-    setForm((prev) => {
-      const next = { ...prev };
-      for (const s of suggestions) {
-        if (s.kind === "scalar") {
-          if (!selected[s.field]) continue;
-          if (touched[s.field]) continue;
-          switch (s.field) {
-            case "name":
-            case "headline":
-            case "bio":
-            case "lookingFor":
-            case "location":
-            case "linkedinUrl":
-            case "xUrl":
-              if (typeof s.value === "string") {
-                next[s.field] = s.value;
-              }
-              break;
-            case "availability":
-              if (typeof s.value === "string") next.availability = s.value as Availability;
-              break;
-            case "riskTolerance":
-              if (typeof s.value === "number") next.riskTolerance = String(s.value);
-              break;
-          }
-          continue;
-        }
-
-        if (touched[s.field]) continue;
-
-        switch (s.field) {
-          case "categories": {
-            const values = s.items
-              .filter((item) => selected[itemSelectionKey(s.field, item.value)])
-              .map((item) => String(item.value)) as TalentCategory[];
-            if (values.length > 0) next.categories = dedupe(values) as TalentCategory[];
-            break;
-          }
-          case "lookingForNeeds": {
-            const values = s.items
-              .filter((item) => selected[itemSelectionKey(s.field, item.value)])
-              .map((item) => String(item.value)) as StartupNeed[];
-            if (values.length > 0) next.lookingForNeeds = dedupe(values) as StartupNeed[];
-            break;
-          }
-          case "domains": {
-            const values = s.items
-              .filter((item) => selected[itemSelectionKey(s.field, item.value)])
-              .map((item) => String(item.value)) as Sector[];
-            if (values.length > 0) next.domains = dedupe(values) as Sector[];
-            break;
-          }
-          case "networks": {
-            const values = s.items
-              .filter((item) => selected[itemSelectionKey(s.field, item.value)])
-              .map((item) => String(item.value)) as Network[];
-            if (values.length > 0) next.networks = dedupe(values) as Network[];
-            break;
-          }
-          case "compensation": {
-            const values = s.items
-              .filter((item) => selected[itemSelectionKey(s.field, item.value)])
-              .map((item) => String(item.value)) as Compensation[];
-            if (values.length > 0) next.compensation = dedupe(values) as Compensation[];
-            break;
-          }
-          case "stagePrefs": {
-            const values = s.items
-              .filter((item) => selected[itemSelectionKey(s.field, item.value)])
-              .map((item) => String(item.value)) as Stage[];
-            if (values.length > 0) next.stagePrefs = dedupe(values) as Stage[];
-            break;
-          }
-        }
-      }
-      return next;
-    });
+    const filtered = payload.suggestions.filter((s) => !DROPPED_FIELDS.includes(s.field));
+    const filled = applyResumeSuggestions(filtered, touched, setForm);
+    setExtract({ status: "ok", filled });
   }
 
   return (
@@ -439,137 +313,52 @@ export function TalentOnboardForm({
           <Field
             id="resume"
             name="resume"
-            label="Resume upload (PDF/DOCX)"
-            hint="Upload once and we'll auto-extract high-confidence profile suggestions."
+            label="Resume"
+            hint="Drop in your resume PDF and we'll fill what we can."
           >
-            <input
-              id="resume"
-              type="file"
-              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              className="block w-full rounded-lg border border-warmgray-200 bg-white px-3 py-2 text-sm text-ink file:mr-3 file:rounded-md file:border-0 file:bg-orange-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-orange-700 hover:file:bg-orange-100"
-              onChange={(e) => onResumeChange(e.currentTarget.files?.[0] ?? null)}
-            />
-            {resumeFilename && (
-              <p className="mt-2 text-xs text-warmgray-600">
-                File: <span className="font-medium text-ink">{resumeFilename}</span>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <input
+                ref={fileInputRef}
+                id="resume"
+                type="file"
+                accept=".pdf,application/pdf"
+                className="hidden"
+                onChange={(e) => onResumeChange(e.currentTarget.files?.[0] ?? null)}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={extract.status === "loading"}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white transition hover:bg-warmgray-800 disabled:cursor-not-allowed disabled:bg-warmgray-300"
+              >
+                {extract.status === "loading" ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} aria-hidden />
+                    {statusMessage || "Reading…"}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                    {resumeFilename ? "Replace resume" : "Auto-fill from resume"}
+                  </>
+                )}
+              </button>
+              {resumeFilename && (
+                <span className="truncate text-xs text-warmgray-600">
+                  <span className="font-medium text-ink">{resumeFilename}</span>
+                </span>
+              )}
+            </div>
+            {extract.status === "ok" && (
+              <p className="mt-2 text-xs font-medium text-emerald-700">
+                Filled in {extract.filled} field{extract.filled === 1 ? "" : "s"} from your resume. Review and edit below.
               </p>
             )}
-            {isExtracting && (
-              <p className="mt-2 text-xs font-medium text-orange-700">
-                {statusMessage || "Analyzing resume…"}
-              </p>
-            )}
-            {extractError && (
-              <p className="mt-2 text-xs text-red-700">{extractError}</p>
-            )}
-            {warnings.length > 0 && (
-              <ul className="mt-2 space-y-1 text-xs text-warmgray-600">
-                {warnings.map((w) => (
-                  <li key={w}>• {w}</li>
-                ))}
-              </ul>
+            {extract.status === "error" && (
+              <p className="mt-2 text-xs font-medium text-red-700">{extract.message}</p>
             )}
             <input type="hidden" name="resumeExtractMeta" value={resumeMetaJson} />
           </Field>
-        )}
-
-        {suggestions.length > 0 && (
-          <section className="rounded-xl border border-orange-100 bg-orange-50/50 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="eyebrow text-orange-600">AI suggestions</p>
-                <p className="mt-1 text-xs text-warmgray-600">
-                  Toggle fields, then apply selected values into the form.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={applySelectedSuggestions}
-                className="inline-flex h-8 items-center justify-center rounded-full bg-orange-500 px-4 text-xs font-semibold text-white transition hover:bg-orange-600"
-              >
-                Apply selected
-              </button>
-            </div>
-
-            <ul className="mt-3 space-y-2">
-              {suggestions.map((s) => (
-                <li key={s.field} className="rounded-lg border border-orange-100 bg-white px-3 py-2">
-                  {s.kind === "scalar" ? (
-                    <label className="flex cursor-pointer items-start gap-3">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(selected[s.field])}
-                        onChange={(e) =>
-                          setSelected((prev) => ({
-                            ...prev,
-                            [s.field]: e.currentTarget.checked,
-                          }))
-                        }
-                        className="mt-1 h-4 w-4 rounded border-warmgray-300 text-orange-600 focus:ring-orange-500"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="text-sm font-semibold text-ink">{FIELD_LABELS[s.field]}</span>
-                          <span className="text-xs font-medium text-warmgray-500">
-                            {Math.round(s.confidence * 100)}%
-                          </span>
-                        </div>
-                        <p className="mt-1 break-words text-xs text-warmgray-700">
-                          {String(s.value)}
-                        </p>
-                        {s.reason && <p className="mt-1 text-[11px] text-warmgray-500">{s.reason}</p>}
-                        {renderEvidence(s.evidence, s.source)}
-                      </div>
-                    </label>
-                  ) : (
-                    <div>
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-sm font-semibold text-ink">{FIELD_LABELS[s.field]}</span>
-                        <span className="text-xs font-medium text-warmgray-500">
-                          {Math.round(s.confidence * 100)}%
-                        </span>
-                      </div>
-                      <ul className="mt-2 space-y-1">
-                        {s.items.map((item) => {
-                          const itemKey = itemSelectionKey(s.field, item.value);
-                          return (
-                            <li key={itemKey}>
-                              <label className="flex cursor-pointer items-start gap-2">
-                                <input
-                                  type="checkbox"
-                                  checked={Boolean(selected[itemKey])}
-                                  onChange={(e) =>
-                                    setSelected((prev) => ({
-                                      ...prev,
-                                      [itemKey]: e.currentTarget.checked,
-                                    }))
-                                  }
-                                  className="mt-0.5 h-4 w-4 rounded border-warmgray-300 text-orange-600 focus:ring-orange-500"
-                                />
-                                <span className="min-w-0 flex-1 text-xs text-warmgray-700">
-                                  {String(item.value)}
-                                </span>
-                                <span className="text-[11px] text-warmgray-500">
-                                  {Math.round(item.confidence * 100)}%
-                                </span>
-                              </label>
-                              {item.reason && (
-                                <p className="ml-6 mt-0.5 text-[11px] text-warmgray-500">
-                                  {item.reason}
-                                </p>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                      {s.reason && <p className="mt-1 text-[11px] text-warmgray-500">{s.reason}</p>}
-                      {renderEvidence(s.evidence, s.source)}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
         )}
 
         <Field id="name" name="name" label="Name" required>
@@ -757,33 +546,73 @@ export function TalentOnboardForm({
   );
 }
 
-function itemSelectionKey(field: ResumeSuggestionField, value: unknown): string {
-  return `${field}::${normalizeSelectionToken(String(value ?? ""))}`;
-}
+function applyResumeSuggestions(
+  suggestions: ResumeSuggestion[],
+  touched: Record<string, boolean>,
+  setForm: React.Dispatch<React.SetStateAction<TalentFormState>>,
+): number {
+  let filled = 0;
 
-function normalizeSelectionToken(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+  setForm((prev) => {
+    const next = { ...prev };
+    for (const s of suggestions) {
+      if (touched[s.field]) continue;
+
+      if (s.kind === "scalar") {
+        switch (s.field) {
+          case "name":
+          case "bio":
+          case "lookingFor":
+          case "location":
+          case "linkedinUrl":
+            if (typeof s.value === "string" && s.value && next[s.field] !== s.value) {
+              next[s.field] = s.value;
+              filled += 1;
+            }
+            break;
+          case "availability":
+            if (typeof s.value === "string" && next.availability !== s.value) {
+              next.availability = s.value as Availability;
+              filled += 1;
+            }
+            break;
+          // headline, xUrl, riskTolerance are filtered upstream; nothing to do here.
+        }
+        continue;
+      }
+
+      const items = s.items.map((item) => String(item.value));
+      switch (s.field) {
+        case "categories": {
+          if (items.length > 0) {
+            next.categories = dedupe(items) as TalentCategory[];
+            filled += 1;
+          }
+          break;
+        }
+        case "lookingForNeeds": {
+          if (items.length > 0) {
+            next.lookingForNeeds = dedupe(items) as StartupNeed[];
+            filled += 1;
+          }
+          break;
+        }
+        case "domains": {
+          if (items.length > 0) {
+            next.domains = dedupe(items) as Sector[];
+            filled += 1;
+          }
+          break;
+        }
+        // networks, compensation, stagePrefs are filtered upstream.
+      }
+    }
+    return next;
+  });
+
+  return filled;
 }
 
 function dedupe<T>(values: T[]): T[] {
   return Array.from(new Set(values));
-}
-
-function dedupeWarnings(values: string[]): string[] {
-  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
-}
-
-function renderEvidence(evidence: string[], source: ResumeSuggestionSource[]) {
-  const notes: string[] = [];
-  if (evidence.length > 0) {
-    notes.push(`Evidence: ${evidence.join(" · ")}`);
-  }
-  if (source.length > 0) {
-    notes.push(`Source: ${source.join(", ")}`);
-  }
-  if (notes.length === 0) return null;
-  return <p className="mt-1 text-[11px] text-warmgray-500">{notes.join(" | ")}</p>;
 }
