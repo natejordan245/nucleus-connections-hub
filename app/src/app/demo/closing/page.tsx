@@ -20,6 +20,7 @@ const COLUMNS: Array<{
     items: [
       "Resume upload — drag a PDF, profile auto-fills.",
       "Paste a website URL — business profile extracts itself.",
+      "Utah-specific resources that bridge the gap on partial matches.",
     ],
   },
   {

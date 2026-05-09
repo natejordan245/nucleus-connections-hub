@@ -113,7 +113,6 @@ export type CandidateDTO = {
   /** Structured intent: role shapes this person wants from businesses.
    *  Optional; data-store readers populate a default when absent. */
   lookingForNeeds?: StartupNeed[];
-  skills: string[];
   domains: Sector[];
   availability: Availability;
   compensation: Compensation[];

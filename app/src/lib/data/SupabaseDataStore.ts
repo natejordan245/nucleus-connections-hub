@@ -76,7 +76,6 @@ export class SupabaseDataStore implements IDataStore {
       lookingFor: d.lookingFor ?? "",
       categories: d.categories ?? ["operator"],
       lookingForNeeds: d.lookingForNeeds ?? [],
-      skills: d.skills ?? [],
       domains: d.domains ?? [],
       availability: d.availability ?? "full-time",
       compensation: d.compensation ?? ["cash"],

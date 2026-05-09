@@ -6,6 +6,7 @@ import { ChipGroup } from "@/components/ChipGroup";
 import { DemoFiller } from "@/components/DemoFiller";
 import { Field, Input, Select, Textarea } from "@/components/FormField";
 import { OnboardAccountFields, decodeOnboardError } from "@/components/OnboardAccountFields";
+import { PhotoUpload } from "@/components/PhotoUpload";
 import {
   AVAILABILITIES,
   AVAILABILITY_LABELS,
@@ -64,7 +65,6 @@ type TalentFormState = {
   lookingFor: string;
   categories: TalentCategory[];
   lookingForNeeds: StartupNeed[];
-  skills: string;
   networks: Network[];
   domains: Sector[];
   availability: Availability;
@@ -84,7 +84,6 @@ const INITIAL_FORM: TalentFormState = {
   lookingFor: "",
   categories: ["operator"],
   lookingForNeeds: [],
-  skills: "",
   networks: ["operator"],
   domains: [],
   availability: "full-time",
@@ -101,7 +100,6 @@ const FIELD_LABELS: Record<ResumeSuggestionField, string> = {
   headline: "Headline",
   bio: "Short bio",
   lookingFor: "What are you looking for?",
-  skills: "Skills",
   location: "Location",
   linkedinUrl: "LinkedIn",
   xUrl: "X URL",
@@ -136,7 +134,6 @@ export function TalentOnboardForm({
           lookingFor: initial.lookingFor,
           categories: initial.categories ?? ["operator"],
           lookingForNeeds: initial.lookingForNeeds ?? [],
-          skills: initial.skills.join(", "),
           networks: initial.networks,
           domains: initial.domains,
           availability: initial.availability,
@@ -353,14 +350,6 @@ export function TalentOnboardForm({
         if (touched[s.field]) continue;
 
         switch (s.field) {
-          case "skills": {
-            const values = s.items
-              .filter((item) => selected[itemSelectionKey(s.field, item.value)])
-              .map((item) => String(item.value).trim())
-              .filter(Boolean);
-            if (values.length > 0) next.skills = values.join(", ");
-            break;
-          }
           case "categories": {
             const values = s.items
               .filter((item) => selected[itemSelectionKey(s.field, item.value)])
@@ -437,6 +426,15 @@ export function TalentOnboardForm({
         action={createTalentAction}
         className="mt-4 space-y-5 rounded-lg border border-warmgray-200 bg-white p-5"
       >
+        <Field id="photoUrl" name="photoUrl" label="Profile photo" hint="Optional.">
+          <PhotoUpload
+            name="photoUrl"
+            label="Upload photo"
+            fallbackName={form.name || prefilledName || "You"}
+            defaultUrl={initial?.photoUrl}
+          />
+        </Field>
+
         {!isEdit && (
           <Field
             id="resume"
@@ -652,21 +650,6 @@ export function TalentOnboardForm({
             }}
           />
         </Field>
-        <Field id="skills" name="skills" label="Skills" hint="Comma-separated.">
-          <Input
-            id="skills"
-            name="skills"
-            placeholder="sales-leadership, gtm-strategy, pricing"
-            data-sample="sales-leadership, gtm-strategy, pricing, channel-partnerships, ae-hiring, outbound-motion"
-            value={form.skills}
-            onChange={(e) => {
-              const value = e.currentTarget.value;
-              setTouched((prev) => ({ ...prev, skills: true }));
-              setForm((prev) => ({ ...prev, skills: value }));
-            }}
-          />
-        </Field>
-
         <Field id="domains" name="domains" label="Domains of interest" hint="Pick any that fit.">
           <ChipGroup
             name="domains"
@@ -737,7 +720,6 @@ export function TalentOnboardForm({
             {/* Preserve fields not surfaced in this form during the upsert. */}
             <input type="hidden" name="headline" value={initial.headline} />
             <input type="hidden" name="xUrl" value={initial.xUrl ?? ""} />
-            <input type="hidden" name="photoUrl" value={initial.photoUrl ?? ""} />
             <input type="hidden" name="riskTolerance" value={String(initial.riskTolerance)} />
             {initial.networks.map((n) => (
               <input key={`net-${n}`} type="hidden" name="networks" value={n} />
