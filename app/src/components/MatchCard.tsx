@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { AlertCircle } from "lucide-react";
 import type { BusinessDTO, CandidateDTO, MatchDTO, MatchFactor } from "@/lib/data/types";
 import { Avatar } from "./Avatar";
@@ -17,9 +18,17 @@ const STRONG_THRESHOLD = 0.85;
 export function MatchCard({
   match,
   candidate,
+  gapCloser,
 }: {
   match: MatchDTO;
   candidate: Candidate;
+  /**
+   * Optional override for the partial-match gap-closer. When undefined and
+   * the score is partial, the default async {@link GapCloser} fetches via
+   * the data store. Slideshow callers pass `<GapCloserView .../>` with
+   * fixtures so the component never touches the data layer.
+   */
+  gapCloser?: ReactNode;
 }) {
   const name =
     candidate.kind === "candidate" ? candidate.candidate.name : candidate.business.name;
@@ -68,11 +77,13 @@ export function MatchCard({
 
       {isPartial && (
         <div className="mt-5">
-          <GapCloser
-            subjectId={match.subjectId}
-            candidateId={match.candidateId}
-            limit={3}
-          />
+          {gapCloser ?? (
+            <GapCloser
+              subjectId={match.subjectId}
+              candidateId={match.candidateId}
+              limit={3}
+            />
+          )}
         </div>
       )}
 
