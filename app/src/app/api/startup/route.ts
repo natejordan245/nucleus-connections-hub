@@ -39,7 +39,6 @@ function fillBusiness(p: Partial<BusinessDTO>): BusinessDTO {
     location: p.location ?? "Salt Lake City, UT",
     utahOrgIds: p.utahOrgIds ?? [],
     logoUrl: p.logoUrl,
-    linkedinUrl: p.linkedinUrl,
     xUrl: p.xUrl,
     websiteUrl: p.websiteUrl,
     createdAt: p.createdAt ?? new Date().toISOString(),

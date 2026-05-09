@@ -110,7 +110,6 @@ export class SupabaseDataStore implements IDataStore {
       location: row.location ?? d.location ?? "Salt Lake City, UT",
       utahOrgIds: d.utahOrgIds ?? [],
       logoUrl: row.photo_url ?? d.logoUrl,
-      linkedinUrl: d.linkedinUrl,
       xUrl: d.xUrl,
       websiteUrl: d.websiteUrl,
       bioExtract: d.bioExtract,

@@ -63,7 +63,6 @@ export const LUMEN: BusinessDTO = {
   location: "Salt Lake City, UT",
   utahOrgIds: ["org-silicon-slopes", "org-stoke-mtn"],
   logoUrl: "/plaibook-icon.svg",
-  linkedinUrl: "https://linkedin.com/company/plaibook",
   websiteUrl: "https://plaibook.tech",
   createdAt: "2026-03-04T12:00:00.000Z",
 };
