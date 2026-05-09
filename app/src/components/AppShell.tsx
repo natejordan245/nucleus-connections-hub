@@ -41,7 +41,7 @@ export function AppShell({
                 >
                   Profile
                 </Link>
-                <form action="/auth/signout" method="post">
+                <form action="/auth/signout" method="post" className="contents">
                   <button
                     type="submit"
                     className="text-xs font-medium text-warmgray-700 hover:text-ink"

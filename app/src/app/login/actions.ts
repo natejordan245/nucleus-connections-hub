@@ -33,7 +33,7 @@ export async function signIn(formData: FormData) {
   if (getAppMode() === "demo") {
     const persona = pickDemoPersonaForEmail(email);
     setDemoCookie(persona.id);
-    redirect("/profile");
+    redirect("/dashboard");
   }
 
   if (!email || !password) {
@@ -44,7 +44,7 @@ export async function signIn(formData: FormData) {
   if (error) {
     redirect(`/login?error=${encodeURIComponent(error.message)}`);
   }
-  redirect("/profile");
+  redirect("/dashboard");
 }
 
 export async function signUp(formData: FormData) {
@@ -57,7 +57,7 @@ export async function signUp(formData: FormData) {
     // user straight into the dashboard so they can poke around.
     const persona = pickDemoPersonaForEmail(email || "demo");
     setDemoCookie(persona.id);
-    redirect("/profile");
+    redirect("/dashboard");
   }
 
   if (!email || !password) {
@@ -72,7 +72,7 @@ export async function signUp(formData: FormData) {
   if (error) {
     redirect(`/signup?error=${encodeURIComponent(error.message)}`);
   }
-  redirect("/profile");
+  redirect("/dashboard");
 }
 
 export async function signInAsDemoPersona(formData: FormData) {
@@ -82,5 +82,5 @@ export async function signInAsDemoPersona(formData: FormData) {
     redirect("/login/personas?error=unknown_persona");
   }
   setDemoCookie(persona.id);
-  redirect("/profile");
+  redirect("/dashboard");
 }
