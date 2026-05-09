@@ -261,8 +261,20 @@ export function TalentOnboardForm({
   }
 
   function consumeExtractPayload(payload: ResumeExtractResponse) {
+    // Skip suggestions for fields the form no longer renders.
+    const dropped: ResumeSuggestionField[] = [
+      "headline",
+      "xUrl",
+      "networks",
+      "compensation",
+      "stagePrefs",
+      "riskTolerance",
+    ];
+    const filteredSuggestions = payload.suggestions.filter(
+      (s) => !dropped.includes(s.field),
+    );
     const nextSelected: Record<string, boolean> = {};
-    for (const suggestion of payload.suggestions) {
+    for (const suggestion of filteredSuggestions) {
       if (suggestion.kind === "scalar") {
         nextSelected[suggestion.field] = suggestion.autoSelect;
         continue;
@@ -272,7 +284,7 @@ export function TalentOnboardForm({
       }
     }
     setWarnings(dedupeWarnings(payload.warnings ?? []));
-    setSuggestions(payload.suggestions);
+    setSuggestions(filteredSuggestions);
     setSelected(nextSelected);
     setResumeMetaJson(JSON.stringify(payload.extractedTextMeta));
   }
@@ -540,19 +552,6 @@ export function TalentOnboardForm({
             }}
           />
         </Field>
-        <Field id="headline" name="headline" label="Headline" hint="One line — your professional summary.">
-          <Input
-            id="headline"
-            name="headline"
-            placeholder="Former GTM lead, two seed-stage exits"
-            value={form.headline}
-            onChange={(e) => {
-              const value = e.currentTarget.value;
-              setTouched((prev) => ({ ...prev, headline: true }));
-              setForm((prev) => ({ ...prev, headline: value }));
-            }}
-          />
-        </Field>
         <Field id="bio" name="bio" label="Short bio" required>
           <Textarea
             id="bio"
@@ -627,18 +626,6 @@ export function TalentOnboardForm({
           />
         </Field>
 
-        <Field id="networks" name="networks" label="Which Nucleus networks do you fit?" hint="Pick all that apply — most operators just check Operator.">
-          <ChipGroup
-            name="networks"
-            options={networkOpts}
-            selected={form.networks}
-            onChange={(next) => {
-              setTouched((prev) => ({ ...prev, networks: true }));
-              setForm((prev) => ({ ...prev, networks: next as Network[] }));
-            }}
-          />
-        </Field>
-
         <Field id="domains" name="domains" label="Domains of interest" hint="Pick any that fit.">
           <ChipGroup
             name="domains"
@@ -670,46 +657,6 @@ export function TalentOnboardForm({
           </Select>
         </Field>
 
-        <Field id="compensation" name="compensation" label="Compensation interest" hint="Pick all that apply.">
-          <ChipGroup
-            name="compensation"
-            options={compOpts}
-            selected={form.compensation}
-            onChange={(next) => {
-              setTouched((prev) => ({ ...prev, compensation: true }));
-              setForm((prev) => ({ ...prev, compensation: next as Compensation[] }));
-            }}
-          />
-        </Field>
-
-        <Field id="stagePrefs" name="stagePrefs" label="Stage preference" hint="Where you want to plug in.">
-          <ChipGroup
-            name="stagePrefs"
-            options={stageOpts}
-            selected={form.stagePrefs}
-            onChange={(next) => {
-              setTouched((prev) => ({ ...prev, stagePrefs: true }));
-              setForm((prev) => ({ ...prev, stagePrefs: next as Stage[] }));
-            }}
-          />
-        </Field>
-
-        <Field id="riskTolerance" name="riskTolerance" label="Risk tolerance" hint="1 = stable bet · 5 = pre-PMF moonshot.">
-          <Input
-            id="riskTolerance"
-            name="riskTolerance"
-            type="number"
-            min={1}
-            max={5}
-            value={form.riskTolerance}
-            onChange={(e) => {
-              const value = e.currentTarget.value;
-              setTouched((prev) => ({ ...prev, riskTolerance: true }));
-              setForm((prev) => ({ ...prev, riskTolerance: value }));
-            }}
-          />
-        </Field>
-
         <Field id="location" name="location" label="Location">
           <Input
             id="location"
@@ -734,21 +681,6 @@ export function TalentOnboardForm({
               const value = e.currentTarget.value;
               setTouched((prev) => ({ ...prev, linkedinUrl: true }));
               setForm((prev) => ({ ...prev, linkedinUrl: value }));
-            }}
-          />
-        </Field>
-
-        <Field id="xUrl" name="xUrl" label="X URL" hint="Optional.">
-          <Input
-            id="xUrl"
-            name="xUrl"
-            type="url"
-            placeholder="https://x.com/…"
-            value={form.xUrl}
-            onChange={(e) => {
-              const value = e.currentTarget.value;
-              setTouched((prev) => ({ ...prev, xUrl: true }));
-              setForm((prev) => ({ ...prev, xUrl: value }));
             }}
           />
         </Field>

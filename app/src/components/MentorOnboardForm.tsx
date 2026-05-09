@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
 import { ChipGroup } from "@/components/ChipGroup";
 import { Field, Input, Textarea } from "@/components/FormField";
 import { OnboardAccountFields, decodeOnboardError } from "@/components/OnboardAccountFields";
@@ -59,9 +58,6 @@ const INITIAL: MentorFormState = {
   websiteUrl: "",
 };
 
-const VALID_SECTORS = new Set(SECTORS);
-const VALID_COMP = new Set(COMPENSATIONS);
-
 export function MentorOnboardForm({
   error,
   createMentorAction,
@@ -69,122 +65,14 @@ export function MentorOnboardForm({
   prefilledEmail: _prefilledEmail,
   signedIn = true,
 }: Props) {
-  const [paste, setPaste] = useState("");
   const [form, setForm] = useState<MentorFormState>(() => ({
     ...INITIAL,
     name: prefilledName ?? "",
   }));
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [extractError, setExtractError] = useState<string | null>(null);
-  const [extractedFields, setExtractedFields] = useState<string[]>([]);
 
   const sectorOpts = SECTORS.map((s) => ({ value: s, label: SECTOR_LABELS[s] }));
   const compOpts = COMPENSATIONS.map((c) => ({ value: c, label: COMPENSATION_LABELS[c] }));
   const networkOpts = NETWORKS.map((n) => ({ value: n, label: NETWORK_LABELS[n] }));
-
-  async function onExtract() {
-    setExtractError(null);
-    setExtractedFields([]);
-    if (!paste.trim()) {
-      setExtractError("Paste your bio first.");
-      return;
-    }
-    setIsExtracting(true);
-    try {
-      const res = await fetch("/api/profile/extract", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "mentor", text: paste }),
-      });
-      const data = (await res.json().catch(() => ({}))) as
-        | { suggestions?: { field: string; value: string | string[]; confidence: number }[] }
-        | { error?: string };
-      if (!res.ok || "error" in data) {
-        setExtractError(("error" in data && data.error) || "Extraction failed.");
-        return;
-      }
-      const suggestions = "suggestions" in data ? data.suggestions ?? [] : [];
-      const filled: string[] = [];
-      setForm((prev) => {
-        const next = { ...prev };
-        for (const s of suggestions) {
-          const val = s.value;
-          switch (s.field) {
-            case "headline":
-              if (typeof val === "string" && !next.headline) {
-                next.headline = val;
-                filled.push("headline");
-              }
-              break;
-            case "bio":
-              if (typeof val === "string" && !next.bio) {
-                next.bio = val;
-                filled.push("bio");
-              }
-              break;
-            case "location":
-              if (typeof val === "string") {
-                next.location = val;
-                filled.push("location");
-              }
-              break;
-            case "linkedinUrl":
-              if (typeof val === "string") {
-                next.linkedinUrl = val;
-                filled.push("linkedinUrl");
-              }
-              break;
-            case "areasAdvised":
-              if (Array.isArray(val)) {
-                next.areasAdvised = val.filter((v): v is Sector => VALID_SECTORS.has(v as Sector));
-                filled.push("areasAdvised");
-              }
-              break;
-            case "sectorsOfInterest":
-              if (Array.isArray(val)) {
-                next.sectorsOfInterest = val.filter((v): v is Sector =>
-                  VALID_SECTORS.has(v as Sector),
-                );
-                filled.push("sectorsOfInterest");
-              }
-              break;
-            case "compPreference":
-              if (Array.isArray(val)) {
-                const filtered = val.filter((v): v is Compensation =>
-                  VALID_COMP.has(v as Compensation),
-                );
-                if (filtered.length > 0) {
-                  next.compPreference = filtered;
-                  filled.push("compPreference");
-                }
-              }
-              break;
-            case "hoursPerMonth":
-              if (typeof val === "string") {
-                next.hoursPerMonth = val;
-                filled.push("hoursPerMonth");
-              }
-              break;
-            case "boardSeatOpen":
-              if (val === "yes" || val === "no") {
-                next.boardSeatOpen = val;
-                filled.push("boardSeatOpen");
-              }
-              break;
-          }
-        }
-        return next;
-      });
-      setExtractedFields(filled);
-      if (filled.length === 0) {
-        setExtractError("No high-confidence fields could be extracted. Fill in below.");
-      }
-    } catch (err) {
-      setExtractError(err instanceof Error ? err.message : "Extraction failed.");
-    } finally {
-      setIsExtracting(false);
-    }
-  }
 
   return (
     <main className="mx-auto w-full max-w-2xl px-8 py-10">
@@ -197,7 +85,7 @@ export function MentorOnboardForm({
         Tell us how you advise.
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
-        Paste your bio or your LinkedIn About section. We'll auto-fill what we can.
+        A few quick fields and you're set up.
       </p>
 
       {error === "missing_required" && (
@@ -205,42 +93,6 @@ export function MentorOnboardForm({
           A short bio is required.
         </p>
       )}
-
-      <section className="mt-6 rounded-2xl border border-warmgray-100 bg-orange-50/40 p-5 shadow-sm">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-orange-500" strokeWidth={1.75} aria-hidden />
-          <span className="eyebrow text-orange-500">Smart fill</span>
-        </div>
-        <p className="mt-2 text-sm text-warmgray-700">
-          Paste your advisor bio or LinkedIn About section here. We'll extract what we can —
-          you can edit anything below.
-        </p>
-        <Textarea
-          rows={5}
-          value={paste}
-          onChange={(e) => setPaste(e.currentTarget.value)}
-          placeholder="Paste your advisor bio or LinkedIn About section…"
-          className="mt-3"
-        />
-        <div className="mt-3 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onExtract}
-            disabled={isExtracting || !paste.trim()}
-            className="inline-flex h-10 items-center justify-center rounded-full bg-ink px-5 text-sm font-semibold text-white transition hover:bg-warmgray-800 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isExtracting ? "Extracting…" : "Extract details →"}
-          </button>
-          {extractedFields.length > 0 && (
-            <p className="text-xs text-emerald-700">
-              Pre-filled {extractedFields.length} {extractedFields.length === 1 ? "field" : "fields"} below.
-            </p>
-          )}
-        </div>
-        {extractError && (
-          <p className="mt-2 text-xs text-red-700">{extractError}</p>
-        )}
-      </section>
 
       <form
         action={createMentorAction}
