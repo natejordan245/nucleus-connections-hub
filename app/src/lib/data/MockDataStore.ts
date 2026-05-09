@@ -151,7 +151,6 @@ export class MockDataStore implements IDataStore {
         t.lookingFor,
         (t.categories ?? []).join(" "),
         (t.lookingForNeeds ?? []).join(" "),
-        t.skills.join(" "),
         t.domains.join(" "),
       ]
         .map(lower)
@@ -492,7 +491,7 @@ function synthesizeCandidateToBusiness(c: CandidateDTO, b: BusinessDTO): MatchDT
         detail:
           analysis.covered.length > 0
             ? `Covers: ${analysis.covered.join(", ")}.`
-            : "No direct role coverage from current skills.",
+            : "No direct role coverage from the candidate's stated domains.",
       },
       {
         label: "Domain overlap",

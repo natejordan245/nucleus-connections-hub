@@ -76,15 +76,6 @@ export function CandidateProfileCard({
               ))}
             </div>
           </Card>
-          <Card title="Skills">
-            <div className="flex flex-wrap gap-2">
-              {candidate.skills.map((s) => (
-                <Pill key={s} tone="warmgray">
-                  {s}
-                </Pill>
-              ))}
-            </div>
-          </Card>
           <Card title="Domains">
             <div className="flex flex-wrap gap-2">
               {candidate.domains.map((d) => (

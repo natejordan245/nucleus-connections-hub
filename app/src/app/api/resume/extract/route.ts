@@ -83,7 +83,6 @@ const SCALAR_FIELDS: ResumeScalarSuggestionField[] = [
 ];
 
 const MULTI_FIELDS: ResumeMultiSuggestionField[] = [
-  "skills",
   "categories",
   "lookingForNeeds",
   "domains",
@@ -156,7 +155,7 @@ const EXTRACTION_PROMPT = [
   "No guessing: omit fields without enough evidence.",
   "Use confidence in 0..1 with conservative scoring.",
   "For headline, bio, and lookingFor, keep wording faithful with only minimal rewrite.",
-  "For multi-select fields (skills, categories, lookingForNeeds, domains, networks, compensation, stagePrefs), include all plausible values in listValue.",
+  "For multi-select fields (categories, lookingForNeeds, domains, networks, compensation, stagePrefs), include all plausible values in listValue.",
   "For listValue items, include value and confidence; optionally include evidence/reason/source.",
   "For riskTolerance, only set numberValue (1..5) when clearly inferable.",
   "Use canonical labels where possible:",
@@ -767,24 +766,6 @@ function normalizeMultiItems(
     });
   }
 
-  if (field === "skills" && out.length === 0) {
-    const fallback = splitCsv(input.textValue);
-    for (const skill of fallback) {
-      const confidence = clamp01(input.confidence ?? 0);
-      const band = confidenceBand(confidence);
-      if (!band) continue;
-      out.push({
-        value: skill,
-        confidence,
-        band,
-        autoSelect: band === "high",
-        evidence: normalizeEvidence(input.evidence),
-        source: normalizeSources(input.source),
-        reason: clean(input.reason),
-      });
-    }
-  }
-
   return dedupeByValue(out);
 }
 
@@ -819,7 +800,6 @@ function canonicalizeMultiValue(
   if (!raw) return null;
   const key = normalizeToken(raw);
 
-  if (field === "skills") return raw;
   if (field === "categories") return mapEnumWithAliases(key, TALENT_CATEGORIES, TALENT_CATEGORY_ALIASES);
   if (field === "lookingForNeeds") return mapEnumWithAliases(key, ROLE_NEEDS, ROLE_NEED_ALIASES);
   if (field === "domains") return mapEnumWithAliases(key, SECTORS, DOMAIN_ALIASES);

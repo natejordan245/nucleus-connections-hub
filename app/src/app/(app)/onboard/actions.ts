@@ -212,7 +212,6 @@ export async function createCandidate(formData: FormData) {
   const lookingFor = String(formData.get("lookingFor") ?? "").trim();
   const categories = pick<TalentCategory>(formData.getAll("categories"), TALENT_CATEGORIES);
   const lookingForNeeds = pick<StartupNeed>(formData.getAll("lookingForNeeds"), NEEDS);
-  const skills = csv(String(formData.get("skills") ?? ""));
   const domains = pick<Sector>(formData.getAll("domains"), SECTORS);
   const compensation = pick<Compensation>(formData.getAll("compensation"), COMPENSATIONS);
   const stagePrefs = pick<Stage>(formData.getAll("stagePrefs"), STAGES);
@@ -242,7 +241,6 @@ export async function createCandidate(formData: FormData) {
     lookingFor,
     categories: categories.length > 0 ? categories : ["operator"],
     lookingForNeeds,
-    skills,
     domains,
     availability,
     compensation: compensation.length > 0 ? compensation : ["cash"],
@@ -261,7 +259,7 @@ export async function createCandidate(formData: FormData) {
   const store = getDataStore();
   await store.putCandidate(created);
   if (getAppMode() === "demo") setDemoCookie(id);
-  redirect(`/profile/candidate/${id}`);
+  redirect("/dashboard");
 }
 
 // ── Business ─────────────────────────────────────────────────────────────────
@@ -322,7 +320,7 @@ export async function createBusiness(formData: FormData) {
   const store = getDataStore();
   await store.putBusiness(created);
   if (getAppMode() === "demo") setDemoCookie(id);
-  redirect(`/profile/business/${id}`);
+  redirect("/dashboard");
 }
 
 // ── Mentor ───────────────────────────────────────────────────────────────────
@@ -374,7 +372,7 @@ export async function createMentor(formData: FormData) {
   const store = getDataStore();
   await store.putMentor(created);
   if (getAppMode() === "demo") setDemoCookie(id);
-  redirect(`/profile/mentor/${id}`);
+  redirect("/dashboard");
 }
 
 // ── Investor (VC) ────────────────────────────────────────────────────────────
@@ -433,7 +431,7 @@ export async function createInvestor(formData: FormData) {
   const store = getDataStore();
   await store.putInvestor(created);
   if (getAppMode() === "demo") setDemoCookie(identity.id);
-  redirect(`/profile/investor/${identity.id}`);
+  redirect("/dashboard");
 }
 
 export async function skipInvestor(formData: FormData) {

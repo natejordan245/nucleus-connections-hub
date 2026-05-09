@@ -21,7 +21,6 @@ export type ResumeScalarSuggestionField =
   | "riskTolerance";
 
 export type ResumeMultiSuggestionField =
-  | "skills"
   | "categories"
   | "lookingForNeeds"
   | "domains"
