@@ -9,6 +9,7 @@ import type {
   MentorDTO,
   MessageDTO,
   NotificationDTO,
+  ProfileKind,
   ResourceDTO,
   UtahOrg,
 } from "./types";
@@ -30,6 +31,11 @@ export interface IDataStore {
   listInvestors(): Promise<InvestorDTO[]>;
   getInvestor(id: string): Promise<InvestorDTO | null>;
   listUtahOrgs(): Promise<UtahOrg[]>;
+
+  // Single-query check used by the (needs-profile) gate. Returns the kind of
+  // the viewer's profile, or null if they haven't onboarded yet. Cheaper than
+  // calling getCandidate/getBusiness/getMentor/getInvestor in parallel.
+  getProfileKind(id: string): Promise<ProfileKind | null>;
 
   // matches: returns the candidates ranked for a given subject. For
   // mentor/investor subjects this returns [] until directional matching ships.

@@ -16,27 +16,21 @@ export default async function DashboardPage() {
   const { viewerId } = await requireViewer();
   const store = getDataStore();
 
-  const [candidate, business, mentor, investor, matches, interests, allCandidates, allBusinesses] =
-    await Promise.all([
-      store.getCandidate(viewerId),
-      store.getBusiness(viewerId),
-      store.getMentor(viewerId),
-      store.getInvestor(viewerId),
-      store.matchesFor(viewerId),
-      store.listInterests(viewerId),
-      store.listCandidates(),
-      store.listBusinesses(),
-    ]);
+  // Fetch the viewer's profile kind first so we only load the opposite-side
+  // list. (matchesFor already loads opposite-kind rows internally — but the
+  // dashboard table also needs lookup-by-id for `resolveCandidate`, so we
+  // still need the list. We just don't need both directions.)
+  const viewerKind: ProfileKind | null = await store.getProfileKind(viewerId);
 
-  const viewerKind: ProfileKind | null = candidate
-    ? "candidate"
-    : business
-      ? "business"
-      : mentor
-        ? "mentor"
-        : investor
-          ? "investor"
-          : null;
+  const needsCandidates = viewerKind === "business";
+  const needsBusinesses = viewerKind === "candidate";
+
+  const [matches, interests, allCandidates, allBusinesses] = await Promise.all([
+    store.matchesFor(viewerId),
+    store.listInterests(viewerId),
+    needsCandidates ? store.listCandidates() : Promise.resolve([] as CandidateDTO[]),
+    needsBusinesses ? store.listBusinesses() : Promise.resolve([] as BusinessDTO[]),
+  ]);
 
   const copy = dashboardCopy(viewerKind);
   const interested = resolveInterestedIn({

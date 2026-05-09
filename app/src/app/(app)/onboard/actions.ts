@@ -259,6 +259,11 @@ export async function createCandidate(formData: FormData) {
   const store = getDataStore();
   await store.putCandidate(created);
   if (getAppMode() === "demo") setDemoCookie(id);
+  // Pre-warm the LLM-gate cache so the first dashboard render isn't paying
+  // for 25 cold OpenAI calls. Fire-and-forget — we don't block the redirect.
+  void store.matchesFor(id).catch((err) => {
+    console.warn("[onboard] matchesFor pre-warm failed:", err);
+  });
   redirect("/dashboard");
 }
 
@@ -318,6 +323,9 @@ export async function createBusiness(formData: FormData) {
   const store = getDataStore();
   await store.putBusiness(created);
   if (getAppMode() === "demo") setDemoCookie(id);
+  void store.matchesFor(id).catch((err) => {
+    console.warn("[onboard] matchesFor pre-warm failed:", err);
+  });
   redirect("/dashboard");
 }
 
