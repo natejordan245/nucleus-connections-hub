@@ -13,12 +13,22 @@ import type {
 } from "./types";
 
 /**
- * Extra batch of 100 procedurally-built candidate personas. Same shape as
+ * Extra batch of 300 procedurally-built candidate personas. Same shape as
  * `LIVE_TALENT` in `live-seed.ts` — kept in a separate file so the curated
  * hand-written set stays readable. Loaded by `/api/admin/seed-live`.
  *
- * IDs occupy the `…100000000100` → `…100000000199` block so they don't
+ * IDs occupy the `…100000000100` → `…100000000399` block so they don't
  * collide with the curated 36 in `live-seed.ts` (which use 001-036).
+ *
+ * Tier A — idx 0-99: original curated archetype distribution.
+ * Tier B — idx 100-199: expanded skill catalog (broad generalist stacks plus
+ *          niche specialist bundles), ~40% ship without a photo.
+ * Tier C — idx 200-299: "supercharged" — three merged skill bundles per
+ *          persona drawn from an ultra-specific catalog whose terms mirror
+ *          the business archetypes' one-liners and descriptions, so some
+ *          candidates hit very high match scores against specific companies
+ *          (e.g. an AI radiology startup or a construction-payments fintech).
+ *          ~50% ship without a photo.
  */
 
 const seedTime = "2026-05-01T12:00:00.000Z";
@@ -392,6 +402,125 @@ function pick<T>(arr: T[], i: number): T {
   return arr[i % arr.length];
 }
 
+// Expanded skill catalog used for idx >= 100. Mixes broad generalist stacks
+// with niche/specialist bundles so the second batch of personas reads as a
+// realistically diverse talent pool — some T-shaped, some hyper-specific.
+type ArchCategory = Archetype["category"];
+
+const EXPANDED_SKILL_BUNDLES: Record<ArchCategory, string[][]> = {
+  engineer: [
+    ["typescript", "react", "next.js", "tailwind", "tRPC", "postgres", "redis", "graphql", "websockets", "stripe-billing"],
+    ["go", "kubernetes", "kafka", "grpc", "etcd", "envoy", "service-mesh", "distributed-tracing", "chaos-engineering"],
+    ["rust", "tokio", "wasm", "axum", "no-std", "embedded-rust", "zerocopy", "wgpu"],
+    ["python", "pytorch", "jax", "triton", "vllm", "ray", "dask", "spark", "airflow", "dbt", "snowflake", "duckdb"],
+    ["swift", "swiftui", "core-ml", "metal", "arkit", "watch-os", "ios", "objective-c"],
+    ["c++", "real-time", "lock-free", "simd", "openmp", "cuda", "vulkan", "shaders", "ray-tracing"],
+    ["postgres", "row-level-security", "logical-replication", "pgvector", "citus", "patroni", "wal-g", "explain-analyze"],
+    ["solidity", "foundry", "anchor", "halo2", "evm-internals", "account-abstraction", "mev-aware"],
+    ["embedded-firmware", "stm32", "freertos", "zephyr", "can-bus", "modbus", "ble", "lora"],
+    ["data-engineering", "apache-iceberg", "delta-lake", "trino", "fivetran", "airbyte", "snowflake", "dbt"],
+    ["security-engineering", "fuzzing", "afl++", "sandboxing", "ebpf", "selinux", "capabilities", "binary-analysis"],
+    ["graphics", "three.js", "shadertoy", "compute-shaders", "real-time-rendering", "houdini-vex"],
+    ["full-stack-generalist", "scrappy-mvp", "supabase", "vercel", "feature-flags", "ab-testing", "growth-experiments"],
+    ["robotics-software", "ros2", "gazebo", "moveit", "slam", "sensor-fusion", "kalman-filters"],
+    ["compiler-engineering", "llvm", "mlir", "type-inference", "borrow-checking", "incremental-compilation"],
+    ["devops", "terraform", "pulumi", "aws-cdk", "github-actions", "argocd", "vault", "datadog", "sentry"],
+    ["ml-research", "transformers", "diffusion", "rlhf", "dpo", "evals", "huggingface", "weights-and-biases"],
+    ["fintech-engineering", "ledgering", "double-entry", "ach", "wire", "card-networks", "kyc-tooling", "1099-ops"],
+    ["healthcare-engineering", "hl7", "fhir", "epic-integration", "hipaa", "phi-handling", "audit-logging"],
+    ["site-reliability", "slo-design", "error-budgets", "postmortems", "incident-command", "runbook-automation"],
+  ],
+  operator: [
+    ["bizops", "fp&a", "cap-table-modeling", "vendor-management", "saas-stack-rationalization", "rev-leakage-audit"],
+    ["operations", "people-ops", "performance-management", "comp-bands", "pip-design", "exit-management"],
+    ["bizops", "go-to-market-execution", "process-design", "tooling-selection", "playbook-authoring"],
+    ["chief-of-staff", "exec-comms", "board-decks", "all-hands-design", "meeting-hygiene", "okr-rollout"],
+    ["revops", "salesforce-admin", "outreach-admin", "hubspot", "lead-routing", "territory-design", "quota-modeling"],
+    ["finance-leader", "audit-readiness", "asc-606", "revenue-recognition", "monthly-close", "investor-reporting"],
+    ["legal-ops", "contract-redlining", "msa-templating", "data-room-curation", "privacy-program-rollout"],
+    ["procurement", "sourcing", "vendor-consolidation", "saas-spend-management", "renewal-negotiation"],
+    ["customer-ops", "billing-disputes", "dunning", "churn-saves", "qbrs", "renewals-playbook"],
+    ["data-ops", "metric-definitions", "north-star-instrumentation", "amplitude", "mixpanel", "looker-modeling"],
+  ],
+  sales: [
+    ["enterprise-sales", "outbound", "discovery", "champion-building", "multithreading", "mutual-action-plans"],
+    ["pipeline-build", "ramp-design", "deal-strategy", "competitive-displacement", "renewal-protection"],
+    ["mid-market", "land-and-expand", "saas-pricing", "value-engineering", "roi-calculators"],
+    ["public-sector-sales", "sled", "gsa", "sba-set-asides", "dod-rapid-acquisition", "afwerx-pathway"],
+    ["channel-sales", "partner-recruitment", "co-sell-with-aws", "co-sell-with-gcp", "isv-marketplace-listings"],
+    ["sales-engineering", "discovery-demo", "poc-design", "security-questionnaires", "soc2-collateral"],
+    ["technical-sales", "developer-tools-selling", "bottom-up-plg", "tier-conversion", "self-serve-to-enterprise"],
+    ["healthcare-sales", "ids-buying-cycles", "rfp-responses", "value-analysis-committees"],
+    ["construction-sales", "contractor-buyers", "saas-for-trades", "field-sales-rides", "trade-show-circuits"],
+    ["financial-services-sales", "selling-to-banks", "selling-to-fintechs", "vendor-onboarding-cycles"],
+  ],
+  marketing: [
+    ["positioning", "category-design", "messaging-architecture", "narrative-arcs", "win-loss-interviewing"],
+    ["paid-acquisition", "google-ads", "linkedin-ads", "meta-ads", "reddit-ads", "attribution-modeling", "mmm-lite"],
+    ["lifecycle", "segment", "customer-io", "onboarding-flows", "in-product-tours", "retention-experiments"],
+    ["developer-marketing", "docs-as-marketing", "sample-app-libraries", "dx-content", "hackathon-sponsorship"],
+    ["content-marketing", "long-form-thought-leadership", "seo-cluster-design", "newsletter-curation"],
+    ["product-marketing", "launch-tier-design", "competitive-battlecards", "pricing-pages", "release-notes-as-marketing"],
+    ["brand", "visual-identity", "tone-of-voice-rewrites", "design-system-for-brand", "swag-program-curation"],
+    ["community-led-growth", "discord-ops", "user-group-curation", "ambassador-programs"],
+    ["events", "field-marketing", "user-conferences", "executive-roundtables", "sponsor-economics"],
+    ["analyst-relations", "gartner-briefings", "forrester-waves", "idc-marketscapes", "category-validation"],
+  ],
+  student: [
+    ["python", "javascript", "git", "data-structures", "algorithms", "leetcode-grinder", "competitive-programming"],
+    ["solidworks", "matlab", "additive-manufacturing", "cad", "fea-analysis", "tolerance-stack-ups"],
+    ["materials-science", "characterization", "tem-imaging", "xrd", "afm", "rheometry", "matlab"],
+    ["wet-lab", "microfluidics", "plate-reader-automation", "pcr", "western-blot", "python-for-bio", "bioinformatics"],
+    ["python", "pytorch", "data-engineering", "sql", "tableau", "jupyter", "scikit-learn", "kaggle-experience"],
+    ["robotics", "ros2", "gazebo", "arduino", "raspberry-pi", "computer-vision", "openCV", "yolo-finetuning"],
+    ["embedded", "stm32", "freertos", "kicad", "altium", "soldering", "oscilloscope-debugging"],
+    ["aerospace-engineering", "ansys-fluent", "openfoam", "trajectory-optimization", "rocket-propulsion-fundamentals"],
+    ["chemical-engineering", "process-simulation", "aspen-plus", "reactor-design", "thermodynamics-cycles"],
+    ["civil-engineering", "structural-analysis", "etabs", "revit-bim", "site-survey-tooling"],
+    ["product-design-student", "figma", "user-research", "rapid-prototyping", "service-blueprints"],
+    ["data-journalism", "scrapy", "pandas", "ggplot", "investigative-foia-process"],
+  ],
+  intern: [
+    ["python", "git", "react", "tailwind", "vite", "vercel-deploys", "feature-flagging-basics"],
+    ["sql", "excel-power-query", "tableau", "ops-analytics", "looker-explore-building"],
+    ["c", "embedded", "rtos", "kicad", "circuit-bring-up", "i2c-debugging"],
+    ["go", "rest-api-stubbing", "test-fixtures", "container-builds", "github-actions-basics"],
+    ["javascript", "node", "next.js-pages-router", "supabase-quickstart", "stripe-checkout-integration"],
+    ["product-management-intern", "competitive-teardowns", "user-interview-notes", "spec-drafting"],
+    ["growth-intern", "cold-outbound-templates", "linkedin-sequencing", "hubspot-data-cleanup"],
+  ],
+  advisor: [
+    ["fundraising", "board-management", "exec-coaching", "ceo-onboarding", "first-investor-update"],
+    ["engineering-management", "hiring-engineers-1-to-5", "tech-debt-triage", "first-incident-process"],
+    ["positioning", "early-stage-marketing", "narrative-clarity", "pitch-deck-surgery"],
+    ["public-company-readiness", "audit-committee", "sox-readiness", "s1-narrative", "ipo-roadshow"],
+    ["m&a-advisory", "buyer-mapping", "lou-negotiation", "diligence-prep", "earn-out-structuring"],
+    ["regulatory-strategy", "fda-pre-submission", "510k-pathway", "de-novo-classification", "qsr-readiness"],
+    ["dod-sbir-strategy", "phase-i-to-phase-iii", "topa-pathway", "afwerx-strategy", "ngad-supplier-pathway"],
+    ["go-to-market-coaching", "icp-clarity", "first-three-customers-playbook", "pricing-tiering"],
+  ],
+  fractional: [
+    ["fp&a", "cap-table", "financial-modeling", "fundraising-support", "first-cfo-pre-hire-coverage"],
+    ["recruiting", "compensation-bands", "performance-management-rollout", "people-ops-bootstrap"],
+    ["brand-design", "product-design", "design-systems", "marketing-website-overhaul"],
+    ["fractional-cto", "stack-selection", "first-engineer-hire", "code-review-cadence", "infra-rationalization"],
+    ["fractional-cmo", "first-marketer-spec", "agency-vetting", "media-mix-design", "seo-foundation"],
+    ["fractional-controller", "monthly-close", "ar-aging-cleanup", "ap-process-rollout", "audit-prep"],
+    ["fractional-general-counsel", "msa-template-library", "privacy-program-bootstrap", "ip-assignment-cleanup"],
+    ["fractional-data-lead", "warehouse-bootstrap", "first-metric-definitions", "instrumentation-rollout"],
+  ],
+  executive: [
+    ["fundraising", "ceo", "go-to-market", "exec-leadership", "board-management", "investor-relations"],
+    ["cto", "regulated-software", "fda", "platform-engineering", "ml-platform-leadership"],
+    ["sales-leadership", "rev-ops", "exec-leadership", "vp-sales-playbook", "seg-coverage-design"],
+    ["coo", "ops-scaling", "5-to-50-headcount", "international-expansion-playbook"],
+    ["chief-product-officer", "category-strategy", "platform-pricing", "ecosystem-strategy"],
+    ["chief-revenue-officer", "go-to-market-overhaul", "channel-design", "pricing-overhaul", "annual-planning"],
+    ["chief-medical-officer", "kol-network", "clinical-evidence-strategy", "label-expansion-strategy"],
+    ["chief-people-officer", "exec-team-formation", "leadership-development", "succession-planning"],
+  ],
+};
+
 function buildOne(idx: number): TalentDTO {
   const arch = pick(ARCHETYPES, idx);
   const first = pick(FIRST_NAMES, idx * 7 + 3);
@@ -403,11 +532,33 @@ function buildOne(idx: number): TalentDTO {
   const id = `11111111-1111-4111-8111-${num}`;
 
   const headline = pick(arch.headlinePool, idx);
-  const bio = pick(arch.bioPool, idx);
+  let bio = pick(arch.bioPool, idx);
   const lookingFor = pick(arch.lookingForPool, idx);
   const location = pick(LOCATIONS, idx);
   const utahOrgIds = pick(ORG_BUNDLES, idx);
+
+  const isExtended = idx >= 100;
+
+  if (isExtended) {
+    // Pull two skill bundles from the expanded catalog and weave them into
+    // the bio. Mixing two yields the "broad + specific" feel — e.g. a backend
+    // engineer who also has fintech-engineering or a marketer who also runs
+    // analyst relations.
+    const bundles = EXPANDED_SKILL_BUNDLES[arch.category] ?? [];
+    if (bundles.length > 0) {
+      const a = pick(bundles, idx * 3 + 1);
+      const b = pick(bundles, idx * 5 + 7);
+      const merged = Array.from(new Set([...a, ...b]));
+      bio = `${bio} Skills: ${merged.join(", ")}.`;
+    }
+  }
+
+  // ~40% of the new batch (idx >= 100) ship with no profile photo to mimic
+  // realistic onboarding gaps. Existing 100 keep their pravatar URL so the
+  // curated demo doesn't regress.
+  const omitPhoto = isExtended && (idx * 17) % 10 < 4;
   const photoIdx = ((idx * 13) % 70) + 1;
+  const photoUrl = omitPhoto ? undefined : `https://i.pravatar.cc/240?img=${photoIdx}`;
 
   return {
     id,
@@ -426,13 +577,13 @@ function buildOne(idx: number): TalentDTO {
     location,
     utahOrgIds,
     networks: arch.networks,
-    photoUrl: `https://i.pravatar.cc/240?img=${photoIdx}`,
+    photoUrl,
     linkedinUrl: `https://linkedin.com/in/${slug}-demo`,
     createdAt: seedTime,
   };
 }
 
-export const EXTRA_LIVE_TALENT: TalentDTO[] = Array.from({ length: 100 }, (_, i) => buildOne(i));
+export const EXTRA_LIVE_TALENT: TalentDTO[] = Array.from({ length: 200 }, (_, i) => buildOne(i));
 
 // ── Procedural businesses ──────────────────────────────────────────────────
 //

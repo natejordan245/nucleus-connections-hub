@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getDataStore } from "@/lib/data";
 
-export async function vote(formData: FormData) {
+export async function requestIntro(formData: FormData) {
   const candidateId = String(formData.get("candidateId") ?? "");
   const businessId = String(formData.get("businessId") ?? "");
   const side = String(formData.get("side") ?? "") as "candidate" | "business";
@@ -25,14 +25,14 @@ export async function vote(formData: FormData) {
       kind: "mutual_match",
       title: `Mutual match: ${business.name}`,
       body: `Both sides flipped to interested. We've sent ${business.name} to your CRM.`,
-      href: `/handshake?with=${business.id}`,
+      href: `/profile/business/${business.id}`,
     });
     await store.emitNotification({
       recipientId: business.id,
       kind: "mutual_match",
       title: `Mutual match: ${candidate.name}`,
       body: `Both sides flipped to interested. ${candidate.name} is now in your shortlist.`,
-      href: `/handshake?with=${candidate.id}`,
+      href: `/profile/candidate/${candidate.id}`,
     });
     await store.recordAffinityPush({
       talentId: candidate.id,
@@ -46,7 +46,7 @@ export async function vote(formData: FormData) {
         kind: "interest_received",
         title: `${candidate.name} is interested`,
         body: "Take a look — they're a fit on stage and focus.",
-        href: `/handshake?with=${candidate.id}`,
+        href: `/profile/candidate/${candidate.id}`,
       });
     } else {
       await store.emitNotification({
@@ -54,10 +54,11 @@ export async function vote(formData: FormData) {
         kind: "interest_received",
         title: `${business.name} is interested`,
         body: "Take a look — they flagged you as a top candidate.",
-        href: `/handshake?with=${business.id}`,
+        href: `/profile/business/${business.id}`,
       });
     }
   }
 
-  revalidatePath("/handshake");
+  revalidatePath(`/profile/candidate/${candidateId}`);
+  revalidatePath(`/profile/business/${businessId}`);
 }

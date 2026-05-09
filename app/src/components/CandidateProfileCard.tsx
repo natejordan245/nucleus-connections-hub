@@ -41,7 +41,6 @@ export function CandidateProfileCard({
           <div className="mt-3 flex flex-wrap gap-2">
             <Pill tone="warmgray">{candidate.location}</Pill>
             <Pill tone="orange">{AVAILABILITY_LABELS[candidate.availability]}</Pill>
-            <Pill tone="warmgray">Risk {candidate.riskTolerance}/5</Pill>
           </div>
           <div className="mt-3">
             <SocialLinks profile={candidate} />

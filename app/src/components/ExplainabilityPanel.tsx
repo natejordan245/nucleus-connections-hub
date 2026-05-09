@@ -1,4 +1,5 @@
 import { AlertCircle } from "lucide-react";
+import { InfoButton } from "@/components/InfoButton";
 import type { MatchDTO } from "@/lib/data/types";
 
 export function ExplainabilityPanel({ match }: { match: MatchDTO }) {
@@ -14,8 +15,13 @@ export function ExplainabilityPanel({ match }: { match: MatchDTO }) {
         <ul className="mt-4 space-y-2.5">
           {match.factors.map((f) => (
             <li key={f.label}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-ink">{f.label}</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink">
+                  {f.label}
+                  <InfoButton label={`Why this factor: ${f.label}`}>
+                    {f.detail}
+                  </InfoButton>
+                </span>
                 <span className="font-mono text-[11px] font-bold text-warmgray-700">
                   {Math.round(f.weight * 100)}%
                 </span>
@@ -26,7 +32,6 @@ export function ExplainabilityPanel({ match }: { match: MatchDTO }) {
                   style={{ width: `${Math.round(f.weight * 100)}%` }}
                 />
               </div>
-              <p className="mt-1 text-[11px] text-warmgray-500">{f.detail}</p>
             </li>
           ))}
         </ul>

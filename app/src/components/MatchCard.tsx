@@ -44,7 +44,6 @@ export function MatchCard({
     candidate.kind === "candidate"
       ? `/profile/candidate/${candidateId}`
       : `/profile/business/${candidateId}`;
-  const handshakeHref = `/handshake?with=${candidateId}`;
   const isPartial = match.score < STRONG_THRESHOLD;
 
   return (
@@ -92,7 +91,7 @@ export function MatchCard({
           Why was I matched? →
         </Link>
         <Link
-          href={handshakeHref}
+          href={detailHref}
           className="inline-flex h-9 items-center gap-2 rounded-full bg-ink px-4 text-xs font-semibold text-white transition hover:bg-warmgray-800"
         >
           Open

@@ -11,6 +11,7 @@ import type {
   MentorDTO,
   ResourceDTO,
 } from "@/lib/data/types";
+import { getViewerKind, requireViewer } from "@/lib/viewer";
 
 type Tab = "people" | "companies" | "mentors" | "investors" | "resources";
 
@@ -29,7 +30,7 @@ export default async function SearchPage({
 }) {
   const q = searchParams?.q ?? "";
   // Map URL kind values: `business` is also accepted as a synonym for `companies`.
-  const tab: Tab =
+  const requestedTab: Tab =
     searchParams?.kind === "companies" || searchParams?.kind === "business"
       ? "companies"
       : searchParams?.kind === "mentors" || searchParams?.kind === "mentor"
@@ -39,6 +40,18 @@ export default async function SearchPage({
           : searchParams?.kind === "resources"
             ? "resources"
             : "people";
+
+  const { viewerId } = await requireViewer();
+  const viewerKind = await getViewerKind(viewerId);
+
+  // Tabs allowed for this viewer kind. Candidates only browse companies;
+  // businesses don't see other businesses.
+  const allowedTabs: Tab[] =
+    viewerKind === "candidate"
+      ? ["companies"]
+      : viewerKind === "business"
+        ? ["people", "mentors", "investors", "resources"]
+        : ["people", "companies", "mentors", "investors", "resources"];
 
   const store = getDataStore();
   const results = await store.search(q);
@@ -50,6 +63,20 @@ export default async function SearchPage({
     investors: results.investors.length,
     resources: results.resources.length,
   };
+
+  // When there's a query, only show tabs with results. Without a query,
+  // keep all allowed tabs visible so the user can browse.
+  const visibleTabs: Tab[] = q
+    ? allowedTabs.filter((t) => counts[t] > 0)
+    : allowedTabs;
+
+  // Pick the active tab: prefer the requested one if it's visible;
+  // otherwise jump to the visible tab with the most results.
+  const tab: Tab =
+    visibleTabs.includes(requestedTab) && (q ? counts[requestedTab] > 0 : true)
+      ? requestedTab
+      : (visibleTabs.slice().sort((a, b) => counts[b] - counts[a])[0] ??
+        allowedTabs[0]);
 
   return (
     <main className="mx-auto w-full max-w-7xl px-6 py-8">
@@ -84,7 +111,6 @@ export default async function SearchPage({
           placeholder="Try bioengineering, GTM, seed, or Lehi…"
           className="flex-1 bg-transparent py-1.5 text-sm text-ink outline-none placeholder:text-warmgray-400"
         />
-        <input type="hidden" name="kind" value={tab} />
         <button
           type="submit"
           className="rounded-md bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-orange-600"
@@ -93,36 +119,38 @@ export default async function SearchPage({
         </button>
       </form>
 
-      <nav className="mt-4 flex flex-wrap items-center gap-1 border-b border-warmgray-200">
-        {TABS.map((t) => {
-          const active = t.value === tab;
-          const href = `/search?kind=${t.value}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
-          return (
-            <Link
-              key={t.value}
-              href={href}
-              className={
-                "relative inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold transition " +
-                (active
-                  ? "text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-orange-500"
-                  : "text-warmgray-500 hover:text-ink")
-              }
-            >
-              {t.label}
-              <span
+      {visibleTabs.length > 1 && (
+        <nav className="mt-4 flex flex-wrap items-center gap-1 border-b border-warmgray-200">
+          {TABS.filter((t) => visibleTabs.includes(t.value)).map((t) => {
+            const active = t.value === tab;
+            const href = `/search?kind=${t.value}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
+            return (
+              <Link
+                key={t.value}
+                href={href}
                 className={
-                  "rounded-md px-1.5 py-0.5 font-mono text-[10px] " +
+                  "relative inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold transition " +
                   (active
-                    ? "bg-orange-50 text-orange-700"
-                    : "bg-warmgray-50 text-warmgray-500")
+                    ? "text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-orange-500"
+                    : "text-warmgray-500 hover:text-ink")
                 }
               >
-                {counts[t.value]}
-              </span>
-            </Link>
-          );
-        })}
-      </nav>
+                {t.label}
+                <span
+                  className={
+                    "rounded-md px-1.5 py-0.5 font-mono text-[10px] " +
+                    (active
+                      ? "bg-orange-50 text-orange-700"
+                      : "bg-warmgray-50 text-warmgray-500")
+                  }
+                >
+                  {counts[t.value]}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+      )}
 
       <section className="mt-6">
         {tab === "people" && <PeopleResults items={results.candidates} q={q} />}
