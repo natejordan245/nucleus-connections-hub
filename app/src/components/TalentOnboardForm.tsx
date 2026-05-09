@@ -302,6 +302,7 @@ export function TalentOnboardForm({
 
       <form
         action={createTalentAction}
+        onInvalidCapture={scrollToInvalid}
         className="mt-4 space-y-5 rounded-lg border border-warmgray-200 bg-white p-5"
       >
         <Field id="photoUrl" name="photoUrl" label="Profile photo" hint="Optional.">
@@ -548,6 +549,27 @@ export function TalentOnboardForm({
       </form>
     </main>
   );
+}
+
+/**
+ * Browser HTML5 validation prevents submit on missing required fields and
+ * shows a native tooltip — but the offending field can be above the fold,
+ * so the user sees nothing happen. `invalid` events fire in document order;
+ * scroll the first one into view so the tooltip lands somewhere visible.
+ */
+let recentlyScrolled = false;
+function scrollToInvalid(e: React.FormEvent<HTMLFormElement>) {
+  const target = e.target as HTMLElement | null;
+  if (!target || target === e.currentTarget) return;
+  if (recentlyScrolled) return;
+  recentlyScrolled = true;
+  setTimeout(() => {
+    recentlyScrolled = false;
+  }, 100);
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (typeof (target as HTMLInputElement).focus === "function") {
+    (target as HTMLInputElement).focus({ preventScroll: true });
+  }
 }
 
 /**

@@ -210,7 +210,7 @@ export function BusinessOnboardForm({
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <form action={createBusinessAction} className="space-y-4">
+        <form action={createBusinessAction} className="space-y-4" onInvalidCapture={scrollToInvalid}>
           {/* Smart import — distinct module above the main form */}
           <section className="rounded-2xl border border-warmgray-200 bg-gradient-to-br from-orange-50/60 via-white to-white">
             <div className="px-5 py-5">
@@ -608,6 +608,31 @@ export function BusinessOnboardForm({
       </div>
     </main>
   );
+}
+
+/**
+ * Browser HTML5 validation prevents submit on missing required fields and
+ * shows a native tooltip — but the offending field is often above the fold,
+ * so the user sees nothing happen. `invalid` events fire in document order,
+ * so the first one we capture *is* the first invalid field. Scroll it into
+ * view + focus it so the native tooltip lands somewhere visible.
+ *
+ * `recentlyScrolled` debounces so we only react to the first invalid event
+ * per submit attempt (one submit can fire `invalid` on every empty field).
+ */
+let recentlyScrolled = false;
+function scrollToInvalid(e: React.FormEvent<HTMLFormElement>) {
+  const target = e.target as HTMLElement | null;
+  if (!target || target === e.currentTarget) return;
+  if (recentlyScrolled) return;
+  recentlyScrolled = true;
+  setTimeout(() => {
+    recentlyScrolled = false;
+  }, 100);
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (typeof (target as HTMLInputElement).focus === "function") {
+    (target as HTMLInputElement).focus({ preventScroll: true });
+  }
 }
 
 function Section({
