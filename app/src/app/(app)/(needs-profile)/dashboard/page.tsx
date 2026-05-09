@@ -10,14 +10,13 @@ export default async function DashboardPage() {
   const { viewerId } = await requireViewer();
   const store = getDataStore();
 
-  const [talent, startup, matches, interests, allTalent, allStartups, utahOrgs] = await Promise.all([
+  const [talent, startup, matches, interests, allTalent, allStartups] = await Promise.all([
     store.getTalent(viewerId),
     store.getStartup(viewerId),
     store.matchesFor(viewerId),
     store.listInterests(viewerId),
     store.listTalent(),
     store.listStartups(),
-    store.listUtahOrgs(),
   ]);
 
   const isTalent = !!talent;
@@ -119,7 +118,7 @@ export default async function DashboardPage() {
             {matches.map((m) => {
               const cand = resolveCandidate(m, allTalent, allStartups);
               if (!cand) return null;
-              return <MatchCard key={m.id} match={m} candidate={cand} utahOrgs={utahOrgs} />;
+              return <MatchCard key={m.id} match={m} candidate={cand} />;
             })}
           </div>
         )}
