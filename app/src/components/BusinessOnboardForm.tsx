@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChipGroup } from "@/components/ChipGroup";
+import { DemoFiller } from "@/components/DemoFiller";
 import { Field, Input, Select, Textarea } from "@/components/FormField";
 import { OnboardAccountFields, decodeOnboardError } from "@/components/OnboardAccountFields";
 import { PhotoUpload } from "@/components/PhotoUpload";
@@ -81,6 +82,7 @@ export function BusinessOnboardForm({
 
   return (
     <main className="mx-auto w-full max-w-2xl px-8 py-10">
+      <DemoFiller />
       <Link href="/onboard" className="text-sm font-medium text-warmgray-600 hover:text-ink">
         ← Back
       </Link>
@@ -90,7 +92,8 @@ export function BusinessOnboardForm({
         Tell us about your company.
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
-        Free-text where it matters; quick chips for the rest.
+        Free-text where it matters; quick chips for the rest.{" "}
+        <span className="text-warmgray-500">Tip: double-click any text field to auto-fill a sample.</span>
       </p>
 
       {error === "missing_required" && (
@@ -113,6 +116,7 @@ export function BusinessOnboardForm({
             name="name"
             required
             placeholder="Bramble AI"
+            data-sample="Beacon Health"
             value={form.name}
             onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, name: v })); }}
           />
@@ -123,6 +127,7 @@ export function BusinessOnboardForm({
             id="oneLiner"
             name="oneLiner"
             placeholder="Customer-conversation analytics for vertical SaaS"
+            data-sample="AI-driven cancer biomarker detection for community oncology clinics"
             value={form.oneLiner}
             onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, oneLiner: v })); }}
           />
@@ -135,6 +140,7 @@ export function BusinessOnboardForm({
             required
             rows={5}
             placeholder="Who you are, what you make, who buys it, and where you are in the journey."
+            data-sample="Beacon Health is a U of U PIVOT spinout building a deep-learning pipeline that flags early-stage colorectal cancer biomarkers from standard pathology slides. Pilot deployments with two regional oncology networks; running a 510(k) submission this year. Looking for a regulatory lead with FDA experience and a clinical advisor."
             value={form.description}
             onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, description: v })); }}
           />
@@ -225,6 +231,7 @@ export function BusinessOnboardForm({
           <Input
             id="location"
             name="location"
+            data-sample="Salt Lake City, UT"
             value={form.location}
             onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, location: v })); }}
           />
@@ -236,6 +243,7 @@ export function BusinessOnboardForm({
             name="websiteUrl"
             type="url"
             placeholder="https://example.com"
+            data-sample="https://beaconhealth.example.com"
             value={form.websiteUrl}
             onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, websiteUrl: v })); }}
           />
@@ -247,6 +255,7 @@ export function BusinessOnboardForm({
             name="linkedinUrl"
             type="url"
             placeholder="https://linkedin.com/company/…"
+            data-sample="https://linkedin.com/company/beacon-health-sample"
             value={form.linkedinUrl}
             onChange={(e) => { const v = e.currentTarget.value; setForm((p) => ({ ...p, linkedinUrl: v })); }}
           />

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChipGroup } from "@/components/ChipGroup";
+import { DemoFiller } from "@/components/DemoFiller";
 import { Field, Input, Textarea } from "@/components/FormField";
 import { OnboardAccountFields, decodeOnboardError } from "@/components/OnboardAccountFields";
 import { PhotoUpload } from "@/components/PhotoUpload";
@@ -32,6 +33,7 @@ export default async function OnboardInvestorPage({
 
   return (
     <main className="mx-auto w-full max-w-2xl px-8 py-10">
+      <DemoFiller />
       <Link href="/onboard" className="text-sm font-medium text-warmgray-600 hover:text-ink">
         ← Back
       </Link>
@@ -42,7 +44,8 @@ export default async function OnboardInvestorPage({
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
         Most fields are optional. You can fill these in later — or skip straight to
-        browsing Utah businesses.
+        browsing Utah businesses.{" "}
+        <span className="text-warmgray-500">Tip: double-click any text field to auto-fill a sample.</span>
       </p>
 
       <form
@@ -61,11 +64,17 @@ export default async function OnboardInvestorPage({
             autoComplete="name"
             placeholder="Rachel Stone"
             defaultValue={prefilledName ?? ""}
+            data-sample="Rachel Stone"
           />
         </Field>
 
         <Field id="fundName" name="fundName" label="Fund name" hint="Optional. Leave blank for solo angels.">
-          <Input id="fundName" name="fundName" placeholder="Summit Peak Ventures" />
+          <Input
+            id="fundName"
+            name="fundName"
+            placeholder="Summit Peak Ventures"
+            data-sample="Summit Peak Ventures"
+          />
         </Field>
 
         <Field id="headline" name="headline" label="Headline">
@@ -73,6 +82,7 @@ export default async function OnboardInvestorPage({
             id="headline"
             name="headline"
             placeholder="Seed-stage Mountain West generalist"
+            data-sample="Seed-stage Mountain West generalist · technical founders only"
           />
         </Field>
 
@@ -82,13 +92,26 @@ export default async function OnboardInvestorPage({
             name="bio"
             rows={3}
             placeholder="Stage, sectors, the kinds of founders you back."
+            data-sample="Pre-seed and seed checks into Utah-rooted technical teams across software, life-sciences tooling, and dev infra. Lead-from-conviction, comfortable being first money in. Active with PIVOT Center and Lassonde."
           />
         </Field>
 
         <Field id="checkSize" name="checkSize" label="Check size (USD)">
           <div className="grid grid-cols-2 gap-3">
-            <Input id="checkSizeMin" name="checkSizeMin" type="text" placeholder="Min e.g. 250000" />
-            <Input id="checkSizeMax" name="checkSizeMax" type="text" placeholder="Max e.g. 1500000" />
+            <Input
+              id="checkSizeMin"
+              name="checkSizeMin"
+              type="text"
+              placeholder="Min e.g. 250000"
+              data-sample="250000"
+            />
+            <Input
+              id="checkSizeMax"
+              name="checkSizeMax"
+              type="text"
+              placeholder="Max e.g. 1500000"
+              data-sample="1500000"
+            />
           </div>
         </Field>
 
@@ -101,15 +124,32 @@ export default async function OnboardInvestorPage({
         </Field>
 
         <Field id="location" name="location" label="Location">
-          <Input id="location" name="location" defaultValue="Salt Lake City, UT" />
+          <Input
+            id="location"
+            name="location"
+            defaultValue="Salt Lake City, UT"
+            data-sample="Salt Lake City, UT"
+          />
         </Field>
 
         <Field id="websiteUrl" name="websiteUrl" label="Website" hint="Optional.">
-          <Input id="websiteUrl" name="websiteUrl" type="url" placeholder="https://…" />
+          <Input
+            id="websiteUrl"
+            name="websiteUrl"
+            type="url"
+            placeholder="https://…"
+            data-sample="https://summitpeak.example.com"
+          />
         </Field>
 
         <Field id="linkedinUrl" name="linkedinUrl" label="LinkedIn" hint="Optional.">
-          <Input id="linkedinUrl" name="linkedinUrl" type="url" placeholder="https://linkedin.com/in/…" />
+          <Input
+            id="linkedinUrl"
+            name="linkedinUrl"
+            type="url"
+            placeholder="https://linkedin.com/in/…"
+            data-sample="https://linkedin.com/in/sample-investor"
+          />
         </Field>
 
         <OnboardAccountFields signedIn={signedIn} errorMessage={errorMessage} />
