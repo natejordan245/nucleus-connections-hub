@@ -1,15 +1,12 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, ChevronDown, Filter, TrendingUp } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
-import { MatchCard } from "@/components/MatchCard";
 import { getDataStore } from "@/lib/data";
 import type {
   BusinessDTO,
   CandidateDTO,
   InterestDTO,
-  InvestorDTO,
   MatchDTO,
-  MentorDTO,
   ProfileKind,
 } from "@/lib/data/types";
 import { requireViewer } from "@/lib/viewer";
@@ -18,16 +15,17 @@ export default async function DashboardPage() {
   const { viewerId } = await requireViewer();
   const store = getDataStore();
 
-  const [candidate, business, mentor, investor, matches, interests, allCandidates, allBusinesses] = await Promise.all([
-    store.getCandidate(viewerId),
-    store.getBusiness(viewerId),
-    store.getMentor(viewerId),
-    store.getInvestor(viewerId),
-    store.matchesFor(viewerId),
-    store.listInterests(viewerId),
-    store.listCandidates(),
-    store.listBusinesses(),
-  ]);
+  const [candidate, business, mentor, investor, matches, interests, allCandidates, allBusinesses] =
+    await Promise.all([
+      store.getCandidate(viewerId),
+      store.getBusiness(viewerId),
+      store.getMentor(viewerId),
+      store.getInvestor(viewerId),
+      store.matchesFor(viewerId),
+      store.listInterests(viewerId),
+      store.listCandidates(),
+      store.listBusinesses(),
+    ]);
 
   const viewerKind: ProfileKind | null = candidate
     ? "candidate"
@@ -40,101 +38,295 @@ export default async function DashboardPage() {
           : null;
 
   const copy = dashboardCopy(viewerKind);
+  const interested = resolveInterestedIn({
+    viewerKind,
+    viewerId,
+    interests,
+    allCandidates,
+    allBusinesses,
+  });
+  const avgScore = matches.length
+    ? Math.round((matches.reduce((s, m) => s + m.score, 0) / matches.length) * 100)
+    : 0;
+  const topScore = matches.length
+    ? Math.round(Math.max(...matches.map((m) => m.score)) * 100)
+    : 0;
+  const sharedTotal = matches.reduce((s, m) => s + m.sharedOrgIds.length, 0);
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-8 py-10">
-      <span className="eyebrow text-orange-500">{copy.eyebrow}</span>
-      <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight text-ink">
-        {copy.title}
-      </h1>
-      <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">{copy.sub}</p>
+    <main className="mx-auto w-full max-w-7xl px-6 py-8">
+      <div className="flex items-baseline justify-between">
+        <div>
+          <span className="eyebrow text-orange-500">{copy.eyebrow}</span>
+          <h1 className="mt-2 text-2xl font-bold text-ink">{copy.title}</h1>
+          <p className="mt-1 text-sm text-warmgray-500">{copy.sub}</p>
+        </div>
+        <div className="hidden text-right font-mono text-xs text-warmgray-500 sm:block">
+          <div>Last sync · just now</div>
+          <div className="mt-1 flex items-center justify-end gap-1 text-emerald-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            live
+          </div>
+        </div>
+      </div>
 
-      <form
-        action="/search"
-        method="GET"
-        role="search"
-        className="mt-8 flex w-full max-w-2xl items-center gap-2"
-      >
-        <label htmlFor="dashboard-search" className="sr-only">
-          Search
-        </label>
-        <div className="relative flex-1">
-          <Search
-            aria-hidden
-            strokeWidth={1.75}
-            className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-warmgray-400"
-          />
+      {/* Stat strip */}
+      <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-warmgray-200 bg-warmgray-200 sm:grid-cols-4">
+        <Stat label="Ranked queue" value={String(matches.length).padStart(2, "0")} />
+        <Stat label="Top score" value={`${topScore}%`} accent />
+        <Stat label="Avg score" value={`${avgScore}%`} delta={avgScore >= 75 ? "↑" : "·"} />
+        <Stat label="Inbound interest" value={String(interested.length).padStart(2, "0")} />
+      </div>
+
+      {/* Search + filter row */}
+      <div className="mt-4 flex items-center gap-2 rounded-lg border border-warmgray-200 bg-white p-2">
+        <form action="/search" method="GET" role="search" className="flex flex-1 items-center gap-2">
+          <Search aria-hidden strokeWidth={1.75} className="ml-2 h-4 w-4 text-warmgray-400" />
+          <label htmlFor="dashboard-search" className="sr-only">
+            Search
+          </label>
           <input
             id="dashboard-search"
             name="q"
             type="search"
             placeholder={copy.placeholder}
             autoComplete="off"
-            className="w-full rounded-full border border-warmgray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-ink outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-300/40"
+            className="flex-1 bg-transparent py-1.5 text-sm text-ink outline-none placeholder:text-warmgray-400"
           />
-        </div>
+          <button
+            type="submit"
+            className="rounded-md bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-orange-600"
+          >
+            Search
+          </button>
+        </form>
+        <span className="h-5 w-px bg-warmgray-200" />
         <button
-          type="submit"
-          className="inline-flex h-10 items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(37,99,235,0.55)] transition hover:bg-orange-600"
+          type="button"
+          className="inline-flex items-center gap-1 rounded-md border border-warmgray-200 px-2.5 py-1.5 text-xs font-medium text-warmgray-700 hover:border-warmgray-300"
         >
-          Search
+          <Filter className="h-3.5 w-3.5" strokeWidth={2} aria-hidden /> Filters
         </button>
-      </form>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 rounded-md border border-warmgray-200 px-2.5 py-1.5 text-xs font-medium text-warmgray-700 hover:border-warmgray-300"
+        >
+          Sort: Score <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+        </button>
+      </div>
 
-      {(() => {
-        const interestedCards = resolveInterestedIn({
-          viewerKind,
-          viewerId,
-          interests,
-          allCandidates,
-          allBusinesses,
-        });
-        if (interestedCards.length === 0) return null;
-        return (
-          <section className="mt-12">
-            <h2 className="font-serif text-2xl font-semibold text-ink">
-              Interested in you
+      {/* Two-col split */}
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
+        <section className="rounded-lg border border-warmgray-200 bg-white">
+          <div className="flex items-center justify-between border-b border-warmgray-200 px-4 py-2.5">
+            <h2 className="text-sm font-semibold text-ink">
+              {copy.matchesHeading}
+              <span className="ml-2 font-mono text-xs text-warmgray-500">{matches.length}</span>
             </h2>
-            <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {interestedCards.map((c) => (
-                <li key={c.href}>
-                  <Link
-                    href={c.href}
-                    className="flex items-center gap-3 rounded-2xl border border-warmgray-100 bg-white p-4 shadow-sm transition hover:border-warmgray-200"
-                  >
-                    <Avatar name={c.name} src={c.photo} size="md" />
-                    <span className="min-w-0">
-                      <span className="block truncate font-semibold text-ink">{c.name}</span>
-                      <span className="block truncate text-xs text-warmgray-600">
-                        {c.headline}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        );
-      })()}
-
-      <section className="mt-12">
-        <h2 className="font-serif text-2xl font-semibold text-ink">
-          {copy.matchesHeading}
-        </h2>
-
-        {matches.length === 0 ? (
-          <EmptyState viewerKind={viewerKind} />
-        ) : (
-          <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {matches.map((m) => {
-              const cand = resolveCandidate(m, allCandidates, allBusinesses);
-              if (!cand) return null;
-              return <MatchCard key={m.id} match={m} candidate={cand} />;
-            })}
+            <span className="font-mono text-xs text-warmgray-500">↻ refresh</span>
           </div>
-        )}
-      </section>
+
+          {matches.length === 0 ? (
+            <EmptyState viewerKind={viewerKind} />
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="border-b border-warmgray-200 bg-warmgray-50 text-left font-mono text-[11px] uppercase tracking-wider text-warmgray-500">
+                <tr>
+                  <th className="px-4 py-2 font-semibold">#</th>
+                  <th className="py-2 font-semibold">Name</th>
+                  <th className="py-2 font-semibold">Score</th>
+                  <th className="hidden py-2 font-semibold md:table-cell">Location</th>
+                  <th className="hidden py-2 font-semibold md:table-cell">Signals</th>
+                  <th className="px-4 py-2 text-right font-semibold">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-warmgray-100">
+                {matches.map((m, i) => {
+                  const cand = resolveCandidate(m, allCandidates, allBusinesses);
+                  if (!cand) return null;
+                  return <DenseRow key={m.id} idx={i} match={m} cand={cand} />;
+                })}
+              </tbody>
+            </table>
+          )}
+        </section>
+
+        <aside className="space-y-4">
+          <section className="rounded-lg border border-warmgray-200 bg-white">
+            <div className="border-b border-warmgray-200 px-4 py-2.5">
+              <h2 className="text-sm font-semibold text-ink">
+                Interested in you
+                <span className="ml-2 font-mono text-xs text-warmgray-500">{interested.length}</span>
+              </h2>
+            </div>
+            {interested.length === 0 ? (
+              <p className="px-4 py-6 text-xs text-warmgray-500">No inbound interest yet.</p>
+            ) : (
+              <ul className="divide-y divide-warmgray-100">
+                {interested.slice(0, 8).map((c) => (
+                  <li key={c.href}>
+                    <Link
+                      href={c.href}
+                      className="group flex items-center gap-3 px-4 py-2.5 transition hover:bg-orange-50"
+                    >
+                      <Avatar name={c.name} src={c.photo} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-xs font-semibold text-ink">{c.name}</div>
+                        <div className="truncate text-[11px] text-warmgray-500">{c.headline}</div>
+                      </div>
+                      <span aria-hidden className="text-warmgray-300 group-hover:text-orange-500">
+                        →
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="rounded-lg border border-warmgray-200 bg-white p-4">
+            <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-ink">
+              <TrendingUp className="h-3.5 w-3.5 text-orange-500" strokeWidth={2} aria-hidden />
+              Diagnostics
+            </div>
+            <dl className="space-y-1.5 font-mono text-[11px]">
+              <Diag label="shared.org.count" value={String(sharedTotal)} />
+              <Diag label="queue.depth" value={String(matches.length)} />
+              <Diag label="signal.inbound" value={String(interested.length)} />
+              <Diag label="score.spread" value={`${topScore - avgScore}pt`} />
+            </dl>
+          </section>
+        </aside>
+      </div>
     </main>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  accent,
+  delta,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+  delta?: string;
+}) {
+  return (
+    <div className={`px-4 py-3 ${accent ? "bg-ink text-paper" : "bg-white"}`}>
+      <div
+        className={`font-mono text-[10px] uppercase tracking-wider ${
+          accent ? "text-orange-300" : "text-warmgray-500"
+        }`}
+      >
+        {label}
+      </div>
+      <div className="mt-1 flex items-baseline gap-1.5">
+        <span
+          className={`font-mono text-2xl font-bold ${accent ? "text-paper" : "text-ink"}`}
+        >
+          {value}
+        </span>
+        {delta && (
+          <span className={`text-xs ${accent ? "text-orange-300" : "text-warmgray-400"}`}>
+            {delta}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Diag({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-2">
+      <span className="text-warmgray-500">{label}</span>
+      <span className="font-semibold text-ink">{value}</span>
+    </div>
+  );
+}
+
+type ResolvedCand =
+  | { kind: "candidate"; candidate: CandidateDTO }
+  | { kind: "business"; business: BusinessDTO };
+
+function DenseRow({
+  idx,
+  match,
+  cand,
+}: {
+  idx: number;
+  match: MatchDTO;
+  cand: ResolvedCand;
+}) {
+  const name = cand.kind === "candidate" ? cand.candidate.name : cand.business.name;
+  const photo = cand.kind === "candidate" ? cand.candidate.photoUrl : cand.business.logoUrl;
+  const headline =
+    cand.kind === "candidate" ? cand.candidate.headline : cand.business.oneLiner;
+  const location =
+    cand.kind === "candidate" ? cand.candidate.location : cand.business.location;
+  const detailHref =
+    cand.kind === "candidate"
+      ? `/profile/candidate/${cand.candidate.id}`
+      : `/profile/business/${cand.business.id}`;
+  const handshakeHref = `/handshake?with=${
+    cand.kind === "candidate" ? cand.candidate.id : cand.business.id
+  }`;
+  const pct = Math.round(match.score * 100);
+  const sharedCount = match.sharedOrgIds.length;
+  const tone =
+    pct >= 90 ? "text-orange-700" : pct >= 75 ? "text-emerald-700" : "text-warmgray-700";
+
+  return (
+    <tr className="transition hover:bg-warmgray-50">
+      <td className="px-4 py-2 align-middle font-mono text-xs text-warmgray-500">
+        {String(idx + 1).padStart(2, "0")}
+      </td>
+      <td className="py-2 align-middle">
+        <div className="flex items-center gap-2.5">
+          <Avatar name={name} src={photo} size="sm" />
+          <div className="min-w-0">
+            <Link
+              href={detailHref}
+              className="block truncate text-sm font-semibold text-ink hover:text-orange-700"
+            >
+              {name}
+            </Link>
+            <div className="truncate text-[11px] text-warmgray-500">{headline}</div>
+          </div>
+        </div>
+      </td>
+      <td className="py-2 align-middle">
+        <div className="flex items-center gap-2">
+          <span className={`font-mono text-sm font-bold ${tone}`}>{pct}%</span>
+          <div className="hidden h-1 w-12 rounded-full bg-warmgray-100 sm:block">
+            <div
+              className="h-full rounded-full bg-orange-500"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+      </td>
+      <td className="hidden py-2 align-middle text-xs text-warmgray-700 md:table-cell">
+        {location}
+      </td>
+      <td className="hidden py-2 align-middle text-xs md:table-cell">
+        {sharedCount > 0 ? (
+          <span className="font-medium text-orange-700">{sharedCount} shared</span>
+        ) : (
+          <span className="text-warmgray-400">—</span>
+        )}
+      </td>
+      <td className="px-4 py-2 text-right align-middle">
+        <Link
+          href={handshakeHref}
+          className="inline-flex h-7 items-center rounded-md bg-ink px-2.5 text-[11px] font-semibold text-white transition hover:bg-warmgray-800"
+        >
+          Open
+        </Link>
+      </td>
+    </tr>
   );
 }
 
@@ -159,7 +351,7 @@ function dashboardCopy(viewerKind: ProfileKind | null): {
         title: "Find your next hire.",
         sub: "Search Utah's operators, or jump to the candidates we ranked for you.",
         placeholder: "Search talent by skill, role, or location…",
-        matchesHeading: "Candidates for you",
+        matchesHeading: "Ranked candidates",
       };
     case "mentor":
       return {
@@ -175,7 +367,7 @@ function dashboardCopy(viewerKind: ProfileKind | null): {
         title: "Find businesses to back.",
         sub: "Browse Utah companies that match your check size, stage, and sector.",
         placeholder: "Search businesses by sector, stage, or origin…",
-        matchesHeading: "Businesses for you",
+        matchesHeading: "Ranked businesses",
       };
     case "candidate":
     default:
@@ -184,7 +376,7 @@ function dashboardCopy(viewerKind: ProfileKind | null): {
         title: "Find businesses that fit you.",
         sub: "Search Utah's businesses, or jump to the matches we ranked for you.",
         placeholder: "Search businesses by sector, role, or stage…",
-        matchesHeading: "Businesses for you",
+        matchesHeading: "Ranked businesses",
       };
   }
 }
@@ -202,7 +394,6 @@ function resolveInterestedIn({
   allCandidates: CandidateDTO[];
   allBusinesses: BusinessDTO[];
 }): InterestedCard[] {
-  // Interest handshake is candidate↔business only. Mentor/investor: no cards.
   if (viewerKind === "candidate") {
     return interests
       .filter((i) => i.talentId === viewerId && i.startupState === "interested")
@@ -234,10 +425,7 @@ function resolveCandidate(
   m: MatchDTO,
   candidates: CandidateDTO[],
   businesses: BusinessDTO[],
-):
-  | { kind: "candidate"; candidate: CandidateDTO }
-  | { kind: "business"; business: BusinessDTO }
-  | null {
+): ResolvedCand | null {
   if (m.candidateKind === "candidate") {
     const c = candidates.find((x) => x.id === m.candidateId);
     return c ? { kind: "candidate", candidate: c } : null;
@@ -246,61 +434,39 @@ function resolveCandidate(
     const b = businesses.find((x) => x.id === m.candidateId);
     return b ? { kind: "business", business: b } : null;
   }
-  // Mentor / investor matches don't surface yet.
   return null;
 }
 
 function EmptyState({ viewerKind }: { viewerKind: ProfileKind | null }) {
-  if (!viewerKind) {
-    return (
-      <div className="mt-6 rounded-2xl border border-dashed border-warmgray-200 bg-white p-10 text-center">
-        <p className="font-serif text-xl font-semibold text-ink">
-          Tell us about yourself first.
-        </p>
-        <p className="mt-2 text-sm text-warmgray-600">
-          Two minutes of input is all we need to start ranking.
-        </p>
-        <Link
-          href="/onboard"
-          className="mt-4 inline-flex h-10 items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(37,99,235,0.55)] transition hover:bg-orange-600"
-        >
-          Get started
-        </Link>
-      </div>
-    );
-  }
-  if (viewerKind === "mentor" || viewerKind === "investor") {
-    return (
-      <div className="mt-6 rounded-2xl border border-dashed border-warmgray-200 bg-white p-10 text-center">
-        <p className="font-serif text-xl font-semibold text-ink">
-          Match recommendations coming soon.
-        </p>
-        <p className="mt-2 text-sm text-warmgray-600">
-          For now, browse the directory to find{" "}
-          {viewerKind === "mentor" ? "businesses or candidates" : "businesses"} that fit you.
-        </p>
-        <Link
-          href="/search"
-          className="mt-4 inline-flex h-10 items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(37,99,235,0.55)] transition hover:bg-orange-600"
-        >
-          Browse the directory →
-        </Link>
-      </div>
-    );
-  }
+  const noProfile = viewerKind === null;
+  const future = viewerKind === "mentor" || viewerKind === "investor";
+  const headline = noProfile
+    ? "Tell us about yourself first."
+    : future
+      ? "Match recommendations coming soon."
+      : viewerKind === "candidate"
+        ? "No business matches yet."
+        : "No candidate matches yet.";
+  const sub = noProfile
+    ? "Two minutes of input is all we need to start ranking."
+    : future
+      ? "Browse the directory while we build your queue."
+      : "Sharpen your profile so we can rank what fits you.";
+  const cta = noProfile
+    ? { href: "/onboard", label: "Get started" }
+    : future
+      ? { href: "/search", label: "Browse directory" }
+      : { href: "/profile", label: "Open profile" };
+
   return (
-    <div className="mt-6 rounded-2xl border border-dashed border-warmgray-200 bg-white p-10 text-center">
-      <p className="font-serif text-xl font-semibold text-ink">
-        {viewerKind === "candidate" ? "No business matches yet." : "No candidate matches yet."}
-      </p>
-      <p className="mt-2 text-sm text-warmgray-600">
-        Sharpen your profile so we can rank what fits you.
-      </p>
+    <div className="px-6 py-12 text-center">
+      <p className="text-base font-semibold text-ink">{headline}</p>
+      <p className="mt-1 text-xs text-warmgray-500">{sub}</p>
       <Link
-        href="/profile"
-        className="mt-4 inline-flex h-10 items-center justify-center rounded-full bg-ink px-5 text-sm font-semibold text-white transition hover:bg-warmgray-800"
+        href={cta.href}
+        className="mt-4 inline-flex h-8 items-center rounded-md bg-orange-500 px-3 text-xs font-semibold text-white transition hover:bg-orange-600"
       >
-        Open profile →
+        {cta.label} →
       </Link>
     </div>
   );

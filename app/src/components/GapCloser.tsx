@@ -29,47 +29,49 @@ export async function GapCloser({
   if (resources.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-warmgray-100 bg-white p-6 shadow-sm">
-      <div className="flex items-center gap-2">
-        <Sparkles className="h-4 w-4 text-orange-500" strokeWidth={1.75} aria-hidden />
-        <span className="eyebrow text-orange-500">Close the gap</span>
+    <section className="rounded-lg border border-warmgray-200 bg-white">
+      <div className="flex items-center gap-1.5 border-b border-warmgray-200 px-4 py-2.5">
+        <Sparkles className="h-3.5 w-3.5 text-orange-500" strokeWidth={2} aria-hidden />
+        <h2 className="text-sm font-semibold text-ink">Close the gap</h2>
       </div>
 
-      {gapText && (
-        <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-warmgray-700">
-          {gapText}
-        </p>
-      )}
+      <div className="p-4">
+        {gapText && (
+          <p className="whitespace-pre-line text-sm leading-relaxed text-warmgray-700">
+            {gapText}
+          </p>
+        )}
 
-      <div className="mt-5">
-        <span className="eyebrow text-warmgray-500">Recommended resources</span>
-        <ul className="mt-2 space-y-2">
-          {resources.map((r) => (
-            <li key={r.id}>
-              <a
-                href={r.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-start gap-3 rounded-xl border border-warmgray-100 bg-paper p-3 transition hover:border-orange-300 hover:bg-orange-50/40"
-              >
-                <Pill tone="warmgray">{r.kind}</Pill>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-ink">
-                    {r.title}
-                  </p>
-                  <p className="mt-0.5 line-clamp-2 text-xs text-warmgray-600">
-                    {r.summary}
-                  </p>
-                </div>
-                <ArrowUpRight
-                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warmgray-400 transition group-hover:text-orange-600"
-                  strokeWidth={2}
-                  aria-hidden
-                />
-              </a>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-3">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-warmgray-500">
+            recommended resources
+          </span>
+          <ul className="mt-2 space-y-1.5">
+            {resources.map((r) => (
+              <li key={r.id}>
+                <a
+                  href={r.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-start gap-2.5 rounded-md border border-warmgray-200 bg-paper p-2.5 transition hover:border-orange-300 hover:bg-orange-50/40"
+                >
+                  <Pill tone="warmgray">{r.kind}</Pill>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-semibold text-ink">{r.title}</p>
+                    <p className="mt-0.5 line-clamp-2 text-[11px] text-warmgray-500">
+                      {r.summary}
+                    </p>
+                  </div>
+                  <ArrowUpRight
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warmgray-400 transition group-hover:text-orange-600"
+                    strokeWidth={2}
+                    aria-hidden
+                  />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </section>
   );

@@ -70,24 +70,52 @@ Google Fonts. Hierarchy comes from weight + size.
 Color the eyebrow `text-orange-500` (royal blue) for primary sections,
 `text-warmgray-400` for secondary, `text-emerald-700` for live-mode contexts.
 
-**Hierarchy**
-- H1 page title: `font-serif text-4xl font-semibold leading-tight text-ink` (or `text-3xl` on auth/utility pages).
-- H2 section: `font-serif text-2xl font-semibold text-ink`.
+**Hierarchy** — *dense / SaaS console.* The visual hierarchy comes from
+monospace + small caps + thin borders, not display type. Headlines stay
+tight; the right side of the H1 row often holds a mono status indicator
+("Last sync · just now", live dot).
+- H1 page title: `text-2xl font-bold text-ink`. Optional eyebrow above.
+- H2 section: `text-sm font-semibold text-ink`. Inside a section header bar,
+  follow with a mono count: `<span class="ml-2 font-mono text-xs text-warmgray-500">{count}</span>`.
+- Section header bar: `border-b border-warmgray-200 px-4 py-2.5` containing
+  the H2 + an optional right-aligned mono action (`↻ refresh`).
+- Body: `text-sm text-warmgray-700` for primary; `text-xs text-warmgray-500`
+  is the workhorse for secondary metadata. Long warm-paper paragraphs
+  belong on landing/auth pages, not in product chrome.
 - Hero (landing only): `font-serif text-[56px]–[72px] font-semibold leading-[1.04] tracking-[-0.02em]`.
-- Body: `text-sm font-semibold leading-relaxed text-warmgray-600/700`.
 - Eyebrow: `.eyebrow` + a tone color.
+
+**Mono is semantic.** `font-mono` marks operational chrome —
+diagnostics, dotted IDs (`shared.org.count`), counts beside titles, status
+text, percentages, timestamps. Use it deliberately; mono signals "this is a
+system surface", not "this is decorative".
 
 ## Layout
 
-- **Page width:** `mx-auto w-full max-w-6xl px-8` for app pages,
-  `max-w-md` for auth cards, `max-w-5xl` for content-focused pages
-  (matches grid, profile).
-- **Vertical rhythm:** `py-10` on main content, `py-6` on header, `pb-16` on
-  auth pages.
-- **Cards:** `rounded-2xl border border-warmgray-100 bg-white p-6 shadow-sm`.
-  Hover-able cards add `transition hover:border-warmgray-200`.
-- **Stat blocks:** `rounded-2xl border border-warmgray-100 bg-white p-5` with
-  `eyebrow` label on top and `font-serif text-3xl font-semibold` value.
+- **Page width:** `mx-auto w-full max-w-7xl px-6 py-8` for app pages,
+  `max-w-md` for auth cards. Content-focused pages (profile, search) may
+  use `max-w-5xl px-6 py-8` if dashboard width is too wide.
+- **Vertical rhythm:** `py-8` on main content, `py-6` on header, `pb-16` on
+  auth pages. Inside a section: `px-4 py-2.5` for header bars, `px-4 py-2`
+  for table rows.
+- **Surfaces:** `rounded-lg border border-warmgray-200 bg-white` — no
+  shadow. Borders do the work; shadows are reserved for hover-lift CTAs.
+- **Section structure:** card has a header bar (`border-b border-warmgray-200`
+  + H2 + count) and a body. Lists inside use `divide-y divide-warmgray-100`,
+  not bordered list items.
+- **Stat strip:** four cells in a single shell with hairline grout —
+  `grid grid-cols-2 sm:grid-cols-4 gap-px overflow-hidden rounded-lg border border-warmgray-200 bg-warmgray-200`.
+  Each cell is `bg-white px-4 py-3` with a mono `text-[10px] uppercase
+  tracking-wider` label and a `font-mono text-2xl font-bold` value. **One**
+  cell may flip accent (`bg-ink text-paper`, label `text-orange-300`) to
+  highlight the hero stat.
+- **Diagnostics block:** small card with mono key/value pairs
+  (`font-mono text-[11px]`, label `text-warmgray-500`, value `text-ink
+  font-semibold`). Use dotted-namespace labels (`shared.org.count`,
+  `queue.depth`).
+- **Match list:** real `<table>` with mono uppercase `<thead>` and
+  `divide-y divide-warmgray-100` rows. Avoid grids of large MatchCards in
+  product chrome — keep those for marketing surfaces.
 
 ## Components
 
@@ -100,10 +128,15 @@ Don't reach for `bg-*` / `border-*` directly — use the Pill.
 
 Two variants. Don't add more without updating this doc.
 
-- **Primary** — blue capsule:
+- **Primary** — blue rounded-md, used for the page-level action (e.g. the
+  `Search` button in the toolbar):
+  `rounded-md bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-orange-600`.
+- **Primary (hero)** — capsule, used on landing + auth pages only:
   `inline-flex h-10 items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(37,99,235,0.55)] transition hover:bg-orange-600`.
-- **Dark** (used inside cards for "Open" CTAs):
-  `inline-flex h-9 items-center gap-2 rounded-full bg-ink px-4 text-xs font-semibold text-white transition hover:bg-warmgray-800`.
+- **Dark** (row-level "Open" CTAs in dense lists):
+  `inline-flex h-7 items-center rounded-md bg-ink px-2.5 text-[11px] font-semibold text-white transition hover:bg-warmgray-800`.
+- **Toolbar** (filter / sort buttons next to a primary):
+  `inline-flex items-center gap-1 rounded-md border border-warmgray-200 px-2.5 py-1.5 text-xs font-medium text-warmgray-700 hover:border-warmgray-300`.
 - **Ghost** — text-only link in `text-warmgray-700 hover:text-ink`.
 
 The reusable building blocks live in `components/AuthCard.tsx`

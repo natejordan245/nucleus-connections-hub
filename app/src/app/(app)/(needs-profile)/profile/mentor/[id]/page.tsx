@@ -15,19 +15,22 @@ export default async function MentorProfilePage({ params }: { params: { id: stri
   const isOwner = viewerId === mentor.id;
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-8 py-10">
-      <Link href="/dashboard" className="text-sm font-medium text-warmgray-600 hover:text-ink">
-        ← Back
+    <main className="mx-auto w-full max-w-5xl px-6 py-8">
+      <Link
+        href="/dashboard"
+        className="font-mono text-xs text-warmgray-500 hover:text-ink"
+      >
+        ← back to dashboard
       </Link>
 
-      <header className="mt-6 flex items-start gap-6">
+      <header className="mt-4 flex items-start gap-5 rounded-lg border border-warmgray-200 bg-white p-5">
         <Avatar name={mentor.name} src={mentor.photoUrl} size="lg" />
         <div className="flex-1">
-          <h1 className="font-serif text-3xl font-semibold text-ink">{mentor.name}</h1>
+          <span className="eyebrow text-orange-500">Mentor</span>
+          <h1 className="mt-1 text-2xl font-bold text-ink">{mentor.name}</h1>
           <p className="mt-1 text-sm text-warmgray-700">{mentor.headline}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Pill tone="warmgray">{mentor.location}</Pill>
-            <Pill tone="orange">Mentor</Pill>
             <Pill tone="warmgray">{mentor.hoursPerMonth} hrs/mo</Pill>
             {mentor.boardSeatOpen && <Pill tone="emerald">Open to board seat</Pill>}
           </div>
@@ -39,15 +42,15 @@ export default async function MentorProfilePage({ params }: { params: { id: stri
         {isOwner && (
           <Link
             href="/onboard/mentor"
-            className="inline-flex h-10 items-center justify-center rounded-full border border-warmgray-200 bg-white px-5 text-sm font-semibold text-ink transition hover:border-warmgray-300"
+            className="inline-flex items-center gap-1 rounded-md border border-warmgray-200 px-2.5 py-1.5 text-xs font-medium text-warmgray-700 hover:border-warmgray-300"
           >
             Edit profile
           </Link>
         )}
       </header>
 
-      <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
-        <section className="space-y-6">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
+        <section className="space-y-4">
           <Card title="About">
             <p className="text-sm leading-relaxed text-warmgray-700">{mentor.bio}</p>
           </Card>
@@ -71,7 +74,7 @@ export default async function MentorProfilePage({ params }: { params: { id: stri
           </Card>
         </section>
 
-        <aside className="space-y-6">
+        <aside className="space-y-4">
           <Card title="Compensation preference">
             <div className="flex flex-wrap gap-2">
               {mentor.compPreference.map((c) => (
@@ -82,10 +85,18 @@ export default async function MentorProfilePage({ params }: { params: { id: stri
             </div>
           </Card>
           <Card title="Availability">
-            <p className="text-sm text-warmgray-700">
-              {mentor.hoursPerMonth} hours per month.
-              {mentor.boardSeatOpen ? " Open to a board seat." : " Not currently taking new board seats."}
-            </p>
+            <dl className="space-y-1.5 font-mono text-[11px]">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-warmgray-500">hours.per.month</span>
+                <span className="font-semibold text-ink">{mentor.hoursPerMonth}</span>
+              </div>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-warmgray-500">board.seat.open</span>
+                <span className="font-semibold text-ink">
+                  {mentor.boardSeatOpen ? "yes" : "no"}
+                </span>
+              </div>
+            </dl>
           </Card>
         </aside>
       </div>
@@ -95,9 +106,11 @@ export default async function MentorProfilePage({ params }: { params: { id: stri
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-warmgray-100 bg-white p-6 shadow-sm">
-      <span className="eyebrow text-warmgray-500">{title}</span>
-      <div className="mt-3">{children}</div>
+    <section className="rounded-lg border border-warmgray-200 bg-white">
+      <div className="border-b border-warmgray-200 px-4 py-2.5">
+        <h2 className="text-sm font-semibold text-ink">{title}</h2>
+      </div>
+      <div className="p-4">{children}</div>
     </section>
   );
 }

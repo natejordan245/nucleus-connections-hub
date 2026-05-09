@@ -52,23 +52,27 @@ export default async function SearchPage({
   };
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-8 py-10">
-      <span className="eyebrow text-orange-500">Search</span>
-      <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight text-ink">
-        Find people, companies, and resources.
-      </h1>
-      <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
-        Search across the network — operators, businesses, mentors, VCs, and the
-        playbooks Nucleus has gathered.
-      </p>
+    <main className="mx-auto w-full max-w-7xl px-6 py-8">
+      <div className="flex items-baseline justify-between">
+        <div>
+          <span className="eyebrow text-orange-500">Search</span>
+          <h1 className="mt-2 text-2xl font-bold text-ink">
+            Find people, companies, and resources.
+          </h1>
+          <p className="mt-1 text-sm text-warmgray-500">
+            Operators, businesses, mentors, VCs, and the playbooks Nucleus has
+            gathered.
+          </p>
+        </div>
+      </div>
 
       <form
         action="/search"
         method="GET"
-        className="mt-8 flex items-center gap-3 rounded-2xl border border-warmgray-100 bg-white p-2 shadow-sm focus-within:border-orange-300"
+        className="mt-4 flex items-center gap-2 rounded-lg border border-warmgray-200 bg-white p-2"
       >
         <SearchIcon
-          className="ml-2 h-5 w-5 shrink-0 text-warmgray-400"
+          className="ml-2 h-4 w-4 shrink-0 text-warmgray-400"
           strokeWidth={1.75}
           aria-hidden
         />
@@ -77,19 +81,19 @@ export default async function SearchPage({
           name="q"
           defaultValue={q}
           autoFocus
-          placeholder="Try “bioengineering”, “GTM”, “seed”, or “Lehi”…"
-          className="flex-1 bg-transparent px-1 py-2 text-sm text-ink outline-none placeholder:text-warmgray-400"
+          placeholder="Try bioengineering, GTM, seed, or Lehi…"
+          className="flex-1 bg-transparent py-1.5 text-sm text-ink outline-none placeholder:text-warmgray-400"
         />
         <input type="hidden" name="kind" value={tab} />
         <button
           type="submit"
-          className="inline-flex h-9 items-center justify-center rounded-full bg-ink px-4 text-xs font-semibold text-white transition hover:bg-warmgray-800"
+          className="rounded-md bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-orange-600"
         >
           Search
         </button>
       </form>
 
-      <nav className="mt-6 flex flex-wrap items-center gap-1 border-b border-warmgray-100">
+      <nav className="mt-4 flex flex-wrap items-center gap-1 border-b border-warmgray-200">
         {TABS.map((t) => {
           const active = t.value === tab;
           const href = `/search?kind=${t.value}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
@@ -98,17 +102,19 @@ export default async function SearchPage({
               key={t.value}
               href={href}
               className={
-                "relative inline-flex items-center gap-2 px-4 py-3 text-sm font-medium transition " +
+                "relative inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold transition " +
                 (active
                   ? "text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-orange-500"
-                  : "text-warmgray-600 hover:text-ink")
+                  : "text-warmgray-500 hover:text-ink")
               }
             >
               {t.label}
               <span
                 className={
-                  "rounded-full px-2 py-0.5 text-[10px] font-semibold " +
-                  (active ? "bg-orange-50 text-orange-700" : "bg-warmgray-50 text-warmgray-500")
+                  "rounded-md px-1.5 py-0.5 font-mono text-[10px] " +
+                  (active
+                    ? "bg-orange-50 text-orange-700"
+                    : "bg-warmgray-50 text-warmgray-500")
                 }
               >
                 {counts[t.value]}
@@ -131,11 +137,11 @@ export default async function SearchPage({
 
 function EmptyState({ kind, q }: { kind: string; q: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-warmgray-200 bg-white p-10 text-center">
-      <p className="font-serif text-lg font-semibold text-ink">
-        {q ? `No ${kind} match “${q}”.` : `No ${kind} yet.`}
+    <div className="rounded-lg border border-dashed border-warmgray-200 bg-white px-6 py-12 text-center">
+      <p className="text-base font-semibold text-ink">
+        {q ? `No ${kind} match "${q}".` : `No ${kind} yet.`}
       </p>
-      <p className="mt-2 text-sm text-warmgray-600">
+      <p className="mt-1 text-xs text-warmgray-500">
         {q ? "Try a different term, or switch tabs." : "Check back soon."}
       </p>
     </div>
@@ -150,14 +156,14 @@ function PeopleResults({ items, q }: { items: CandidateDTO[]; q: string }) {
         <li key={c.id}>
           <Link
             href={`/profile/candidate/${c.id}`}
-            className="flex h-full gap-4 rounded-2xl border border-warmgray-100 bg-white p-5 shadow-sm transition hover:border-warmgray-200"
+            className="flex h-full gap-3 rounded-lg border border-warmgray-200 bg-white p-4 transition hover:border-warmgray-300"
           >
             <Avatar name={c.name} src={c.photoUrl} size="md" />
             <div className="min-w-0 flex-1">
-              <h3 className="truncate font-serif text-lg font-semibold text-ink">
+              <h3 className="truncate text-sm font-semibold text-ink">
                 {c.name}
               </h3>
-              <p className="truncate text-xs text-warmgray-600">{c.headline}</p>
+              <p className="truncate text-[11px] text-warmgray-500">{c.headline}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Pill tone="warmgray">{c.location}</Pill>
                 {c.domains.slice(0, 2).map((d) => (
@@ -182,14 +188,14 @@ function CompanyResults({ items, q }: { items: BusinessDTO[]; q: string }) {
         <li key={s.id}>
           <Link
             href={`/profile/business/${s.id}`}
-            className="flex h-full gap-4 rounded-2xl border border-warmgray-100 bg-white p-5 shadow-sm transition hover:border-warmgray-200"
+            className="flex h-full gap-3 rounded-lg border border-warmgray-200 bg-white p-4 transition hover:border-warmgray-300"
           >
             <Avatar name={s.name} src={s.logoUrl} size="md" />
             <div className="min-w-0 flex-1">
-              <h3 className="truncate font-serif text-lg font-semibold text-ink">
+              <h3 className="truncate text-sm font-semibold text-ink">
                 {s.name}
               </h3>
-              <p className="truncate text-xs text-warmgray-600">{s.oneLiner}</p>
+              <p className="truncate text-[11px] text-warmgray-500">{s.oneLiner}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Pill tone="warmgray">{s.location}</Pill>
                 <Pill tone="orange">{SECTOR_LABELS[s.sector]}</Pill>
@@ -210,14 +216,14 @@ function MentorResults({ items, q }: { items: MentorDTO[]; q: string }) {
         <li key={m.id}>
           <Link
             href={`/profile/mentor/${m.id}`}
-            className="flex h-full gap-4 rounded-2xl border border-warmgray-100 bg-white p-5 shadow-sm transition hover:border-warmgray-200"
+            className="flex h-full gap-3 rounded-lg border border-warmgray-200 bg-white p-4 transition hover:border-warmgray-300"
           >
             <Avatar name={m.name} src={m.photoUrl} size="md" />
             <div className="min-w-0 flex-1">
-              <h3 className="truncate font-serif text-lg font-semibold text-ink">
+              <h3 className="truncate text-sm font-semibold text-ink">
                 {m.name}
               </h3>
-              <p className="truncate text-xs text-warmgray-600">{m.headline}</p>
+              <p className="truncate text-[11px] text-warmgray-500">{m.headline}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Pill tone="warmgray">{m.location}</Pill>
                 <Pill tone="orange">{m.hoursPerMonth} hrs/mo</Pill>
@@ -239,14 +245,14 @@ function InvestorResults({ items, q }: { items: InvestorDTO[]; q: string }) {
         <li key={i.id}>
           <Link
             href={`/profile/investor/${i.id}`}
-            className="flex h-full gap-4 rounded-2xl border border-warmgray-100 bg-white p-5 shadow-sm transition hover:border-warmgray-200"
+            className="flex h-full gap-3 rounded-lg border border-warmgray-200 bg-white p-4 transition hover:border-warmgray-300"
           >
             <Avatar name={i.fundName ?? i.name} src={i.photoUrl} size="md" />
             <div className="min-w-0 flex-1">
-              <h3 className="truncate font-serif text-lg font-semibold text-ink">
+              <h3 className="truncate text-sm font-semibold text-ink">
                 {i.fundName ?? i.name}
               </h3>
-              <p className="truncate text-xs text-warmgray-600">{i.headline}</p>
+              <p className="truncate text-[11px] text-warmgray-500">{i.headline}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Pill tone="warmgray">{i.location}</Pill>
                 {i.sectorsInvested.slice(0, 2).map((s) => (
@@ -273,15 +279,13 @@ function ResourceResults({ items, q }: { items: ResourceDTO[]; q: string }) {
             href={r.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="block rounded-2xl border border-warmgray-100 bg-white p-5 shadow-sm transition hover:border-warmgray-200"
+            className="block rounded-lg border border-warmgray-200 bg-white p-4 transition hover:border-warmgray-300"
           >
             <div className="flex items-center gap-2">
               <Pill tone="orange">{r.kind}</Pill>
-              <span className="text-xs text-warmgray-500">{r.uploadedByName}</span>
+              <span className="font-mono text-[11px] text-warmgray-500">{r.uploadedByName}</span>
             </div>
-            <h3 className="mt-2 font-serif text-lg font-semibold text-ink">
-              {r.title}
-            </h3>
+            <h3 className="mt-2 text-sm font-semibold text-ink">{r.title}</h3>
             <p className="mt-1 text-sm leading-relaxed text-warmgray-700">
               {r.description}
             </p>

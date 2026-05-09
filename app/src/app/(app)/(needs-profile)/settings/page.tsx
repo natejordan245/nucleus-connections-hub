@@ -27,16 +27,12 @@ export default async function SettingsPage() {
           : "/onboard";
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-8 py-10">
+    <main className="mx-auto w-full max-w-3xl px-6 py-8">
       <span className="eyebrow text-orange-500">Settings</span>
-      <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight text-ink">
-        Your account.
-      </h1>
-      <p className="mt-3 max-w-xl text-sm leading-relaxed text-warmgray-600">
-        Mode, identity, and the door out.
-      </p>
+      <h1 className="mt-2 text-2xl font-bold text-ink">Your account.</h1>
+      <p className="mt-1 text-sm text-warmgray-500">Mode, identity, and the door out.</p>
 
-      <div className="mt-8 space-y-4">
+      <div className="mt-4 space-y-3">
         <Card>
           <Row
             label="Account"
@@ -54,7 +50,7 @@ export default async function SettingsPage() {
           <div className="mt-3">
             <Link
               href={profileHref}
-              className="text-sm font-medium text-orange-600 hover:text-orange-700"
+              className="text-xs font-semibold text-orange-600 hover:text-orange-700"
             >
               {profile ? "Open profile →" : "Finish onboarding →"}
             </Link>
@@ -74,7 +70,7 @@ export default async function SettingsPage() {
           <form action={toggleAppMode} className="mt-3">
             <button
               type="submit"
-              className="inline-flex h-9 items-center justify-center rounded-full border border-warmgray-200 bg-white px-4 text-sm font-medium text-warmgray-700 transition hover:border-warmgray-300 hover:text-ink"
+              className="inline-flex items-center gap-1 rounded-md border border-warmgray-200 px-2.5 py-1.5 text-xs font-medium text-warmgray-700 hover:border-warmgray-300"
             >
               Switch to {mode === "live" ? "Demo" : "Live"} mode
             </button>
@@ -86,9 +82,9 @@ export default async function SettingsPage() {
           <form action="/auth/signout" method="post" className="mt-3">
             <button
               type="submit"
-              className="inline-flex h-9 items-center gap-2 rounded-full border border-warmgray-200 bg-white px-4 text-sm font-medium text-warmgray-700 transition hover:border-warmgray-300 hover:text-ink"
+              className="inline-flex items-center gap-1.5 rounded-md border border-warmgray-200 px-2.5 py-1.5 text-xs font-medium text-warmgray-700 hover:border-warmgray-300"
             >
-              <LogOut className="h-4 w-4" strokeWidth={2} aria-hidden /> Sign out
+              <LogOut className="h-3.5 w-3.5" strokeWidth={2} aria-hidden /> Sign out
             </button>
           </form>
         </Card>
@@ -99,26 +95,20 @@ export default async function SettingsPage() {
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-warmgray-100 bg-white p-6 shadow-sm">
+    <section className="rounded-lg border border-warmgray-200 bg-white p-4">
       {children}
     </section>
   );
 }
 
-function Row({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
+function Row({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div>
-      <span className="eyebrow text-warmgray-400">{label}</span>
-      <p className="mt-1 font-serif text-lg font-semibold text-ink">{value}</p>
-      {hint && <p className="mt-1 text-sm text-warmgray-600">{hint}</p>}
+      <span className="font-mono text-[10px] uppercase tracking-wider text-warmgray-500">
+        {label}
+      </span>
+      <p className="mt-1 text-sm font-semibold text-ink">{value}</p>
+      {hint && <p className="mt-1 text-xs text-warmgray-500">{hint}</p>}
     </div>
   );
 }
