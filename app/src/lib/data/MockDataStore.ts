@@ -90,6 +90,14 @@ export class MockDataStore implements IDataStore {
     return [...utahOrgs];
   }
 
+  async getProfileKind(id: string) {
+    if (candidateMap.has(id)) return "candidate" as const;
+    if (businessMap.has(id)) return "business" as const;
+    if (mentorMap.has(id)) return "mentor" as const;
+    if (investorMap.has(id)) return "investor" as const;
+    return null;
+  }
+
   async matchesFor(subjectId: string): Promise<MatchDTO[]> {
     return baselineMatches
       .filter((m) => m.subjectId === subjectId)

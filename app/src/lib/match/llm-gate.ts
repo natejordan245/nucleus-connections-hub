@@ -111,6 +111,116 @@ export async function gatePair(args: {
   return { ...fresh, cached: false, model: MODEL };
 }
 
+/**
+ * Batched form of `gatePair`. One Supabase `select` for all (subject, candidate)
+ * pairs, one parallel fan-out to OpenAI for misses, one batched `upsert` for
+ * the new rows. Replaces N round-trips with 2 + (parallel OpenAI calls).
+ *
+ * Returns verdicts in the same order as the input pairs. Failed OpenAI calls
+ * map to `null` at that index.
+ */
+export async function gatePairs(args: {
+  sb: SupabaseClient;
+  pairs: Array<{ subject: ProfileForGate; candidate: ProfileForGate }>;
+}): Promise<(LLMGateVerdict | null)[]> {
+  const { sb, pairs } = args;
+  if (pairs.length === 0) return [];
+
+  const hashes = await Promise.all(
+    pairs.map((p) => sha256(cacheKeyInputs(p.subject, p.candidate))),
+  );
+
+  const subjectIds = Array.from(new Set(pairs.map((p) => p.subject.id)));
+  const candidateIds = Array.from(new Set(pairs.map((p) => p.candidate.id)));
+  const { data: cachedRows } = await sb
+    .from("match_summaries")
+    .select("*")
+    .in("subject_id", subjectIds)
+    .in("candidate_id", candidateIds);
+
+  const cacheMap = new Map<string, {
+    cache_hash: string;
+    is_match: boolean;
+    summary: string | null;
+    factors: unknown;
+    concerns: unknown;
+    model: string | null;
+  }>();
+  for (const r of (cachedRows ?? []) as Array<{
+    subject_id: string;
+    candidate_id: string;
+    cache_hash: string;
+    is_match: boolean;
+    summary: string | null;
+    factors: unknown;
+    concerns: unknown;
+    model: string | null;
+  }>) {
+    cacheMap.set(`${r.subject_id}:${r.candidate_id}`, r);
+  }
+
+  const results: (LLMGateVerdict | null)[] = new Array(pairs.length).fill(null);
+  const misses: Array<{ idx: number; pair: (typeof pairs)[number]; hash: string }> = [];
+
+  for (let i = 0; i < pairs.length; i++) {
+    const pair = pairs[i];
+    const cached = cacheMap.get(`${pair.subject.id}:${pair.candidate.id}`);
+    if (cached && cached.cache_hash === hashes[i]) {
+      results[i] = {
+        isMatch: cached.is_match,
+        summary: cached.summary ?? "",
+        factors: (cached.factors ?? []) as LLMGateVerdict["factors"],
+        concerns: (cached.concerns ?? []) as string[],
+        cached: true,
+        model: cached.model ?? "",
+      };
+    } else {
+      misses.push({ idx: i, pair, hash: hashes[i] });
+    }
+  }
+
+  if (misses.length === 0) return results;
+
+  const fresh = await Promise.all(
+    misses.map((m) => callOpenAI(m.pair.subject, m.pair.candidate)),
+  );
+
+  const upserts: Array<{
+    subject_id: string;
+    candidate_id: string;
+    cache_hash: string;
+    is_match: boolean;
+    summary: string;
+    factors: LLMGateVerdict["factors"];
+    concerns: string[];
+    model: string;
+  }> = [];
+  for (let i = 0; i < misses.length; i++) {
+    const m = misses[i];
+    const f = fresh[i];
+    if (!f) continue;
+    results[m.idx] = { ...f, cached: false, model: MODEL };
+    upserts.push({
+      subject_id: m.pair.subject.id,
+      candidate_id: m.pair.candidate.id,
+      cache_hash: m.hash,
+      is_match: f.isMatch,
+      summary: f.summary,
+      factors: f.factors,
+      concerns: f.concerns,
+      model: MODEL,
+    });
+  }
+
+  if (upserts.length > 0) {
+    await sb
+      .from("match_summaries")
+      .upsert(upserts, { onConflict: "subject_id,candidate_id" });
+  }
+
+  return results;
+}
+
 async function callOpenAI(
   subject: ProfileForGate,
   candidate: ProfileForGate,

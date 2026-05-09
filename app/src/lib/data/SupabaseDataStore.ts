@@ -18,13 +18,14 @@ import type { IDataStore, VoteSide } from "./store";
 import {
   cosineSimilarity,
   embed,
+  embedMany,
   textForResource,
   textForStartupProfile,
   textForStartupWants,
   textForTalentProfile,
   textForTalentWants,
 } from "@/lib/embedding/embed";
-import { gatePair, type LLMGateVerdict } from "@/lib/match/llm-gate";
+import { gatePair, gatePairs, type LLMGateVerdict } from "@/lib/match/llm-gate";
 
 /**
  * Live-mode data store. Reads/writes the `profiles` table (see migration
@@ -335,6 +336,17 @@ export class SupabaseDataStore implements IDataStore {
     return data ? this.rowToInvestor(data as ProfileRow) : null;
   }
 
+  async getProfileKind(id: string): Promise<ProfileKind | null> {
+    const sb = await this.getClient();
+    const { data, error } = await sb
+      .from("profiles")
+      .select("kind")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? ((data as { kind: ProfileKind }).kind) : null;
+  }
+
   async listUtahOrgs(): Promise<UtahOrg[]> {
     // Utah-org graph isn't in Postgres yet — return empty until the migration
     // ships. Pages that consume this gracefully render no proximity pills.
@@ -514,10 +526,7 @@ export class SupabaseDataStore implements IDataStore {
     const row = this.candidateToRow(c);
     const profileText = textForTalentProfile(c);
     const wantsText = textForTalentWants(c);
-    const [profileVec, wantsVec] = await Promise.all([
-      embed(profileText),
-      embed(wantsText),
-    ]);
+    const [profileVec, wantsVec] = await embedMany([profileText, wantsText]);
     const payload = {
       ...row,
       embedding_text: profileText,
@@ -539,10 +548,7 @@ export class SupabaseDataStore implements IDataStore {
     const row = this.businessToRow(b);
     const profileText = textForStartupProfile(b);
     const wantsText = textForStartupWants(b);
-    const [profileVec, wantsVec] = await Promise.all([
-      embed(profileText),
-      embed(wantsText),
-    ]);
+    const [profileVec, wantsVec] = await embedMany([profileText, wantsText]);
     const payload = {
       ...row,
       embedding_text: profileText,
@@ -738,29 +744,30 @@ export class SupabaseDataStore implements IDataStore {
       .sort((a, b) => b.composite - a.composite)
       .slice(0, TOP_N_BEFORE_LLM);
 
-    // LLM gate: per-pair verdict + summary, with cache lookup.
-    const verdicts = await Promise.all(
-      nearest.map(async (n) => {
-        const verdict = await gatePair({
-          sb,
-          subject: {
-            id: viewer.id,
-            kind: viewer.kind,
-            name: viewer.name,
-            embeddingText: viewer.embedding_text ?? "",
-            wantsText: viewer.embedding_wants_text ?? "",
-          },
-          candidate: {
-            id: n.row.id,
-            kind: n.row.kind,
-            name: n.row.name,
-            embeddingText: n.row.embedding_text ?? "",
-            wantsText: n.row.embedding_wants_text ?? "",
-          },
-        });
-        return { ...n, verdict };
-      }),
-    );
+    // LLM gate: per-pair verdict + summary, with cache lookup. Batched —
+    // one Supabase select for all cached rows + one upsert for new rows,
+    // not N of each.
+    const subjectGate = {
+      id: viewer.id,
+      kind: viewer.kind,
+      name: viewer.name,
+      embeddingText: viewer.embedding_text ?? "",
+      wantsText: viewer.embedding_wants_text ?? "",
+    };
+    const gateVerdicts = await gatePairs({
+      sb,
+      pairs: nearest.map((n) => ({
+        subject: subjectGate,
+        candidate: {
+          id: n.row.id,
+          kind: n.row.kind,
+          name: n.row.name,
+          embeddingText: n.row.embedding_text ?? "",
+          wantsText: n.row.embedding_wants_text ?? "",
+        },
+      })),
+    });
+    const verdicts = nearest.map((n, i) => ({ ...n, verdict: gateVerdicts[i] }));
 
     // Keep cosine order; drop pairs the LLM rejects (or where the call failed).
     const matched = verdicts

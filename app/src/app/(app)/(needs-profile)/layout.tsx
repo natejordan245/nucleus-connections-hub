@@ -13,14 +13,8 @@ export default async function NeedsProfileLayout({
   children: React.ReactNode;
 }) {
   const { viewerId } = await requireViewer();
-  const store = getDataStore();
-  const [candidate, business, mentor, investor] = await Promise.all([
-    store.getCandidate(viewerId),
-    store.getBusiness(viewerId),
-    store.getMentor(viewerId),
-    store.getInvestor(viewerId),
-  ]);
-  if (!candidate && !business && !mentor && !investor) {
+  const kind = await getDataStore().getProfileKind(viewerId);
+  if (!kind) {
     redirect("/onboard");
   }
   return <>{children}</>;
