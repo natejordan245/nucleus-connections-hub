@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { DelicateArch } from "./DelicateArch";
-import { ModeBadge } from "./ModeBadge";
 
 export type HeaderViewer = {
   id: string;
@@ -35,7 +34,6 @@ export function AppShell({
           </Link>
 
           <div className="flex items-center gap-3">
-            <ModeBadge />
             {viewer ? (
               <>
                 <Link

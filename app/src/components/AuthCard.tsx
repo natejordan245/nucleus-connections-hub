@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { DelicateArch } from "./DelicateArch";
-import { ModeBadge } from "./ModeBadge";
 
 export function AuthShell({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +11,6 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
             Nucleus Connections Hub
           </span>
         </Link>
-        <ModeBadge />
       </header>
       <main className="mx-auto flex w-full max-w-md flex-1 items-center px-6 pb-16 pt-4">
         {children}
